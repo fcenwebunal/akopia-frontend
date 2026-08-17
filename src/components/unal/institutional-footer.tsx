@@ -25,10 +25,10 @@ const SERVICE_LINKS = [
 
 export function InstitutionalFooter() {
   return (
-    <footer className="mt-auto border-t-4 border-unal-green bg-[var(--surface-2)]">
+    <footer className="mt-auto border-t-4 border-unal-green bg-(--surface-2)">
       <div className="mx-auto grid max-w-6xl gap-8 px-5 py-10 sm:grid-cols-2 lg:grid-cols-4">
         <nav aria-label="Gobierno en línea">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-(--muted)">
             Gobierno en línea
           </h2>
           <ul className="space-y-2 text-sm">
@@ -43,7 +43,7 @@ export function InstitutionalFooter() {
         </nav>
 
         <nav aria-label="Servicios">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-(--muted)">
             Servicios
           </h2>
           <ul className="space-y-2 text-sm">
@@ -57,8 +57,8 @@ export function InstitutionalFooter() {
           </ul>
         </nav>
 
-        <div className="text-sm leading-relaxed text-[var(--ink-2)]">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+        <div className="text-sm leading-relaxed text-(--ink-2)">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-(--muted)">
             Contacto
           </h2>
           <address className="not-italic">
@@ -72,7 +72,7 @@ export function InstitutionalFooter() {
           </address>
         </div>
 
-        <div className="text-sm leading-relaxed text-[var(--ink-2)]">
+        <div className="text-sm leading-relaxed text-(--ink-2)">
           <Image
             src="/unal/sello-colombia.png"
             alt="Escudo de la República de Colombia"
@@ -93,8 +93,8 @@ export function InstitutionalFooter() {
         </div>
       </div>
 
-      <div className="border-t border-[var(--rule)] px-5 py-4">
-        <p className="mx-auto max-w-6xl text-center text-xs text-[var(--muted)]">
+      <div className="border-t border-(--rule) px-5 py-4">
+        <p className="mx-auto max-w-6xl text-center text-xs text-(--muted)">
           AKOPIA · Facultad de Ciencias Exactas y Naturales · Universidad
           Nacional de Colombia, sede Manizales
         </p>

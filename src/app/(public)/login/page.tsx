@@ -38,7 +38,7 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-md px-5 py-16">
       <h1 className="text-3xl font-black tracking-tight">Iniciar sesión</h1>
-      <p className="mt-2 text-[var(--ink-2)]">
+      <p className="mt-2 text-(--ink-2)">
         Acceso para operadores del centro de acopio.
       </p>
 
@@ -63,7 +63,7 @@ export default function LoginPage() {
         {error ? (
           <p
             role="alert"
-            className="rounded border-l-4 border-unal-red bg-[var(--surface-2)] px-4 py-3 text-sm"
+            className="rounded border-l-4 border-unal-red bg-(--surface-2) px-4 py-3 text-sm"
           >
             {error}
           </p>
@@ -109,7 +109,7 @@ function Field({
         onChange={(event) => onChange(event.target.value)}
         autoComplete={autoComplete}
         required
-        className="w-full rounded border border-[var(--rule)] bg-[var(--surface)] px-3 py-2.5 focus:border-unal-green-dark"
+        className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5 focus:border-unal-green-dark"
       />
     </div>
   );

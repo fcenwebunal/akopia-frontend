@@ -8,7 +8,7 @@ import Link from "next/link";
  */
 export function InstitutionalHeader() {
   return (
-    <header className="border-b border-[var(--rule)] bg-[var(--surface)]">
+    <header className="border-b border-(--rule) bg-(--surface)">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-5 py-4">
         <a
           href="https://unal.edu.co"
@@ -25,12 +25,12 @@ export function InstitutionalHeader() {
           />
         </a>
 
-        <div className="min-w-0 flex-1 border-l border-[var(--rule)] pl-6">
+        <div className="min-w-0 flex-1 border-l border-(--rule) pl-6">
           <Link href="/" className="inline-block">
             <span className="block text-xl font-black tracking-tight text-unal-green-dark sm:text-2xl">
               AKOPIA
             </span>
-            <span className="block text-xs leading-tight text-[var(--muted)] sm:text-sm">
+            <span className="block text-xs leading-tight text-(--muted) sm:text-sm">
               Centro de acopio · Sede Manizales
             </span>
           </Link>

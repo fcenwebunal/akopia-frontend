@@ -19,16 +19,16 @@ export default function RegistroPage() {
     <div className="mx-auto max-w-2xl px-5 py-16">
       <h1 className="text-3xl font-black tracking-tight">Solicitar acceso</h1>
 
-      <p className="mt-4 text-lg leading-relaxed text-[var(--ink-2)]">
+      <p className="mt-4 text-lg leading-relaxed text-(--ink-2)">
         Las cuentas de AKOPIA las crea un administrador del centro de acopio.
         No hay registro abierto: cada operador queda asociado a una persona
         responsable, porque todo movimiento de inventario se atribuye a quien
         lo hizo.
       </p>
 
-      <div className="mt-8 rounded border-l-4 border-unal-aqua bg-[var(--surface-2)] p-5">
+      <div className="mt-8 rounded border-l-4 border-unal-aqua bg-(--surface-2) p-5">
         <h2 className="font-bold">Cómo obtener una cuenta</h2>
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-[var(--ink-2)]">
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-(--ink-2)">
           <li>
             Escribe al responsable del centro de acopio indicando tu nombre
             completo, tu correo institucional y la labor que vas a desempeñar.
@@ -43,7 +43,7 @@ export default function RegistroPage() {
         </ol>
       </div>
 
-      <p className="mt-8 text-[var(--ink-2)]">
+      <p className="mt-8 text-(--ink-2)">
         ¿Ya tienes una cuenta?{" "}
         <Link href="/login" className="font-bold text-unal-green-dark underline">
           Inicia sesión

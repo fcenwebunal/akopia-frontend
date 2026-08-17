@@ -18,7 +18,7 @@ const STEPS = [
 export default function HomePage() {
   return (
     <>
-      <section className="border-b border-[var(--rule)] bg-[var(--surface-2)]">
+      <section className="border-b border-(--rule) bg-(--surface-2)">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 lg:grid-cols-2 lg:py-24">
           <div>
             <p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-unal-green-dark">
@@ -27,7 +27,7 @@ export default function HomePage() {
             <h1 className="text-4xl font-black leading-[1.08] tracking-tight text-balance sm:text-5xl">
               La ayuda organizada llega más lejos
             </h1>
-            <p className="mt-5 max-w-prose text-lg leading-relaxed text-[var(--ink-2)]">
+            <p className="mt-5 max-w-prose text-lg leading-relaxed text-(--ink-2)">
               AKOPIA ordena la gestión de donaciones de un centro de acopio: le
               permite recibir, organizar y distribuir lo que llega de forma
               transparente, sin perder el rastro de nada.
@@ -63,7 +63,7 @@ export default function HomePage() {
                 {String(index + 1).padStart(2, "0")}
               </span>
               <h3 className="mt-2 text-lg font-bold">{step.title}</h3>
-              <p className="mt-2 leading-relaxed text-[var(--ink-2)]">
+              <p className="mt-2 leading-relaxed text-(--ink-2)">
                 {step.body}
               </p>
             </li>
@@ -71,9 +71,9 @@ export default function HomePage() {
         </ol>
       </section>
 
-      <section className="border-t border-[var(--rule)] bg-[var(--surface-2)]">
+      <section className="border-t border-(--rule) bg-(--surface-2)">
         <div className="mx-auto max-w-6xl px-5 py-14 text-center">
-          <p className="font-serif text-2xl text-[var(--ink-2)] text-balance sm:text-3xl">
+          <p className="font-serif text-2xl text-(--ink-2) text-balance sm:text-3xl">
             Operaciones claras para responder mejor
           </p>
         </div>
@@ -89,12 +89,12 @@ export default function HomePage() {
 function DashboardPreview() {
   return (
     <div
-      className="rounded-lg border border-[var(--rule)] bg-[var(--surface)] p-6 shadow-sm"
+      className="rounded-lg border border-(--rule) bg-(--surface) p-6 shadow-sm"
       aria-label="Vista previa del panel de operación"
     >
-      <div className="flex items-baseline justify-between border-b border-[var(--rule)] pb-4">
+      <div className="flex items-baseline justify-between border-b border-(--rule) pb-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+          <p className="text-xs font-bold uppercase tracking-wider text-(--muted)">
             Centro de acopio
           </p>
           <p className="mt-1 text-lg font-bold">Resumen de hoy</p>
@@ -111,16 +111,16 @@ function DashboardPreview() {
       <dl className="grid grid-cols-2 gap-4 py-5">
         <div>
           <dd className="text-3xl font-black text-unal-green-dark">24</dd>
-          <dt className="text-sm text-[var(--muted)]">Donaciones recibidas</dt>
+          <dt className="text-sm text-(--muted)">Donaciones recibidas</dt>
         </div>
         <div>
           <dd className="text-3xl font-black text-unal-orange">8</dd>
-          <dt className="text-sm text-[var(--muted)]">Solicitudes pendientes</dt>
+          <dt className="text-sm text-(--muted)">Solicitudes pendientes</dt>
         </div>
       </dl>
 
-      <div className="rounded border-l-4 border-unal-yellow bg-[var(--surface-2)] p-4">
-        <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+      <div className="rounded border-l-4 border-unal-yellow bg-(--surface-2) p-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-(--muted)">
           Prioridad
         </p>
         <p className="mt-1 text-sm leading-relaxed">
