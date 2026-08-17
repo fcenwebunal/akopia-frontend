@@ -65,7 +65,7 @@ export async function loadCatalog(): Promise<Catalog> {
 }
 
 // Sin acentos ni mayúsculas: quien captura de pie no escribe tildes.
-function normalize(text: string): string {
+export function normalize(text: string): string {
   return text
     .toLowerCase()
     .normalize("NFD")

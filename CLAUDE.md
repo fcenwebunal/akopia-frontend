@@ -165,3 +165,12 @@ Gap analysis contra el mockup de Vercel: solo tiene 3 rutas reales (`/`, `/login
 Verificado de punta a punta contra el servidor real: aprobar (reservado 0→20) → despachar → confirmar entrega (reservado 20→0, disponible sin cambio porque ya se había restado al reservar, movimiento `salida` real) → solicitud queda `entregada`.
 
 **El ciclo completo del negocio ya se puede recorrer de principio a fin:** recepción → clasificación → inventario → solicitud → aprobación (reserva) → despacho → entrega (consume la reserva).
+
+### 2026-08-18 — Filtros de inventario
+
+`/panel/inventario` ganó los cuatro filtros del mockup: grupo, categoría (dependiente del grupo elegido), ubicación y búsqueda por nombre.
+
+- **Todo se filtra en memoria** contra los datos ya cargados (`loadCatalog()` + la lista de inventario, que hoy no pasa de unos pocos cientos de filas). Sin peticiones nuevas por cada cambio de filtro.
+- **Las opciones de ubicación salen del inventario real, no de la colección `locations`.** Con `locations` todavía vacía, ofrecer un desplegable con zonas que nadie usó sería una promesa falsa; así el filtro solo lista lo que de verdad existe hoy, incluido "Sin ubicar".
+- `normalize()` se sacó de `catalog.ts` a exportada, para no duplicar la lógica de sin-tildes-ni-mayúsculas que ya usa el buscador de productos.
+- Verificado con dos productos de categorías distintas (Arroz / Cobijas): `inventory.product_id` viene plano en la fila y `expand.product_id.category_id` con la expansión — exactamente lo que el filtro necesita para cruzar producto → categoría → grupo sin una petición aparte.
