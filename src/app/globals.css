@@ -1,26 +1,85 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Identidad visual UNAL — Unimedios
+ * https://identidad.unal.edu.co/guia-identidad-visual/
+ *
+ * El verde institucional y la familia Ancízar no se sustituyen ni se
+ * aproximan: son los identificadores de la marca. Los demás colores
+ * de la paleta son complementarios y solo acompañan.
+ */
+@theme {
+  --color-unal-green: #94b43b;
+  --color-unal-green-dark: #6f8a24;
+  --color-unal-green-soft: #eef3e0;
+
+  --color-unal-orange: #e15e42;
+  --color-unal-red: #dc313a;
+  --color-unal-yellow: #f8c21c;
+  --color-unal-aqua: #33b3bc;
+
+  --color-unal-ink: #232323;
+  --color-unal-gray: #4b4b4b;
+  --color-unal-gray-mid: #646464;
+  --color-unal-gray-soft: #f2f2f2;
+  --color-unal-rule: #d9d9d9;
+
+  --font-sans: var(--font-ancizar-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-ancizar-serif), Georgia, serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  --surface: #ffffff;
+  --surface-2: #f7f8f4;
+  --ink: #232323;
+  --ink-2: #4b4b4b;
+  --muted: #646464;
+  --rule: #d9d9d9;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --surface: #141613;
+    --surface-2: #1c1f1a;
+    --ink: #eaece7;
+    --ink-2: #c2c7bb;
+    --muted: #949a8e;
+    --rule: #2e332b;
   }
 }
 
+:root[data-theme="dark"] {
+  --surface: #141613;
+  --surface-2: #1c1f1a;
+  --ink: #eaece7;
+  --ink-2: #c2c7bb;
+  --muted: #949a8e;
+  --rule: #2e332b;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+/* Accesibilidad B6: el foco nunca se oculta, solo se rediseña. */
+:focus-visible {
+  outline: 2px solid var(--color-unal-green-dark);
+  outline-offset: 2px;
+  border-radius: 0.125rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
