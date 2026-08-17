@@ -15,6 +15,8 @@ La guía completa de instalación, identidad visual y flujo de trabajo está en 
 >
 > Un cambio que el resto del equipo no puede descubrir leyendo el repositorio es un cambio que va a romperle el trabajo a alguien.
 
+**Además:** cada mejora o corrección se commitea y se empuja en el momento, sin esperar a que lo pidan. `main` no tiene protección de rama: se puede empujar directo cuando el cambio lo amerite, y los PR se reservan para lo que conviene revisar.
+
 ---
 
 ## Qué es esto en una frase
@@ -76,6 +78,9 @@ Interfaz en Next.js 16 + TypeScript + Tailwind v4 para el centro de acopio de la
 - Se introdujo `unal-green-dark` porque el verde institucional puro no alcanza contraste AA sobre blanco.
 - `/login` funcional contra la colección `users`; `/registro` convertida en página informativa por la restricción de `users.createRule`.
 - Estructura de dos superficies con grupos de rutas `(public)` y `(app)`.
+- Agregada [`PUESTA-EN-MARCHA.md`](PUESTA-EN-MARCHA.md): guía conjunta de los dos repositorios, con el diagrama de conexión, la comprobación de seis pasos y el diagnóstico por síntoma. Existe una copia gemela en el backend.
+- Verificado que CORS funciona sin configuración: PocketBase responde `Access-Control-Allow-Origin: *`, así que `localhost:3000` puede llamar a `127.0.0.1:8090` en desarrollo. En producción no hay CORS porque nginx sirve ambos bajo el mismo dominio.
+- Instrucción global recibida: hacer push de cada cambio en el momento, y no proteger `main`.
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

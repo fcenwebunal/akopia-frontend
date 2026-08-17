@@ -2,6 +2,10 @@
 
 Interfaz web del sistema de gestión del **Centro de Acopio de la Universidad Nacional de Colombia, sede Manizales**. Next.js 16 + TypeScript + Tailwind v4, contra un backend [PocketBase](https://github.com/fcenwebunal/akopia-backend).
 
+> 🚀 **¿Primera vez?** Empieza por **[PUESTA-EN-MARCHA.md](PUESTA-EN-MARCHA.md)**: levanta el frontend y el backend juntos, y comprueba que se están hablando. Unos 15 minutos.
+>
+> Este README es la referencia del frontend: identidad visual, estructura de pantallas y cómo aportar código.
+
 ---
 
 ## Índice
