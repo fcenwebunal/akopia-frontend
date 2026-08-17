@@ -103,3 +103,17 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+### 2026-08-17 (noche) — Propuesta de captura rápida
+
+[`PROPUESTA-CAPTURA.md`](PROPUESTA-CAPTURA.md): evaluación de la metodología de captura jerárquica y diseño de la pantalla de recepción, móvil primero y con lector de códigos en PC. **Pendiente de decisión, nada implementado todavía.**
+
+Lo esencial:
+
+- **La jerarquía es correcta para el catálogo futuro, no para el actual.** Medido: 11 grupos, 55 categorías, 123 productos — **3 productos por categoría en promedio**. Tres niveles de navegación para elegir entre 3 opciones no compensan. Se construye, pero como red de seguridad; el camino principal son recientes y búsqueda.
+- **Bloqueante: no existe marca, ni presentación, ni código de barras** en `products`. El flujo pedido no se puede construir sobre el esquema actual. Propuesta: colección `product_variants`.
+- **Decisión estructural pendiente: ¿inventario por producto o por variante?** Recomiendo variante — un centro de acopio entrega paquetes, no kilogramos. **Hoy son dos migraciones sobre tablas vacías; con datos cargados es una migración de datos.**
+- **El código de barras es un atajo que colapsa la jerarquía**, no una función aparte. Un lector USB se comporta como teclado: funciona sin drivers ni permisos.
+- **La cámara del móvil exige HTTPS.** `getUserMedia` y `BarcodeDetector` solo funcionan en contexto seguro, así que sobre `http://172.23.177.12` no van a funcionar. Y `BarcodeDetector` no existe en Safari ni Firefox: en iPhone hace falta polyfill WASM. **Esto convierte el certificado TLS pendiente con OTIC en un bloqueante funcional, no estético.**
+- Un EAN-13 **no lleva vencimiento ni lote**: eso se seguirá tecleando.
+- «Despensas Armadas» es un grupo sin categorías ni productos.
