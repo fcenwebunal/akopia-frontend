@@ -34,6 +34,48 @@ export function currentUser(): AkopiaUser | null {
   return pb.authStore.record as unknown as AkopiaUser;
 }
 
+export class RouteError extends Error {
+  status: number;
+  response: Record<string, unknown>;
+
+  constructor(status: number, response: Record<string, unknown>) {
+    super(typeof response.message === "string" ? response.message : "Error");
+    this.status = status;
+    this.response = response;
+  }
+}
+
+/*
+ * Llama a una ruta propia del backend (pb_hooks/05_routes.pb.js).
+ *
+ * El SDK de PocketBase no expone un método genérico para rutas fuera de
+ * las colecciones, así que estas hablan por fetch directo. El error se
+ * relanza con la misma forma que usan los errores del SDK
+ * (`error.response.message`, `error.status`) para que errorMessage() y
+ * cualquier otro código que lea errores del backend sirvan igual aquí.
+ */
+export async function callRoute<T>(
+  path: string,
+  options: { method?: "GET" | "POST"; body?: unknown } = {}
+): Promise<T> {
+  const response = await fetch(pb.buildURL(path), {
+    method: options.method ?? "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: pb.authStore.token,
+    },
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+  });
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new RouteError(response.status, payload);
+  }
+
+  return payload as T;
+}
+
 /*
  * PocketBase devuelve los errores de validación campo por campo, dentro
  * de `data`. Sacamos el primero porque es el único que el operador

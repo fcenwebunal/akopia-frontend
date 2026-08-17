@@ -8,6 +8,7 @@ import { pb, type AkopiaUser } from "@/lib/pb";
 const NAV = [
   { href: "/panel", label: "Panel" },
   { href: "/panel/donaciones", label: "Donaciones" },
+  { href: "/panel/solicitudes", label: "Solicitudes" },
   { href: "/panel/inventario", label: "Inventario" },
 ];
 

@@ -131,3 +131,14 @@ Lo esencial:
 - **Pendiente para cerrar el ciclo:** la pantalla de clasificación (`pending → available/quarantine`).
 - **`/panel/donaciones/[id]`** — detalle y clasificación. Es lo que cierra el ciclo: pasar un artículo a apto o a cuarentena dispara los hooks y mueve el saldo. Desde aquí solo se cambia el estado; nunca se toca `inventory`.
 - Los artículos que ya afectaron inventario muestran por qué no se pueden rechazar (hay que hacer un ajuste), en vez de ofrecer un botón que devolvería 400.
+
+### 2026-08-18 — Módulo de Solicitudes
+
+Gap analysis contra el mockup de Vercel: solo tiene 3 rutas reales (`/`, `/login`, `/registro`), sin dashboard navegable — la tarjeta "Centro de acopio" es una ilustración estática. En login/registro/portada ya estamos al nivel del mockup o por encima. La brecha real estaba entre lo que el backend ya soporta y lo que el frontend usaba.
+
+- **`/panel/solicitudes`** — listado con prioridad y estado.
+- **`/panel/solicitudes/nueva`** — mismo patrón que la recepción: borrador local, `ProductPicker` reutilizado. Renglón más simple que `donation_items` (sin vencimiento/lote).
+- **`/panel/solicitudes/[id]`** — detalle con `Comprobar disponibilidad`, `Aprobar`, `Rechazar` (solo admin, oculto para operador con explicación) y `Cancelar`. Consumen las rutas propias del backend (`approve`, `reject`, `cancel`, `availability`) en vez de reimplementar la lógica.
+- **`callRoute` en `src/lib/pb.ts`.** El SDK de PocketBase (`^0.27.3`) no expone un método genérico para rutas fuera de colecciones — se buscó y no existe en esta versión. `callRoute` habla por `fetch` directo contra `pb.buildURL()`, y `RouteError` conserva `status`/`response` con la misma forma que usa `errorMessage()`, así que el manejo de errores es uno solo en toda la app.
+- **`approve` puede devolver 400 con `missing`** (detalle de qué falta): se captura por separado del resto de errores y se muestra como lista, no como texto plano.
+- Verificado de punta a punta contra el servidor real: solicitud creada, `availability` confirma, `approve` reserva — disponible 100→70, reservado 0→30.
