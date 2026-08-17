@@ -9,6 +9,7 @@ const NAV = [
   { href: "/panel", label: "Panel" },
   { href: "/panel/donaciones", label: "Donaciones" },
   { href: "/panel/solicitudes", label: "Solicitudes" },
+  { href: "/panel/despachos", label: "Despachos" },
   { href: "/panel/inventario", label: "Inventario" },
 ];
 

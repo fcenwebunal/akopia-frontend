@@ -142,3 +142,26 @@ Gap analysis contra el mockup de Vercel: solo tiene 3 rutas reales (`/`, `/login
 - **`callRoute` en `src/lib/pb.ts`.** El SDK de PocketBase (`^0.27.3`) no expone un método genérico para rutas fuera de colecciones — se buscó y no existe en esta versión. `callRoute` habla por `fetch` directo contra `pb.buildURL()`, y `RouteError` conserva `status`/`response` con la misma forma que usa `errorMessage()`, así que el manejo de errores es uno solo en toda la app.
 - **`approve` puede devolver 400 con `missing`** (detalle de qué falta): se captura por separado del resto de errores y se muestra como lista, no como texto plano.
 - Verificado de punta a punta contra el servidor real: solicitud creada, `availability` confirma, `approve` reserva — disponible 100→70, reservado 0→30.
+
+### 2026-08-18 — Módulo de Despachos y hallazgo tardío en el mockup
+
+**El mockup tiene mucho más de lo que se había visto:** `/dashboard` no estaba enlazado desde la portada, pero existe con navegación completa (Dashboard, Donaciones, Inventario, Solicitudes, Despachos, Productos, Usuarios, Historial) y datos de ejemplo. Revisado a fondo tras el aviso del usuario.
+
+**Piezas explícitamente decorativas en el propio mockup**, según su texto: *«La edición queda pendiente de integración»* (Productos) y *«Vista general de usuarios mock. No realiza gestión real de cuentas»* (Usuarios). No son objetivo a igualar — son placeholders del mockup, y nuestro backend ya podría hacerlas de verdad si algún día se priorizan.
+
+**Backlog identificado, no bloqueante para el ciclo actual:**
+- Filtros en `/panel/inventario` por grupo/categoría/ubicación/búsqueda — el mockup los tiene, el nuestro no
+- Vista de solo lectura de `audit_log` (equivalente a "Historial") — el backend ya genera estas entradas con hooks reales, sería mostrar lo que ya existe
+- Gestión real de usuarios (crear/desactivar) — el backend ya lo permite vía `users.createRule`; el mockup es explícitamente mock
+- Panel con métricas más ricas (distribución por categoría, ocupación por ubicación) — nuestro resumen es más simple a propósito
+
+**Módulo de Despachos**, cierra el ciclo completo hasta la entrega:
+
+- **`/panel/despachos`** — listado; el estado mostrado es el de la solicitud (`despachada`/`entregada`/`cancelada`), porque `dispatches` no tiene campo de estado propio — es CRUD simple, no dispara movimiento de inventario, ya que el stock se reservó al aprobar.
+- **`/panel/despachos/nueva`** — elige entre solicitudes en estado `aprobada`. Crear el despacho es CRUD; además se pasa la solicitud a `despachada` con una segunda llamada (no transaccional, pero de bajo riesgo: no toca inventario).
+- **`/panel/despachos/[id]`** — si no hay entrega, formulario de confirmación que llama a `confirm-delivery`; si ya existe, la muestra de solo lectura.
+- **Relabel de `receiver_id_type`** solo en la interfaz («Documento de identidad» en vez de literalmente «INE»): los valores del esquema (`ine`, `pasaporte`, `credencial`, `otro`) vienen de una plantilla mexicana, pendiente de corregir en el backend — documentado, no bloqueante hoy.
+
+Verificado de punta a punta contra el servidor real: aprobar (reservado 0→20) → despachar → confirmar entrega (reservado 20→0, disponible sin cambio porque ya se había restado al reservar, movimiento `salida` real) → solicitud queda `entregada`.
+
+**El ciclo completo del negocio ya se puede recorrer de principio a fin:** recepción → clasificación → inventario → solicitud → aprobación (reserva) → despacho → entrega (consume la reserva).
