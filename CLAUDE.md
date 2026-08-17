@@ -129,3 +129,5 @@ Lo esencial:
 - **Formulario condicional** según `requires_expiry` / `requires_batch` / `requires_quarantine`: 75 de 123 productos exigen vencimiento, 5 lote, 6 cuarentena.
 - **Fallo parcial contemplado:** si la donación se crea pero algún artículo no entra, se informa cuál y la donación queda utilizable.
 - **Pendiente para cerrar el ciclo:** la pantalla de clasificación (`pending → available/quarantine`).
+- **`/panel/donaciones/[id]`** — detalle y clasificación. Es lo que cierra el ciclo: pasar un artículo a apto o a cuarentena dispara los hooks y mueve el saldo. Desde aquí solo se cambia el estado; nunca se toca `inventory`.
+- Los artículos que ya afectaron inventario muestran por qué no se pueden rechazar (hay que hacer un ajuste), en vez de ofrecer un botón que devolvería 400.

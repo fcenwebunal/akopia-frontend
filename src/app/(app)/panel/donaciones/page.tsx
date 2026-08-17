@@ -74,10 +74,11 @@ export default function DonacionesPage() {
       {donations !== null && donations.length > 0 ? (
         <ul className="mt-6 space-y-2">
           {donations.map((donation) => (
-            <li
-              key={donation.id}
-              className="rounded border border-(--rule) bg-(--surface) p-4"
-            >
+            <li key={donation.id}>
+              <Link
+                href={`/panel/donaciones/${donation.id}`}
+                className="block rounded border border-(--rule) bg-(--surface) p-4 hover:border-unal-green"
+              >
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <span className="font-mono font-bold text-unal-green-dark">
                   {donation.code}
@@ -94,11 +95,12 @@ export default function DonacionesPage() {
                   })}
                 </span>
               </div>
-              {donation.expand?.operator_id?.full_name ? (
-                <p className="mt-1 text-sm text-(--muted)">
-                  Recibió: {donation.expand.operator_id.full_name}
-                </p>
-              ) : null}
+                {donation.expand?.operator_id?.full_name ? (
+                  <p className="mt-1 text-sm text-(--muted)">
+                    Recibió: {donation.expand.operator_id.full_name}
+                  </p>
+                ) : null}
+              </Link>
             </li>
           ))}
         </ul>
