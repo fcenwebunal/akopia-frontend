@@ -1,9 +1,23 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { errorMessage, pb } from "@/lib/pb";
+import { loginWithFirebase } from "@/lib/firebase";
+import { errorMessage, establishFirebaseSession, pb } from "@/lib/pb";
 
+/*
+ * Un solo formulario para las dos formas de entrar que puede tener una
+ * cuenta: registrada por Firebase, o creada directamente por un admin
+ * antes de que existiera esa opción (como admin@akopia.org, que solo
+ * tiene contraseña nativa de PocketBase).
+ *
+ * Se intenta primero con Firebase; si falla por lo que sea, se reintenta
+ * con la contraseña nativa antes de rendirse. No se distingue el motivo
+ * del primer fallo porque Firebase ya no lo deja saber — desde hace
+ * tiempo devuelve el mismo "auth/invalid-credential" tanto si el correo
+ * no existe como si la contraseña está mal, para no revelar cuentas.
+ */
 export default function LoginPage() {
   const router = useRouter();
   const [identity, setIdentity] = useState("");
@@ -17,21 +31,25 @@ export default function LoginPage() {
     setPending(true);
 
     try {
-      const auth = await pb
-        .collection("users")
-        .authWithPassword(identity, password);
+      let active: boolean;
 
-      // El servidor ya bloquea a los usuarios inactivos en cada regla de
-      // acceso; esto solo evita entrar a un panel que se vería vacío.
-      if (!auth.record.active) {
-        pb.authStore.clear();
-        setError("Tu cuenta está desactivada. Contacta al administrador.");
-        return;
+      try {
+        const idToken = await loginWithFirebase(identity, password);
+        const user = await establishFirebaseSession(idToken);
+        active = user.active;
+      } catch {
+        const auth = await pb.collection("users").authWithPassword(identity, password);
+        active = auth.record.active;
       }
 
-      router.push("/panel");
+      router.push(active ? "/panel" : "/panel/pendiente");
     } catch (err) {
-      setError(errorMessage(err));
+      pb.authStore.clear();
+      setError(
+        errorMessage(err) === "Ocurrió un error inesperado. Intenta de nuevo."
+          ? "Correo o contraseña incorrectos."
+          : errorMessage(err)
+      );
     } finally {
       setPending(false);
     }
@@ -47,7 +65,7 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <Field
           id="identity"
-          label="Correo institucional"
+          label="Correo"
           type="email"
           value={identity}
           onChange={setIdentity}
@@ -79,6 +97,14 @@ export default function LoginPage() {
           {pending ? "Entrando…" : "Entrar"}
         </button>
       </form>
+
+      <p className="mt-8 text-(--ink-2)">
+        ¿No tienes una cuenta?{" "}
+        <Link href="/registro" className="font-bold text-unal-green-dark underline">
+          Regístrate
+        </Link>
+        .
+      </p>
     </div>
   );
 }

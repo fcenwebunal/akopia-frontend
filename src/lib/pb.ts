@@ -46,6 +46,31 @@ export class RouteError extends Error {
 }
 
 /*
+ * Cambia un ID token de Firebase por una sesión real de AKOPIA, llamando
+ * al puente del propio frontend (src/app/api/auth/firebase). Lo usan
+ * /login y /registro por igual, para no repetir el POST y el guardado en
+ * pb.authStore en cada uno.
+ */
+export async function establishFirebaseSession(
+  idToken: string
+): Promise<AkopiaUser> {
+  const response = await fetch("/api/auth/firebase", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new RouteError(response.status, payload);
+  }
+
+  pb.authStore.save(payload.token, payload.record);
+  return payload.record as AkopiaUser;
+}
+
+/*
  * Llama a una ruta propia del backend (pb_hooks/05_routes.pb.js).
  *
  * El SDK de PocketBase no expone un método genérico para rutas fuera de

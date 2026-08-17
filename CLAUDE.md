@@ -174,3 +174,28 @@ Verificado de punta a punta contra el servidor real: aprobar (reservado 0→20) 
 - **Las opciones de ubicación salen del inventario real, no de la colección `locations`.** Con `locations` todavía vacía, ofrecer un desplegable con zonas que nadie usó sería una promesa falsa; así el filtro solo lista lo que de verdad existe hoy, incluido "Sin ubicar".
 - `normalize()` se sacó de `catalog.ts` a exportada, para no duplicar la lógica de sin-tildes-ni-mayúsculas que ya usa el buscador de productos.
 - Verificado con dos productos de categorías distintas (Arroz / Cobijas): `inventory.product_id` viene plano en la fila y `expand.product_id.category_id` con la expansión — exactamente lo que el filtro necesita para cruzar producto → categoría → grupo sin una petición aparte.
+
+### 2026-08-18 — Registro y login real con Firebase Authentication
+
+Instrucción recibida: conectar registro/login con Firebase, dando rol admin a `admin@akopia.org` al enlazarse. Esto reabre y resuelve la decisión pendiente sobre `/registro` (documentada desde el 17 de agosto): ya no explica un procedimiento, ahora lo ejecuta — con aprobación de admin como salvaguarda, en vez de bloqueo total.
+
+**Arquitectura, en una frase:** Firebase prueba identidad; PocketBase sigue decidiendo todo lo demás. Ningún `@request.auth.*` de las 18 colecciones cambió.
+
+- **`src/lib/firebase.ts`** — cliente de Firebase (`firebase` npm, config del proyecto `akopia`, no secreta). `registerWithFirebase` / `loginWithFirebase` devuelven un ID token; nada más.
+- **`src/lib/firebase-server.ts`** — verifica el ID token con `jose` contra las llaves públicas de Google (`securetoken@system.gserviceaccount.com`), sin Admin SDK ni cuenta de servicio: solo hace falta el `project_id`, que no es secreto. Se decidió así porque el usuario solo dio la configuración web del cliente, no una cuenta de servicio.
+- **`src/app/api/auth/firebase/route.ts`** — el puente. Verifica el token, busca el usuario por `firebase_uid` y si no por `email` (backfillando el uid la primera vez), lo crea si no existe (`active: false` salvo `admin@akopia.org`), y usa `impersonate` —que exige un superusuario real, verificado empíricamente antes de escribir una sola línea— para emitir una sesión de PocketBase sin conocer la contraseña del usuario.
+- **`establishFirebaseSession()` en `pb.ts`** — envuelve la llamada al puente y guarda la sesión en `pb.authStore`, para no repetirlo en `/login` y `/registro`.
+- **`/registro`** — formulario real. Cuentas nuevas quedan `active: false`.
+- **`/login`** — un solo formulario: intenta Firebase primero, si falla por lo que sea cae a la contraseña nativa de PocketBase (para `admin@akopia.org` y cualquier cuenta creada directo por un admin). No se distingue el motivo del primer fallo porque Firebase ya no lo deja saber: desde hace tiempo da el mismo `auth/invalid-credential` tanto si el correo no existe como si la contraseña está mal.
+- **`/panel/pendiente`** — a donde va una cuenta con token válido pero `active: false`. Sin esto, alguien recién registrado entraría al panel y vería todo vacío sin saber por qué.
+- **`/panel/usuarios`** — gestión real: activar/desactivar, cambiar rol, sección de pendientes destacada, y alta directa sin Firebase para cuando no se quiera usarlo. Solo visible en el nav para `role: admin`.
+
+**Bugs encontrados y corregidos durante la verificación real (no simulada, contra el proyecto Firebase `akopia` de verdad):**
+
+- **`password` y `passwordConfirm` se generaban por separado** (`randomPassword()` llamado dos veces), así que nunca coincidían. La cuenta nueva fallaba con 400 en cada registro. Corregido: una sola llamada, reutilizada.
+- **La contraseña aleatoria de dos UUID (72 caracteres) excedía el máximo de PocketBase (71).** `bcrypt` trunca en 72 bytes y de ahí sale ese límite — no es arbitrario. Un solo UUID (36 caracteres) sobra.
+- **El correo de otros usuarios aparecía vacío en `/panel/usuarios`.** No es bug de la pantalla: PocketBase oculta `email` de terceros (`emailVisibility`) incluso a un `role: admin` que no es superusuario real. Resuelto con `manageRule` en el backend (migración `030`) — ver su `CLAUDE.md`.
+
+**Verificado de punta a punta contra Firebase y PocketBase reales:** alta de un operador (`active: false`), y `admin@akopia.org` registrándose por primera vez en Firebase y enlazándose a su cuenta existente sin perder el rol admin ni el `active: true`. Confirmado también que `active` se revisa en cada petición, no queda embebido en el token: activar a alguien surte efecto con la sesión que ya tenía.
+
+**Nuevas variables de entorno**, en `.env.local` (nunca se commitea): `NEXT_PUBLIC_FIREBASE_*` (config del proyecto, no secreta) y `POCKETBASE_SERVICE_EMAIL` / `POCKETBASE_SERVICE_PASSWORD` (sí secreto — el superusuario de servicio, exclusivo para este puente, nunca expuesto al navegador).

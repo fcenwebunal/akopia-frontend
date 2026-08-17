@@ -145,6 +145,16 @@ El arranque imprime un enlace `http://127.0.0.1:8090/_/#/pbinstall/...`. Ábrelo
 >
 > `admin@akopia.org` **no entra al panel**. Tu superusuario **no entra a la app**. Para probar el login del frontend usas el primero.
 
+### 3.6 Crear el superusuario de servicio (para Firebase)
+
+Además de tu superusuario personal, hace falta uno de servicio, con credenciales fijas, que use el frontend para hablar con PocketBase por detrás del puente de Firebase (`/api/auth/firebase`). Con el servidor corriendo, en otra terminal:
+
+```bash
+./pocketbase.exe superuser upsert servicio@akopia.internal "una-clave-larga-y-tuya"
+```
+
+Anota esa contraseña: la necesitas en el paso 4.2 del frontend. Este superusuario **nunca se usa desde el navegador** — solo el servidor de Next.js lo conoce, y con él puede autenticar a cualquier usuario de la aplicación sin saber su contraseña (`impersonate`). Es exactamente lo que hace posible enlazar una cuenta de Firebase con su registro en `users`.
+
 ---
 
 ## 4. Frontend
@@ -175,6 +185,26 @@ NEXT_PUBLIC_PB_URL=http://127.0.0.1:8090
 > Las variables `NEXT_PUBLIC_*` **se incrustan en el build**. Si cambias este archivo, reinicia `npm run dev` o el cambio no surte efecto.
 
 `.env.local` está en `.gitignore` y no se commitea.
+
+**Además**, completa las dos secciones de Firebase del mismo archivo:
+
+```bash
+# La configuración web de Firebase no es secreta — pídela a quien
+# administra el proyecto "akopia" en Firebase si no la tienes.
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=akopia.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=akopia
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=akopia.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+
+# Este SÍ es secreto: la contraseña del superusuario de servicio del
+# paso 3.6, exactamente como la creaste.
+POCKETBASE_SERVICE_EMAIL=servicio@akopia.internal
+POCKETBASE_SERVICE_PASSWORD=...
+```
+
+Sin esto, `/login` sigue entrando con la contraseña nativa de PocketBase (por ejemplo `admin@akopia.org`, que prueba primero Firebase y cae de vuelta a la nativa si falla), pero `/registro` — que solo sabe crear cuentas por Firebase — no funciona.
 
 ### 4.3 Arrancar
 

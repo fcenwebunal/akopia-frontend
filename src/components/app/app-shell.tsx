@@ -13,6 +13,8 @@ const NAV = [
   { href: "/panel/inventario", label: "Inventario" },
 ];
 
+const ADMIN_NAV = { href: "/panel/usuarios", label: "Usuarios" };
+
 /*
  * Guarda de sesión y cromo de la app de bodega.
  *
@@ -30,7 +32,16 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
   useEffect(() => {
     function sync() {
       if (pb.authStore.isValid && pb.authStore.record) {
-        setUser(pb.authStore.record as unknown as AkopiaUser);
+        const record = pb.authStore.record as unknown as AkopiaUser;
+        setUser(record);
+
+        // Una cuenta sin activar tiene token válido — Firebase no exige
+        // aprobación de admin, eso lo decide PocketBase — pero cada
+        // regla de acceso del backend exige `active = true`, así que
+        // aquí solo vería listas vacías sin entender por qué.
+        if (!record.active && pathname !== "/panel/pendiente") {
+          router.replace("/panel/pendiente");
+        }
       } else {
         setUser(null);
         router.replace("/login");
@@ -40,7 +51,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
 
     sync();
     return pb.authStore.onChange(sync);
-  }, [router]);
+  }, [router, pathname]);
 
   if (!checked || !user) {
     return null;
@@ -75,7 +86,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
           className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 pb-2"
           aria-label="Secciones"
         >
-          {NAV.map((item) => {
+          {(user.role === "admin" ? [...NAV, ADMIN_NAV] : NAV).map((item) => {
             const active =
               item.href === "/panel"
                 ? pathname === "/panel"
