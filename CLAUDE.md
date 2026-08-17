@@ -199,3 +199,20 @@ Instrucción recibida: conectar registro/login con Firebase, dando rol admin a `
 **Verificado de punta a punta contra Firebase y PocketBase reales:** alta de un operador (`active: false`), y `admin@akopia.org` registrándose por primera vez en Firebase y enlazándose a su cuenta existente sin perder el rol admin ni el `active: true`. Confirmado también que `active` se revisa en cada petición, no queda embebido en el token: activar a alguien surte efecto con la sesión que ya tenía.
 
 **Nuevas variables de entorno**, en `.env.local` (nunca se commitea): `NEXT_PUBLIC_FIREBASE_*` (config del proyecto, no secreta) y `POCKETBASE_SERVICE_EMAIL` / `POCKETBASE_SERVICE_PASSWORD` (sí secreto — el superusuario de servicio, exclusivo para este puente, nunca expuesto al navegador).
+
+### 2026-08-18 (tarde) — Superusuario de servicio: desviación de la guía
+
+Juan Manuel creó el superusuario de servicio con `./pocketbase superuser upsert admin@akopia.org "..."`, reutilizando el correo de la cuenta de aplicación en vez de crear el `servicio@akopia.internal` dedicado que sugiere `PUESTA-EN-MARCHA.md`.
+
+**Funciona igual:** `_superusers` y `users` son colecciones independientes en PocketBase, y PocketBase no exige que el correo sea único entre ellas. Verificado: el superusuario nuevo autentica y el puente `/api/auth/firebase` opera con normalidad usándolo.
+
+**Pero junta tres identidades bajo un solo correo:**
+
+| | `users.admin@akopia.org` | `_superusers.admin@akopia.org` (esta) | Superuser personal del panel |
+|---|---|---|---|
+| Para qué | Login de la app | Que el puente de Firebase emita sesiones | Entrar a `/_/` |
+| Contraseña | `AKOPIA_INITIAL_ADMIN_PASSWORD` | La que se le dio al crearla | La de cada quien, del `/pbinstall` |
+
+Es justo el patrón que el proyecto ya documentaba como el error más caro de cometer con dos identidades — ahora son tres. `.env.local` de este entorno queda con `POCKETBASE_SERVICE_EMAIL=admin@akopia.org` y su contraseña, con un comentario explicando la desviación. Si alguna vez alguien corre `superuser upsert admin@akopia.org` con una contraseña distinta pensando en su propio acceso al panel, rompe el puente de Firebase sin aviso claro — solo un 500 genérico. Vale la pena, en algún momento, migrar a un correo dedicado.
+
+**De paso:** en esta máquina, `curl` contra `127.0.0.1:PUERTO` no alcanzaba un servidor de Next.js escuchando en `::` (todas las interfaces IPv6) aunque el puerto estuviera bien abierto — daba `curl: (7) Failed to connect`. `localhost` y `[::1]` sí funcionaban. Parece un detalle de la pila dual-stack de Windows con Git Bash, no del servidor. Si una prueba con `curl 127.0.0.1:PUERTO` da error de conexión y el proceso está claramente escuchando (`Get-NetTCPConnection`), prueba con `localhost` antes de sospechar del código.
