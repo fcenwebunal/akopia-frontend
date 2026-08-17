@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback } from "react";
 import { pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
@@ -33,10 +34,20 @@ export default function DonacionesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight">Donaciones</h1>
-      <p className="mt-1 text-(--muted)">
-        Las últimas donaciones registradas. El código lo asigna el servidor.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight">Donaciones</h1>
+          <p className="mt-1 text-(--muted)">
+            Las últimas donaciones registradas. El código lo asigna el servidor.
+          </p>
+        </div>
+        <Link
+          href="/panel/donaciones/nueva"
+          className="rounded bg-unal-green-dark px-4 py-2.5 font-bold text-white hover:bg-unal-green"
+        >
+          Registrar donación
+        </Link>
+      </div>
 
       {error ? (
         <p

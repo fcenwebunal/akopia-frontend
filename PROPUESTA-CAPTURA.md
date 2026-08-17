@@ -1,5 +1,20 @@
 # Propuesta — Captura rápida de inventario
 
+> ## ⚠️ ALCANCE RECORTADO — 17 ago 2026
+>
+> **Sin variantes, sin marcas, sin lotes y sin código de barras.** El inventario se lleva por producto, como hoy.
+>
+> Lo que **sí** sigue vigente de este documento, y es lo que se está construyendo:
+>
+> - **Recientes de la sesión** y **búsqueda** como caminos principales; la jerarquía como red de seguridad.
+> - **Borrador local y envío al final**, no artículo por artículo.
+> - **Dos disposiciones** para la pantalla de recepción: móvil primero y escritorio.
+> - **Atributos por categoría** (vencimiento en alimentos, no en cobijas).
+>
+> Lo que queda fuera: escáner, marca, presentación y todo el §3.
+
+---
+
 **Cómo debería registrarse una remesa de 40 referencias sin que el sistema estorbe.**
 
 Evaluación de la metodología propuesta (jerarquía grupo → subgrupo → producto → marca → presentación), con los cambios que recomiendo y por qué.

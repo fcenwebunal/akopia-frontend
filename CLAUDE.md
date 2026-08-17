@@ -117,3 +117,15 @@ Lo esencial:
 - **La cámara del móvil exige HTTPS.** `getUserMedia` y `BarcodeDetector` solo funcionan en contexto seguro, así que sobre `http://172.23.177.12` no van a funcionar. Y `BarcodeDetector` no existe en Safari ni Firefox: en iPhone hace falta polyfill WASM. **Esto convierte el certificado TLS pendiente con OTIC en un bloqueante funcional, no estético.**
 - Un EAN-13 **no lleva vencimiento ni lote**: eso se seguirá tecleando.
 - «Despensas Armadas» es un grupo sin categorías ni productos.
+
+### 2026-08-18 (plazo) — Pantalla de recepción
+
+**El aplicativo debe estar funcionando el 18 de agosto.** Alcance recortado: sin marca, sin valor monetario, sin variantes ni lotes, sin escáner. Inventario por producto.
+
+- **`/panel/donaciones/nueva`** — la pantalla que faltaba para que el sistema fuera usable. Hasta ahora la app solo leía.
+- **Tres caminos hacia el mismo sitio**, por orden de velocidad: recientes de la sesión (un toque), búsqueda (tres letras, sin acentos ni mayúsculas), jerarquía grupo → categoría → producto (la red de seguridad). Con 123 productos la jerarquía es el camino lento, por eso no es el que se ve primero.
+- **El catálogo se carga entero una vez** (189 registros) y se filtra en memoria: en bodega la señal es mala justo donde se descarga, y una petición por pulsación haría la captura inusable.
+- **Borrador local, envío al final.** Repetir un producto suma cantidad en vez de abrir otra línea, salvo que lleve vencimiento o lote — ahí cada entrada es distinta.
+- **Formulario condicional** según `requires_expiry` / `requires_batch` / `requires_quarantine`: 75 de 123 productos exigen vencimiento, 5 lote, 6 cuarentena.
+- **Fallo parcial contemplado:** si la donación se crea pero algún artículo no entra, se informa cuál y la donación queda utilizable.
+- **Pendiente para cerrar el ciclo:** la pantalla de clasificación (`pending → available/quarantine`).
