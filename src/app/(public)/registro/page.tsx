@@ -34,8 +34,8 @@ export default function RegistroPage() {
             completo, tu correo institucional y la labor que vas a desempeñar.
           </li>
           <li>
-            El administrador crea la cuenta y te asigna un rol: operador,
-            consulta o administrador.
+            El administrador crea la cuenta y te asigna un rol: operador o
+            administrador.
           </li>
           <li>
             Recibirás una contraseña temporal para el primer ingreso.

@@ -21,6 +21,8 @@ export default function LoginPage() {
         .collection("users")
         .authWithPassword(identity, password);
 
+      // El servidor ya bloquea a los usuarios inactivos en cada regla de
+      // acceso; esto solo evita entrar a un panel que se vería vacío.
       if (!auth.record.active) {
         pb.authStore.clear();
         setError("Tu cuenta está desactivada. Contacta al administrador.");

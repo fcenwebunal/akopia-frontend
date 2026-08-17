@@ -15,7 +15,8 @@ export const pb = new PocketBase(POCKETBASE_URL);
 // que en React 18+ dispara dos veces cada efecto en desarrollo.
 pb.autoCancellation(false);
 
-export type UserRole = "admin" | "operador" | "consulta";
+// Los únicos dos valores que admite users.role en el esquema.
+export type UserRole = "admin" | "operator";
 
 export interface AkopiaUser {
   id: string;
