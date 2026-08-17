@@ -86,6 +86,14 @@ Interfaz en Next.js 16 + TypeScript + Tailwind v4 para el centro de acopio de la
 
 - La guía traía solo comandos `curl` de bash. En PowerShell `curl` es un alias de `Invoke-WebRequest`, que no entiende `-X`, `-H` ni `-d`, y `\` no continúa líneas. El equipo trabaja en Windows: ninguna comprobación era ejecutable tal cual.
 - `PUESTA-EN-MARCHA.md` corregida: la prueba de los hooks apunta al script `verificar.ps1` / `verificar.sh` del backend, y los comandos manuales llevan versión de PowerShell con `Invoke-RestMethod` además de la de bash. Agregados los dos errores típicos a la tabla de diagnóstico.
+
+### 2026-08-17 (noche) — App de bodega
+
+- **Bug:** el login redirigía a `/panel`, que no existía. Entrar correctamente terminaba en un 404.
+- Creado el grupo `(app)` con guarda de sesión de cliente (`pb.authStore` vive en el navegador, un componente de servidor no lo ve) y cromo propio móvil primero. Tres pantallas con datos reales: resumen del día, lista de donaciones e inventario con los tres saldos.
+- **Dos nombres de campo que estaban mal**, tomados por supuestos sin mirar el esquema: `units` expone `code`, no `abbreviation`; y `locations` no tiene ningún campo `code` — la etiqueta se compone de `zone`, `shelf` y `position`, como el catálogo maestro (`A-01-03`). El segundo habría mostrado «Sin ubicar» para siempre.
+- Extraído `useAsyncData`: la regla `react-hooks/set-state-in-effect` marca cualquier función que llame a `setState` desde un efecto, aunque sea tras un `await`. Concentrar la carga en un hook deja la excepción justificada en un solo lugar. **El `fetcher` debe venir en `useCallback`.**
+- Adoptada la sintaxis canónica de Tailwind v4 en todo el árbol: `text-(--token)` en vez de `text-[var(--token)]`.
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

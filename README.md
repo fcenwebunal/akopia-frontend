@@ -132,17 +132,26 @@ akopia-frontend/
 │   ├── app/
 │   │   ├── layout.tsx           # raíz: fuentes, metadatos, <html lang="es">
 │   │   ├── globals.css          # tokens de identidad UNAL + Tailwind
-│   │   └── (public)/            # ── SITIO PÚBLICO ──
-│   │       ├── layout.tsx       # cabecera y pie institucionales
-│   │       ├── page.tsx         # portada
-│   │       ├── login/
-│   │       └── registro/
+│   │   ├── (public)/            # ── SITIO PÚBLICO ──
+│   │   │   ├── layout.tsx       # cabecera y pie institucionales
+│   │   │   ├── page.tsx         # portada
+│   │   │   ├── login/
+│   │   │   └── registro/
+│   │   └── (app)/               # ── APP DE BODEGA (tras el login) ──
+│   │       ├── layout.tsx       # guarda de sesión y cromo propio
+│   │       └── panel/
+│   │           ├── page.tsx     # resumen del día
+│   │           ├── donaciones/
+│   │           └── inventario/
 │   ├── components/
-│   │   └── unal/                # piezas de identidad institucional
-│   │       ├── institutional-header.tsx
-│   │       └── institutional-footer.tsx
+│   │   ├── unal/                # piezas de identidad institucional
+│   │   │   ├── institutional-header.tsx
+│   │   │   └── institutional-footer.tsx
+│   │   └── app/
+│   │       └── app-shell.tsx    # guarda de sesión + navegación de la app
 │   ├── lib/
 │   │   ├── pb.ts                # cliente de PocketBase, tipos y errores
+│   │   ├── use-async-data.ts    # carga de datos en componentes de cliente
 │   │   └── fonts.ts             # Ancízar Sans y Serif
 │   └── fonts/                   # .woff2 de la plantilla oficial
 ├── public/unal/                 # escudo UNAL y sello de Colombia
@@ -324,6 +333,16 @@ Lee [`CLAUDE.md`](CLAUDE.md) — resume el contexto, el estado actual y las rest
 - ✅ `/registro` — ver la nota de abajo
 - ✅ Cliente de PocketBase con manejo de errores en español
 - ✅ Accesibilidad base: saltar al contenido, foco visible, `prefers-reduced-motion`, formularios etiquetados
+- ✅ **App de bodega** en `(app)/`, con guarda de sesión y layout móvil primero:
+  - `/panel` — resumen del día con datos reales: donaciones de hoy, artículos por clasificar, solicitudes pendientes, productos con saldo y productos en cuarentena
+  - `/panel/donaciones` — últimas donaciones con su código, donante y operador
+  - `/panel/inventario` — los tres saldos por producto y ubicación
+
+### Cómo se cargan los datos
+
+Todas las pantallas de la app usan [`useAsyncData`](src/lib/use-async-data.ts). Existe por una razón concreta: la regla `react-hooks/set-state-in-effect` marca cualquier función que acabe llamando a `setState` desde un efecto, aunque lo haga después de un `await`. Pedir datos a un servicio externo es justo para lo que sirve un efecto, así que la excepción se justifica **una vez** en ese hook en vez de repetirse en cada pantalla.
+
+El `fetcher` que se le pasa **tiene que venir envuelto en `useCallback`**, o el efecto se dispara en cada render.
 
 ### Nota sobre `/registro`
 
@@ -342,7 +361,6 @@ Las pantallas van en el orden del flujo real, porque cada una cierra su historia
 
 Antes o en paralelo:
 
-- Layout de la app `(app)/`, móvil primero, con guarda de sesión
 - Tipos generados desde el esquema, como script de npm
 - Confirmar la directriz B3 con Medios Digitales
 
