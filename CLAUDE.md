@@ -81,6 +81,11 @@ Interfaz en Next.js 16 + TypeScript + Tailwind v4 para el centro de acopio de la
 - Agregada [`PUESTA-EN-MARCHA.md`](PUESTA-EN-MARCHA.md): guía conjunta de los dos repositorios, con el diagrama de conexión, la comprobación de seis pasos y el diagnóstico por síntoma. Existe una copia gemela en el backend.
 - Verificado que CORS funciona sin configuración: PocketBase responde `Access-Control-Allow-Origin: *`, así que `localhost:3000` puede llamar a `127.0.0.1:8090` en desarrollo. En producción no hay CORS porque nginx sirve ambos bajo el mismo dominio.
 - Instrucción global recibida: hacer push de cada cambio en el momento, y no proteger `main`.
+
+### 2026-08-17 (tarde) — Corrección de la guía para PowerShell
+
+- La guía traía solo comandos `curl` de bash. En PowerShell `curl` es un alias de `Invoke-WebRequest`, que no entiende `-X`, `-H` ni `-d`, y `\` no continúa líneas. El equipo trabaja en Windows: ninguna comprobación era ejecutable tal cual.
+- `PUESTA-EN-MARCHA.md` corregida: la prueba de los hooks apunta al script `verificar.ps1` / `verificar.sh` del backend, y los comandos manuales llevan versión de PowerShell con `Invoke-RestMethod` además de la de bash. Agregados los dos errores típicos a la tabla de diagnóstico.
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

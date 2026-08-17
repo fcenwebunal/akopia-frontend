@@ -206,24 +206,70 @@ Con los dos procesos arriba, seis pruebas. Si las seis pasan, el sistema está b
 | 3 | Entrar con `admin@akopia.org` y tu contraseña de `.env` | Autentica. Si responde *«No se pudo conectar con el servidor»*, el backend no está corriendo o la URL apunta a otro lado |
 | 4 | Abrir `http://127.0.0.1:8090/_/` y entrar con **tu superusuario** | Se ve el panel con las 18 colecciones |
 | 5 | En el panel, abrir `products` | 123 registros |
-| 6 | La prueba de los hooks (abajo) | Devuelve `DON-000001` |
+| 6 | La prueba de los hooks (abajo) | Las once comprobaciones en `OK` |
 
 ### La prueba de los hooks
 
-Es la que separa un backend que funciona de un CRUD crudo, y **te importa aunque solo toques el frontend**: si falla, cualquier pantalla que construyas va a parecer que funciona mientras escribe datos sin movimientos de inventario ni auditoría.
+Separa un backend que funciona de un CRUD crudo, y **te importa aunque solo toques el frontend**: si falla, cualquier pantalla que construyas va a parecer que funciona mientras escribe datos sin movimientos de inventario ni auditoría.
 
+El repositorio del backend trae un script que la hace entera. Desde `akopia-backend`:
+
+**Windows (PowerShell)**
+```powershell
+.\scripts\verificar.ps1
+```
+
+**Git Bash / Linux / macOS**
 ```bash
-# 1. Autenticarse y guardar el token y el id
+./scripts/verificar.sh
+```
+
+Once comprobaciones —autenticación, catálogo, código correlativo, entrada de inventario, cuarentena, validaciones y auditoría— cada una con `OK` o `FALLA`, y termina en *«Todo correcto. El backend esta funcionando.»*
+
+### Si prefieres hacerla a mano
+
+> ### ⚠️ En PowerShell, `curl` no es curl
+>
+> PowerShell tiene un alias `curl` que apunta a `Invoke-WebRequest`, que **no entiende** `-X`, `-H` ni `-d`, y da errores como *«No se puede enlazar el parámetro 'Headers'»*. Además, la barra `\` **no continúa líneas** en PowerShell: la continuación es la comilla invertida `` ` ``.
+>
+> Dos salidas: usar `curl.exe` (el curl de verdad, incluido en Windows 10+) o usar `Invoke-RestMethod`, que es lo natural en PowerShell y además devuelve objetos en vez de texto. Abajo va la segunda.
+
+**Windows (PowerShell)**
+```powershell
+# 1. Autenticarse
+$body = @{ identity = "admin@akopia.org"; password = "TU_CLAVE" } | ConvertTo-Json
+$auth = Invoke-RestMethod -Uri "http://127.0.0.1:8090/api/collections/users/auth-with-password" `
+  -Method Post -ContentType "application/json" -Body $body
+
+$auth.record.role      # -> admin
+
+# 2. Crear una donación sin `code`
+$headers = @{ Authorization = $auth.token }
+$donacion = @{
+  donor_type   = "individual"
+  donor_name   = "Prueba"
+  receipt_date = "2026-08-17 10:00:00.000Z"
+  operator_id  = $auth.record.id
+} | ConvertTo-Json
+
+$r = Invoke-RestMethod -Uri "http://127.0.0.1:8090/api/collections/donations/records" `
+  -Method Post -Headers $headers -ContentType "application/json" -Body $donacion
+
+$r.code                # -> DON-000001
+```
+
+**Git Bash / Linux / macOS**
+```bash
+# 1. Autenticarse: guarda el token y el record.id de la respuesta
 curl -s -X POST http://127.0.0.1:8090/api/collections/users/auth-with-password \
   -H "Content-Type: application/json" \
   -d '{"identity":"admin@akopia.org","password":"TU_CLAVE"}'
 
-# 2. Con el token y el record.id de la respuesta anterior:
-curl -X POST http://127.0.0.1:8090/api/collections/donations/records \
+# 2. Crear una donación sin `code`
+curl -s -X POST http://127.0.0.1:8090/api/collections/donations/records \
   -H "Content-Type: application/json" \
   -H "Authorization: EL_TOKEN" \
-  -d '{"donor_type":"individual","donor_name":"Prueba",
-       "receipt_date":"2026-08-17 10:00:00.000Z","operator_id":"EL_RECORD_ID"}'
+  -d '{"donor_type":"individual","donor_name":"Prueba","receipt_date":"2026-08-17 10:00:00.000Z","operator_id":"EL_RECORD_ID"}'
 ```
 
 ✅ **Correcto:** la respuesta trae `"code":"DON-000001"` — el servidor lo generó solo.
@@ -323,6 +369,8 @@ npm run lint
 | `Failed to find all relation records` en `operator_id` | El id enviado no existe en `users`. Usa el `record.id` que devuelve `auth-with-password`, no el correo |
 | La contraseña de `admin@akopia.org` no cambia | La migración `023` corre **una sola vez**. Cámbiala desde el panel, o borra `pb_data` |
 | Puerto 3000 u 8090 ocupado | Otra instancia quedó viva. Windows: `taskkill /F /IM node.exe` o `/IM pocketbase.exe` |
+| `Invoke-WebRequest : No se puede enlazar el parámetro 'Headers'` | Estás pegando comandos de bash en PowerShell. `curl` ahí es un alias de `Invoke-WebRequest`. Usa `curl.exe`, o mejor el script `verificar.ps1` del backend |
+| `El término '-H' no se reconoce` | Lo mismo: la barra `\` no continúa líneas en PowerShell, así que cada línea se ejecuta suelta. La continuación es `` ` `` |
 | Corrupción rara de `node_modules`, `.git` o `pb_data` | ¿El repositorio está en Google Drive u OneDrive? Muévelo a una ruta local |
 
 ---
