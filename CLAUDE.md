@@ -216,3 +216,11 @@ Juan Manuel creó el superusuario de servicio con `./pocketbase superuser upsert
 Es justo el patrón que el proyecto ya documentaba como el error más caro de cometer con dos identidades — ahora son tres. `.env.local` de este entorno queda con `POCKETBASE_SERVICE_EMAIL=admin@akopia.org` y su contraseña, con un comentario explicando la desviación. Si alguna vez alguien corre `superuser upsert admin@akopia.org` con una contraseña distinta pensando en su propio acceso al panel, rompe el puente de Firebase sin aviso claro — solo un 500 genérico. Vale la pena, en algún momento, migrar a un correo dedicado.
 
 **De paso:** en esta máquina, `curl` contra `127.0.0.1:PUERTO` no alcanzaba un servidor de Next.js escuchando en `::` (todas las interfaces IPv6) aunque el puerto estuviera bien abierto — daba `curl: (7) Failed to connect`. `localhost` y `[::1]` sí funcionaban. Parece un detalle de la pila dual-stack de Windows con Git Bash, no del servidor. Si una prueba con `curl 127.0.0.1:PUERTO` da error de conexión y el proceso está claramente escuchando (`Get-NetTCPConnection`), prueba con `localhost` antes de sospechar del código.
+
+### 2026-08-18 (tarde) — Historial de auditoría
+
+`/panel/historial`, solo admin: lectura de `audit_log`, que el backend ya llena solo desde `04_audit.pb.js` en cada `create`/`update` de las 8 colecciones auditadas. Esta pantalla no escribe nada — es puro consumo de lo que ya existía y no tenía cara.
+
+- Filtro por entidad (donación, solicitud, despacho…).
+- Para `status_change`/`update` muestra los campos que cambiaron, `viejo → nuevo`; para `create` solo la marca de creación, sin volcar el snapshot completo — es ruido, no señal.
+- Verificado con movimientos reales generados contra el servidor (una donación, un artículo clasificado): `audit_log` trae `create` y `status_change` con el operador expandido, tal como los muestra la pantalla.

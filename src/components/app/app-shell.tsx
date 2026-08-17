@@ -13,7 +13,10 @@ const NAV = [
   { href: "/panel/inventario", label: "Inventario" },
 ];
 
-const ADMIN_NAV = { href: "/panel/usuarios", label: "Usuarios" };
+const ADMIN_NAV = [
+  { href: "/panel/usuarios", label: "Usuarios" },
+  { href: "/panel/historial", label: "Historial" },
+];
 
 /*
  * Guarda de sesión y cromo de la app de bodega.
@@ -86,7 +89,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
           className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 pb-2"
           aria-label="Secciones"
         >
-          {(user.role === "admin" ? [...NAV, ADMIN_NAV] : NAV).map((item) => {
+          {(user.role === "admin" ? [...NAV, ...ADMIN_NAV] : NAV).map((item) => {
             const active =
               item.href === "/panel"
                 ? pathname === "/panel"
