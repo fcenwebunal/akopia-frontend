@@ -1,23 +1,5 @@
-"use strict";
-(function() {
-    var cx = "008572255874373046644:chip1p1uf-4";
-    var gcse = document.createElement("script");
-    gcse.type = "text/javascript";
-    gcse.async = true;
-    gcse.src = (document.location.protocol == "https:" ? "https:" : "http:") + "//www.google.com/cse/cse.js?cx=" + cx;
-    var s = document.getElementsByTagName("script")[0];
-    s.parentNode.insertBefore(gcse, s);
-})();
-
-function checkBck() {
-    jQuery(".gsc-input input").attr("placeholder", "Buscar en la Universidad");
-    if (!jQuery(".gsc-search-button input").attr("src")) {
-        window.setTimeout(function() {
-            checkBck();
-        }, 100);
-    }
-}
-checkBck();
+// Buscador decorativo: la carga del widget de Google Custom Search
+// se quitó a propósito en scripts/scope-unal-template-css.mjs.
 jQuery(document).ready(function($) {
     prepare_content_menu();
     $("#unalOpenMenuServicios, #unalOpenMenuPerfiles").on("click", function(e) {

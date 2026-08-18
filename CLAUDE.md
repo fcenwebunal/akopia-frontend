@@ -701,3 +701,12 @@ Malentendido real de la entrega anterior, señalado con una captura anotada: "a 
 - **Sobre "el panel iba de azul y no funciona":** verificado con Playwright que el botón "Oscuro" del panel de accesibilidad sí se pone azul (`#0763c8`) al seleccionarlo, con `aria-pressed="true"` — mecanismo intacto. Lo más probable es que la captura reportada correspondiera a un instante de Vercel entre el push y el fin del despliegue.
 
 Verificado con Playwright, claro y oscuro, en `/panel/usuarios` (el caso reportado) y en la portada: cuenta pegada a la pestaña de accesibilidad, sin ninguna franja de color distinto en todo el fondo del área de contenido. `npx tsc --noEmit` y `npm run build` limpios.
+
+### 2026-08-18 (noche) — El buscador pasa a ser decorativo, a propósito
+
+Pedido explícito: el buscador nunca llegó a verse como el de unal.edu.co (dependía del CSS externo de Google Custom Search, que no siempre cargaba a tiempo, y de paso traía su publicidad) — Juan Manuel pidió dejar de perseguir la funcionalidad real y en su lugar construir algo que **se vea** igual, sin necesidad de que busque nada.
+
+- **`.gcse-searchbox-only`** (el placeholder que Google reemplazaba con su propio widget) se cambió por un `<input readOnly>` con un ícono de lupa en SVG inline, dentro del mismo contenedor `.buscador`/`#buscador` de la plantilla (tamaño, radio, posición: sin tocar). `readOnly` en vez de `disabled` a propósito — un campo `disabled` se ve "apagado" (opacidad reducida), y la idea es que se vea exactamente como uno activo, solo que no reacciona a nada.
+- **`scripts/scope-unal-template-css.mjs` ahora parcha `unal.js` al copiarlo** (no toca el archivo fuente de la plantilla): quita el bloque que inyectaba el script de Google (`cse.js`) y el `checkBck()` que lo acompañaba — sin este segundo, con el buscador ya sin Google, habría quedado sondeando cada 100ms para siempre un elemento que nunca iba a aparecer. El resto de `unal.js` (menú móvil, panel de servicios, dropdowns) sigue exactamente igual.
+
+Verificado con Playwright: cero peticiones a dominios de Google al cargar cualquier página, sin errores de consola, campo con el placeholder correcto y visualmente equivalente al de unal.edu.co. `npx tsc --noEmit` y `npm run build` limpios.

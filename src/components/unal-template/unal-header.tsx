@@ -248,12 +248,58 @@ export function UnalHeader({
             <a href={`https://${SITE_URL}/`}>{SITE_URL}</a>
           </div>
 
+          {/*
+            Puramente decorativo, a propósito (pedido explícito): antes
+            había un widget real de Google Custom Search aquí, pero
+            nunca se veía como el de unal.edu.co (su propio CSS externo
+            no siempre cargaba a tiempo) y traía de paso su publicidad.
+            Se reemplaza por un campo inerte que imita el diseño real
+            — el contenedor `.buscador` (tamaño, radio, posición) sigue
+            siendo el de la plantilla, sin tocar; solo cambia lo que
+            va adentro. `readOnly` en vez de `disabled` para que no se
+            vea "apagado": readOnly no permite escribir pero conserva
+            la apariencia normal de un campo activo.
+          */}
           <div className="buscador" id="buscador">
-            <div
-              className="gcse-searchbox-only"
-              data-resultsurl="https://unal.edu.co/resultados-de-la-busqueda/"
-              data-newwindow="true"
-            ></div>
+            <div style={{ position: "relative", width: "100%", height: "100%" }}>
+              <input
+                type="text"
+                placeholder="Buscar en la Universidad"
+                readOnly
+                aria-hidden="true"
+                tabIndex={-1}
+                style={{
+                  boxSizing: "border-box",
+                  width: "100%",
+                  height: "100%",
+                  border: "none",
+                  borderRadius: 5,
+                  padding: "0 10px 0 32px",
+                  fontSize: 13,
+                  color: "#333",
+                  backgroundColor: "#fff",
+                }}
+              />
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#777"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                style={{
+                  position: "absolute",
+                  left: 10,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  pointerEvents: "none",
+                }}
+              >
+                <circle cx="10.5" cy="10.5" r="6.5" />
+                <line x1="20" y1="20" x2="15.5" y2="15.5" />
+              </svg>
+            </div>
           </div>
 
           <div className="navbar-dark mainMenu" id="main_menu_container">

@@ -81,6 +81,33 @@ async function scopeCss(fileName) {
   console.log(`scoped  ${fileName}`);
 }
 
+// El buscador se decidió puramente decorativo (pedido explícito del
+// 2026-08-18): se reemplazó el widget real de Google Custom Search por
+// un campo estático. Sin esto, unal.js seguiría cargando el script de
+// Google (con su publicidad) y quedaría además en un bucle de
+// setTimeout cada 100ms para siempre, buscando un elemento que ya no
+// existe (`.gsc-search-button input`). Se quita solo ese bloque —el
+// resto de unal.js (menú móvil, panel de servicios, dropdowns) sigue
+// intacto.
+async function patchUnalJs() {
+  const src = path.join(TEMPLATE_DIR, "js", "unal.js");
+  const original = await readFile(src, "utf8");
+
+  const marker = "jQuery(document).ready(function($) {";
+  const idx = original.indexOf(marker);
+  if (idx === -1) {
+    throw new Error("unal.js cambió de forma inesperada: no se encontró el punto de corte del buscador de Google.");
+  }
+
+  const patched =
+    "// Buscador decorativo: la carga del widget de Google Custom Search\n" +
+    "// se quitó a propósito en scripts/scope-unal-template-css.mjs.\n" +
+    original.slice(idx);
+
+  await writeFile(path.join(OUT_DIR, "js", "unal.js"), patched, "utf8");
+  console.log("patched unal.js (buscador de Google removido)");
+}
+
 async function copyDir(relDir) {
   const src = path.join(TEMPLATE_DIR, relDir);
   const dest = path.join(OUT_DIR, relDir);
@@ -122,6 +149,10 @@ async function main() {
     "unal.js",
     "accesibilidad.js",
   ]) {
+    if (file === "unal.js") {
+      await patchUnalJs();
+      continue;
+    }
     await copyFile(
       path.join(TEMPLATE_DIR, "js", file),
       path.join(OUT_DIR, "js", file)
