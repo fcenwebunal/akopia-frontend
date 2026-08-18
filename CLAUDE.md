@@ -288,3 +288,21 @@ Pedido explícito: que un admin pueda ampliar el catálogo (grupo, categoría o 
 - **No hay borrado, solo `active`** (ya documentado en el catálogo): coherente con que tampoco hay botón de eliminar en este formulario.
 
 Verificado de punta a punta contra el servidor real, no simulado: grupo → categoría (con unidad sugerida) → producto creados con la API en ejecución, el índice único devolvió 400 en un nombre repetido, y `npx tsc --noEmit` limpio. Los tres registros de prueba quedaron desactivados (`active: false`), no borrados, porque `deleteRule` es intencionalmente nulo.
+
+### 2026-08-18 (noche) — Operadores también amplían el catálogo, y recuperación de fotos perdidas
+
+**Migración `033` del backend:** `createRule` de `groups`/`categories`/`products` pasa de admin exclusivo a admin-o-operador (`updateRule` sigue siendo solo admin). En `ProductPicker`, la casilla "Agregar" dejó de depender de `isAdmin` — ahora se ve para cualquier sesión activa, admin u operador; la cámara para poner foto a lo ya existente sigue siendo solo admin, sin cambios.
+
+**Hallazgo al retomar la sesión: todas las fotos de `groups`/`categories` habían perdido su `photo_url`**, y todos los usuarios menos `admin@akopia.org` habían desaparecido de `users` — pero el catálogo base (13 grupos, 57 categorías, 125 productos) seguía intacto, igual que las 76 imágenes ya subidas a Cloudinary (verificado listando el Media Library real: **Cloudinary está bien, nada se perdió ahí**). Lo que se perdió fue el enlace en PocketBase entre cada registro y su imagen, sin que exista forma de reconstruirlo desde Cloudinary mismo (no guarda contexto de a qué categoría pertenecía cada subida).
+
+**Por qué pasa esto — y por qué se ha repetido:** `pb_data/` es SQLite local, correctamente excluido de git (nunca debe compartirse). PocketBase y Next.js, cuando los arranca el asistente dentro de esta sesión de trabajo, corren en un entorno de cómputo que puede reiniciarse por su cuenta (lo que ocurrió al inicio de esta conversación: *"al parecer se reinició la sesión"*). Un reinicio de sesión no borra el código —eso vive en git— pero sí puede hacer que los procesos que corrían dentro de ella mueran y vuelvan a levantarse sobre un estado de `pb_data` más viejo que el último realmente escrito, perdiendo lo que solo existía como escritura en caliente (fotos enlazadas, cuentas creadas a mano) desde la última vez que ese estado quedó fijado en disco de forma duradera. **Esto no tiene que ver con reiniciar el servidor en sí** — se verificó en esta misma sesión que un `taskkill` + relanzar `pocketbase.exe` conserva los datos sin problema, siempre que sea el mismo `pb_data/` de siempre.
+
+**Mitigación práctica, para no repetirlo:**
+- Arrancar `pocketbase.exe` y `npm run dev` en una terminal propia de Juan Manuel, no dentro de una sesión del asistente, para que el ciclo de vida de esos procesos no dependa de que la sesión de trabajo siga viva.
+- Tomar un respaldo real de vez en cuando desde *Settings → Backups* del panel de PocketBase (ya documentado en el `CLAUDE.md` raíz, §7) — es la única copia duradera de lo que solo vive en `pb_data`.
+
+**Recuperación hecha hoy:**
+- **`scripts/link-local-photos.mjs`** (nuevo) — sube fotos locales y las enlaza al grupo o categoría cuyo nombre se le parezca más, por solapamiento de palabras (con tolerancia a singular/plural). Corrido en `--dry-run` primero para revisar el emparejamiento antes de subir nada. Contra las 30 imágenes que Juan Manuel ya tenía guardadas en su Descargas (evidentemente elegidas a mano para el catálogo, con nombres que coinciden con grupos/categorías reales): **20 enlazadas correctamente**, 4 sin candidato claro (quedan para poner a mano).
+- **`seed-catalog-photos.mjs` corrido de nuevo** (es idempotente: nunca pisa lo que ya tiene foto) para recuperar el resto desde Wikimedia: 29 más.
+- **Resultado final: 11/14 grupos y 38/57 categorías con foto** — mejor cobertura que el 45/66 que había antes de la pérdida.
+- Los usuarios perdidos (cuentas de operador creadas a mano, vínculos de Firebase) no se pueden recuperar automáticamente — hay que volver a crearlas o esperar a que cada quien vuelva a registrarse.

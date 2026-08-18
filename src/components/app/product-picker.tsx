@@ -22,7 +22,10 @@ import { PhotoTile } from "./photo-tile";
  *
  * El explorador se ve como un menú de restaurante: foto y nombre, no
  * solo texto. `isAdmin` decide si aparece el distintivo de cámara para
- * poner o cambiar esa foto — el resto solo la ve.
+ * poner o cambiar esa foto — el resto solo la ve. La casilla "Agregar"
+ * no depende de `isAdmin`: admin y operador pueden ampliar el catálogo
+ * por igual (el backend lo autoriza desde la migración 033), solo la
+ * foto de lo ya existente sigue siendo cosa de admin.
  */
 export function ProductPicker({
   catalog,
@@ -170,7 +173,7 @@ export function ProductPicker({
                   return count === 0 ? "Vacío" : `${count} categorías`;
                 }}
                 onSelect={(group) => setGroupId(group.id)}
-                onAddNew={isAdmin ? () => setAddingKind("group") : undefined}
+                onAddNew={() => setAddingKind("group")}
               />
             </>
           ) : (
@@ -198,7 +201,7 @@ export function ProductPicker({
                   kind="categories"
                   onUpload={(id, url) => savePhoto("categories", id, url)}
                   onSelect={(category) => setCategoryId(category.id)}
-                  onAddNew={isAdmin ? () => setAddingKind("category") : undefined}
+                  onAddNew={() => setAddingKind("category")}
                 />
               ) : (
                 <ProductGrid
@@ -209,7 +212,7 @@ export function ProductPicker({
                   onUpload={(id, url) => savePhoto("products", id, url)}
                   empty="Esta categoría no tiene productos."
                   onSelect={onSelect}
-                  onAddNew={isAdmin ? () => setAddingKind("product") : undefined}
+                  onAddNew={() => setAddingKind("product")}
                 />
               )}
             </>
