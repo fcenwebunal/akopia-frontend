@@ -158,7 +158,6 @@ export function AccessibilityPanel({ top }: Readonly<{ top?: number | null }>) {
           </div>
         </div>
       </div>
-      <AccountBar />
       {/*
         accesibilidad.js registra este clic vía `window.onload`, que en
         Next.js ya disparó para cuando el script carga (afterInteractive
@@ -177,6 +176,17 @@ export function AccessibilityPanel({ top }: Readonly<{ top?: number | null }>) {
       >
         Panel de Accesibilidad
       </div>
+      {/*
+        <AccountBar> va DESPUÉS de la pestaña en el DOM, no antes: los
+        `float` del mismo lado se apilan en orden de aparición — el
+        primero llega hasta el borde, el siguiente se acomoda contra
+        él. Con la pestaña primero (float:right, de la plantilla) y
+        esto también en float:right, queda pegado a su izquierda. Al
+        revés (como estaba) cada uno se iba a su extremo del todo,
+        dejando un hueco enorme en medio — no era lo pedido: "junto al
+        botón", no "en la esquina opuesta de la pantalla".
+      */}
+      <AccountBar />
     </div>
   );
 }

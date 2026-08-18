@@ -7,13 +7,13 @@ import { pb, type AkopiaUser } from "@/lib/pb";
 
 /*
  * Franja de cuenta — "Iniciar sesión"/"Registrarse" sin sesión, o
- * "Hola, {nombre} · Salir" con sesión activa — flotando a la
- * izquierda dentro de la misma fila que "Panel de Accesibilidad"
- * (montado desde <AccessibilityPanel>, antes de #pestania-
- * accesibilidad, que ya trae `float:right`). Presente en los tres
- * momentos (portada, login/registro, app), pedido explícito del
- * 2026-08-18; movida de su propia franja a esta fila el mismo día,
- * a pedido de Juan Manuel.
+ * "Hola, {nombre} · Salir" con sesión activa — junto a "Panel de
+ * Accesibilidad" (montada desde <AccessibilityPanel>, después de
+ * #pestania-accesibilidad en el DOM). Ambos en `float:right`: la
+ * pestaña llega primero al borde, esto se acomoda pegado a su
+ * izquierda — no en el extremo opuesto de la fila, que es como quedó
+ * en el primer intento. Presente en los tres momentos (portada,
+ * login/registro, app), pedido explícito del 2026-08-18.
  */
 export function AccountBar() {
   const router = useRouter();
@@ -46,7 +46,7 @@ export function AccountBar() {
     // le gana a cualquier clase de Tailwind) le borraban el fondo verde
     // y el texto blanco al botón "Registrarse".
     <div
-      className="akopia-content float-left flex items-center gap-3 pl-4 font-sans text-sm text-(--ink)"
+      className="akopia-content float-right flex items-center gap-3 pr-4 font-sans text-sm text-(--ink)"
       style={{ height: 35 }}
     >
       {!checked ? null : user ? (

@@ -59,7 +59,13 @@ export function UnalShell({
   }, [menuItems]);
 
   return (
-    <div className="unal-chrome flex min-h-screen flex-col">
+    // bg-(--surface): el header y el footer ya pintan su propio fondo
+    // opaco de punta a punta, así que esto no los toca — pero cualquier
+    // hueco transparente entre ellos (la fila de accesibilidad/cuenta,
+    // los márgenes laterales de `.detalle`) mostraba, sin esto, lo que
+    // hubiera detrás del body en vez del blanco del contenido, dejando
+    // franjas grises sueltas de distintos tonos.
+    <div className="unal-chrome flex min-h-screen flex-col bg-(--surface)">
       <UnalHeader menuItems={menuItems} servicesTop={contentTop} />
       <AccessibilityPanel top={headerHeight} />
       {/*
