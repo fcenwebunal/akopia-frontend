@@ -82,12 +82,27 @@ function MainMenuGroup({ item }: Readonly<{ item: AppMenuItem }>) {
  * 2026-08-18) y sin botones de sesión (viven en <AccountBar>, en el
  * área de contenido).
  */
-export function UnalHeader({ menuItems = [] }: Readonly<{ menuItems?: AppMenuItem[] }>) {
+export function UnalHeader({
+  menuItems = [],
+  servicesTop,
+}: Readonly<{ menuItems?: AppMenuItem[]; servicesTop?: number | null }>) {
   return (
     <>
       {/* Panel de servicios */}
       <div id="services">
-        <div className="indicator d-none d-md-block"></div>
+        {/*
+          `#services .indicator{top:150px}` en el CSS de la plantilla
+          es, otra vez, un valor fijo pensado para la altura del
+          cabezote de ejemplo — con el menú propio de AKOPIA la
+          pestaña terminaba solapada sobre la franja de cuenta
+          ("Salir" quedaba tapado). <UnalShell> mide la altura real y
+          la pasa aquí (cabezote + la franja fija del panel de
+          accesibilidad, 35px).
+        */}
+        <div
+          className="indicator d-none d-md-block"
+          style={servicesTop == null ? undefined : { top: servicesTop }}
+        ></div>
         <ul className="dropdown-menu" id="servicios">
           {SERVICIOS.map((s) => (
             <li key={s.href}>

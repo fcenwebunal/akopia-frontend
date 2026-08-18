@@ -667,3 +667,17 @@ Tres hallazgos más en la misma familia de problema (Bootstrap/Tailwind compitie
 **Patrón para la próxima vez que aparezca algo así:** cualquier elemento propio de AKOPIA (con clases Tailwind) que viva dentro de `.unal-chrome` pero fuera de `.akopia-content` es territorio sin proteger — hoy son el cabezote y `<AccountBar>`, los únicos dos casos. Si se agrega algo nuevo ahí, lleva `.akopia-content` en su propia raíz, o hereda el problema.
 
 Verificado con Playwright: "Registrarse" con fondo verde y texto blanco en claro; login completo (título, subtítulo, etiquetas, campos, botón "Entrar", pie) con buen contraste en oscuro — colores computados confirmados, no solo mirado; redes sociales + idioma visibles en su posición real (esquina superior derecha), en la portada y en el login. `npx tsc --noEmit` y `npm run build` limpios.
+
+### 2026-08-18 (noche) — El panel de accesibilidad y la pestaña "Servicios" flotaban en medio del propio menú
+
+Reportado con captura de `/panel/usuarios`: "Panel de Accesibilidad" y "SEDES" aparecían encimados sobre el menú, y "Salir" quedaba cortado por la pestaña verde "Servicios" del borde derecho.
+
+**Causa, no relacionada con nada de las entregas anteriores:** `.tx-unal-accesibilidad{top:103px}` y `#services .indicator{top:150px}`, en el CSS original de la plantilla, son valores **fijos en píxeles** — calculados por Unimedios para la altura de SU cabezote de ejemplo (con la fila de "Perfiles" y el menú de muestra que trae la plantilla). El menú real de AKOPIA tiene una altura distinta según la página y el rol (vacío en portada/login, hasta 4 grupos + Sedes en la app para un admin) — con esos valores fijos, el panel de accesibilidad y la pestaña de servicios terminaban posicionados a mitad del propio cabezote en vez de justo debajo.
+
+**Resuelto midiendo el DOM real en vez de asumir un valor fijo**, centralizado en `<UnalShell>` con `ResizeObserver` (se recalcula solo si el menú cambia de alto — por ejemplo al cambiar de rol o de ancho de pantalla):
+- `top` del panel de accesibilidad = altura real de `#unalTop`.
+- `top` del indicador de "Servicios" = dónde empieza `<main id="contenido">` en la página — ya contabiliza cabezote + franja del panel de accesibilidad + `<AccountBar>` juntos, sin sumar constantes a mano que se habrían desactualizado la próxima vez que cambiara cualquiera de los tres.
+
+Ambos valores se pasan como prop y se aplican por `style` en línea — nunca le gana nada de la plantilla a un estilo en línea, así que no hizo falta tocar ningún CSS.
+
+Verificado con Playwright en `/panel/usuarios` (el caso real reportado, menú completo de admin) y en la portada (header sin menú, el caso más corto): sin superposición en ninguno de los dos, "Salir" completo y sin cortar. `npx tsc --noEmit` y `npm run build` limpios.

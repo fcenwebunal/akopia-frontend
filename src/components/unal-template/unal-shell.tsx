@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { AccessibilityPanel } from "./accessibility-panel";
 import { AccountBar } from "./account-bar";
 import type { AppMenuItem } from "./menu-config";
@@ -31,10 +34,35 @@ export function UnalShell({
   boxed?: boolean;
   children: React.ReactNode;
 }>) {
+  const [headerHeight, setHeaderHeight] = useState<number | null>(null);
+  const [contentTop, setContentTop] = useState<number | null>(null);
+
+  useEffect(() => {
+    const header = document.getElementById("unalTop");
+    // "#contenido" (<main>) empieza justo después de todo lo que va
+    // antes en el flujo normal — header, la franja siempre visible del
+    // panel de accesibilidad, y <AccountBar> — así que su posición ya
+    // contabiliza las tres sin tener que sumar sus alturas a mano
+    // (que además se desactualizarían si alguna cambia de tamaño).
+    const content = document.getElementById("contenido");
+    if (!header || !content) return;
+
+    const update = () => {
+      setHeaderHeight(header.getBoundingClientRect().height);
+      setContentTop(content.getBoundingClientRect().top);
+    };
+    update();
+
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [menuItems]);
+
   return (
     <div className="unal-chrome flex min-h-screen flex-col">
-      <UnalHeader menuItems={menuItems} />
-      <AccessibilityPanel />
+      <UnalHeader menuItems={menuItems} servicesTop={contentTop} />
+      <AccessibilityPanel top={headerHeight} />
       <AccountBar />
       {/*
         La clase `detalle` se mantiene siempre presente: accesibilidad.js

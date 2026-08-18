@@ -14,6 +14,14 @@ import { applyTheme, getStoredTheme, type Theme } from "@/lib/theme";
  * de la plantilla, reutilizando applyTheme()/getStoredTheme() ya
  * existentes — es la pieza que Juan Manuel pidió mover aquí desde el
  * header propio de la app.
+ *
+ * `top`: `.tx-unal-accesibilidad{top:103px}` en el CSS de la plantilla
+ * es un valor fijo, calculado para la altura del cabezote de ejemplo
+ * de Unimedios — con el menú propio de AKOPIA la altura real de
+ * #unalTop varía por página (vacío en portada/login, hasta 4 grupos +
+ * Sedes en la app), así que ese valor fijo dejaba el panel flotando en
+ * medio del propio cabezote. <UnalShell> mide la altura real con
+ * ResizeObserver y la pasa aquí.
  */
 const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "light", label: "Claro" },
@@ -21,7 +29,7 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "dark", label: "Oscuro" },
 ];
 
-export function AccessibilityPanel() {
+export function AccessibilityPanel({ top }: Readonly<{ top?: number | null }>) {
   const [theme, setTheme] = useState<Theme | null>(null);
 
   useEffect(() => {
@@ -40,7 +48,10 @@ export function AccessibilityPanel() {
   }
 
   return (
-    <div className="tx-unal-accesibilidad">
+    <div
+      className="tx-unal-accesibilidad"
+      style={top == null ? undefined : { top }}
+    >
       <div
         id="panel-accesibilidad"
         style={{ display: "none" }}
