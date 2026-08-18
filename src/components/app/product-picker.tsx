@@ -21,24 +21,21 @@ import { PhotoTile } from "./photo-tile";
  * elegir entre tres opciones), por eso no es el que se ve primero.
  *
  * El explorador se ve como un menú de restaurante: foto y nombre, no
- * solo texto. La cámara para poner o cambiar la foto de una categoría o
- * un producto la ve cualquier activo desde el 18 de agosto (el backend
- * limita a un operador a tocar solo `photo_url`, nunca el resto del
- * registro — ver `06_catalog_photo_guard.pb.js`); la de un GRUPO sigue
- * siendo solo de `isAdmin`, no se pidió abrirla. La casilla "Agregar"
- * tampoco depende de `isAdmin`: admin y operador pueden ampliar el
- * catálogo por igual desde la migración 033.
+ * solo texto. La cámara para poner o cambiar la foto de un grupo,
+ * categoría o producto la ve cualquier sesión activa (el backend limita
+ * a un operador a tocar solo `photo_url`, nunca el resto del registro
+ * — ver `06_catalog_photo_guard.pb.js`), igual que la casilla
+ * "Agregar" desde la migración 033. No queda ningún nivel del catálogo
+ * reservado a admin aquí dentro.
  */
 export function ProductPicker({
   catalog,
   recent,
   onSelect,
-  isAdmin = false,
 }: {
   catalog: Catalog;
   recent: Product[];
   onSelect: (product: Product) => void;
-  isAdmin?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [groupId, setGroupId] = useState<string | null>(null);
@@ -157,12 +154,12 @@ export function ProductPicker({
           {!browsing ? (
             <>
               <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-(--muted)">
-                Explorar por categoría
+                Explorar por grupo
               </h3>
               <TileGrid<Group>
                 items={effectiveCatalog.groups}
                 photoOverrides={photoOverrides}
-                canUpload={isAdmin}
+                canUpload
                 kind="groups"
                 onUpload={(id, url) => savePhoto("groups", id, url)}
                 disabledIf={(group) =>

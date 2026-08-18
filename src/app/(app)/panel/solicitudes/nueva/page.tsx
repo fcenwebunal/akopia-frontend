@@ -251,7 +251,7 @@ export default function NuevaSolicitudPage() {
 
       <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
         <h2 className="mb-3 text-sm font-bold">Qué se pide</h2>
-        <ProductPicker catalog={catalog} recent={recent} onSelect={addProduct} isAdmin={operator?.role === "admin"} />
+        <ProductPicker catalog={catalog} recent={recent} onSelect={addProduct} />
       </section>
 
       {lines.length > 0 ? (

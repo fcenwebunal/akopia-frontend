@@ -385,3 +385,12 @@ Pedido explícito, dos partes:
 La ruta de firma (`/api/uploads/sign`) ahora solo exige admin para `groups`; `categories`/`products`/`locations` admiten cualquier activo, coherente con lo que sus reglas de colección ya permiten.
 
 Verificado con Playwright, con sesión de un operador real (no admin): la cámara aparece en categorías del explorador, la subida de una foto nueva se refleja de inmediato y persiste (confirmado releyendo el registro), y crear una categoría sin foto muestra "Sube una foto antes de crear." sin llegar a la API.
+
+### 2026-08-18 (noche) — Grupos también editables por operador, y "Explorar por grupo"
+
+Dos ajustes puntuales sobre lo anterior:
+
+- **Grupos se suma al mismo permiso que ya tenían categorías/productos**: `groups.updateRule` se abre a cualquier activo (migración `038` del backend), con el mismo `06_catalog_photo_guard.pb.js` limitándolo a `photo_url` — nombre y descripción de un grupo siguen siendo solo de admin. Con esto ya no queda ningún nivel del catálogo con la cámara reservada a admin; el prop `isAdmin` de `ProductPicker` quedó sin ningún uso dentro del componente y se eliminó por completo (junto con los dos sitios que lo pasaban, `donaciones/nueva` y `solicitudes/nueva`) en vez de dejarlo muerto.
+- **"Explorar por categoría" pasó a "Explorar por grupo"** — corrige una imprecisión real: ese primer nivel del explorador navega `groups`, no `categories`; el texto llevaba diciendo lo que no era desde que se escribió.
+
+Verificado con Playwright, sesión de operador real: 11 grupos, 11 cámaras visibles (antes 0), y la etiqueta "EXPLORAR POR GRUPO" en pantalla.
