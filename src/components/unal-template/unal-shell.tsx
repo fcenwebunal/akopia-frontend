@@ -43,17 +43,19 @@ export function UnalShell({
         =false) solo se anula el margen que trae esa clase, por estilo
         en línea — nada le gana en especificidad a la regla escopeada.
 
-        `text-(--ink) font-sans` reafirma los tokens de la app justo en
-        la frontera con el contenido: `body{color:...}` de Bootstrap
-        quedó sin escopear a propósito (ver scope-unal-template-css.mjs)
-        porque el panel de accesibilidad necesita `body` real para el
-        zoom/contraste, pero eso significa que ese color fijo (sin
-        noción de tema) se hereda hacia dentro del árbol. Sin este
-        refuerzo, el modo oscuro deja el texto casi invisible: hereda
-        el `#212529` de Bootstrap en vez del token `--ink` de la app.
+        `text-(--ink) font-sans bg-(--surface)` reafirma los tokens de
+        la app justo en la frontera con el contenido: `body{color:...;
+        background-color:#fff}` de Bootstrap quedó sin escopear a
+        propósito (ver scope-unal-template-css.mjs) porque el panel de
+        accesibilidad necesita `body` real para el zoom/contraste. El
+        color de texto se hereda hacia dentro del árbol si no se
+        reafirma; el fondo ni siquiera hereda (no es una propiedad
+        heredable) — simplemente se ve *a través* de cualquier hijo que
+        no pinte el suyo propio. Sin este refuerzo, el modo oscuro deja
+        el contenido con fondo blanco fijo y texto claro: casi ilegible.
       */}
       <main
-        className="detalle flex-1 font-sans text-(--ink)"
+        className="detalle flex-1 bg-(--surface) font-sans text-(--ink)"
         id="contenido"
         style={boxed ? undefined : { margin: 0 }}
       >

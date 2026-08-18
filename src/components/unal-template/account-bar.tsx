@@ -36,7 +36,13 @@ export function AccountBar() {
   }
 
   return (
-    <div className="flex min-h-[42px] items-center justify-end gap-3 border-b border-(--rule) bg-(--surface-2) px-5 py-2 font-sans text-sm text-(--ink)">
+    // "akopia-content": AccountBar es interfaz propia (Tailwind), no de
+    // la plantilla — sin esta clase, vive dentro de `.unal-chrome` pero
+    // fuera de la exclusión que arma scripts/scope-unal-template-css.mjs,
+    // así que reglas genéricas de la plantilla como `a{...}` (sin capa,
+    // le gana a cualquier clase de Tailwind) le borraban el fondo verde
+    // y el texto blanco al botón "Registrarse".
+    <div className="akopia-content flex min-h-[42px] items-center justify-end gap-3 border-b border-(--rule) bg-(--surface-2) px-5 py-2 font-sans text-sm text-(--ink)">
       {!checked ? null : user ? (
         <>
           <span className="text-(--ink-2)">

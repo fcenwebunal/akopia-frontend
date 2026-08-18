@@ -152,7 +152,15 @@ export function UnalHeader({ menuItems = [] }: Readonly<{ menuItems?: AppMenuIte
         <div className="firstMenu d-none d-md-block">
           <div className="content-fluid">
             <nav className="navbar navbar-expand-md nav navbar-dark">
-              <ul className="socialLinks d-none d-md-block">
+              {/*
+                "ml-auto" (margin-left:auto de Bootstrap 4): sin la fila
+                de "Perfiles" (eliminada, decisión del 2026-08-18), este
+                era el primer hijo del <nav> flex y ya no hay nada a su
+                izquierda que lo empuje hacia la derecha — sin esto,
+                las redes quedan pegadas al borde izquierdo, debajo del
+                escudo.
+              */}
+              <ul className="socialLinks d-none d-md-block ml-auto">
                 <li>
                   <a
                     href="https://www.facebook.com/UNALOficial"
@@ -182,7 +190,14 @@ export function UnalHeader({ menuItems = [] }: Readonly<{ menuItems?: AppMenuIte
                 </li>
               </ul>
 
-              <div className="collapse btn-group languageMenu d-none d-md-block">
+              {/*
+                Sin "collapse": Tailwind también trae una utilidad
+                llamada exactamente ".collapse" (visibility:collapse,
+                para filas de tabla), que colisiona con el ".collapse"
+                de Bootstrap. No hace falta aquí — el despliegue del
+                idioma ya lo maneja "dropdown-toggle", no "collapse".
+              */}
+              <div className="btn-group languageMenu d-none d-md-block">
                 <div className="btn btn-default dropdown-toggle" data-toggle="dropdown">
                   es<span className="caret"></span>
                 </div>
