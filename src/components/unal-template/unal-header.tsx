@@ -127,8 +127,19 @@ export function UnalHeader({
         cuenta, y con el contenido real de AKOPIA (menos ítems que el
         menú de ejemplo de la plantilla) no siempre llegan. Sin esto, el
         escudo se desborda sobre la fila de Sedes/Accesibilidad.
+
+        background-color: #unalTop en sí no trae fondo propio en el CSS
+        de la plantilla (cada fila pinta el suyo). Con el min-height de
+        arriba, cuando el contenido real no llega a 145px queda un
+        sobrante sin pintar por nadie — se veía como una franja gris
+        suelta entre el menú y el panel de accesibilidad. Se rellena con
+        el mismo tono que ya usa `.firstMenu`, para que se vea como
+        parte del cabezote y no como un hueco.
       */}
-      <header id="unalTop" style={{ minHeight: 145 }}>
+      <header
+        id="unalTop"
+        style={{ minHeight: 145, backgroundColor: "rgb(102, 102, 102)" }}
+      >
         <div className="logo">
           <a href="https://unal.edu.co">
             <svg width="93%" height="93%">

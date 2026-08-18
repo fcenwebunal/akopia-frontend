@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { applyTheme, getStoredTheme, type Theme } from "@/lib/theme";
+import { AccountBar } from "./account-bar";
 
 /*
  * Panel de accesibilidad de la plantilla, sin tocar su diseño ni su
@@ -157,6 +158,7 @@ export function AccessibilityPanel({ top }: Readonly<{ top?: number | null }>) {
           </div>
         </div>
       </div>
+      <AccountBar />
       {/*
         accesibilidad.js registra este clic vía `window.onload`, que en
         Next.js ya disparó para cuando el script carga (afterInteractive

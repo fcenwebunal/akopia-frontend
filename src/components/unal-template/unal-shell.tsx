@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { AccessibilityPanel } from "./accessibility-panel";
-import { AccountBar } from "./account-bar";
 import type { AppMenuItem } from "./menu-config";
 import { UnalFooter } from "./unal-footer";
 import { UnalHeader } from "./unal-header";
@@ -40,10 +39,10 @@ export function UnalShell({
   useEffect(() => {
     const header = document.getElementById("unalTop");
     // "#contenido" (<main>) empieza justo después de todo lo que va
-    // antes en el flujo normal — header, la franja siempre visible del
-    // panel de accesibilidad, y <AccountBar> — así que su posición ya
-    // contabiliza las tres sin tener que sumar sus alturas a mano
-    // (que además se desactualizarían si alguna cambia de tamaño).
+    // antes en el flujo normal — header y la franja siempre visible del
+    // panel de accesibilidad (que ya incluye <AccountBar>, flotando a
+    // su izquierda) — así que su posición ya contabiliza ambas sin
+    // tener que sumar sus alturas a mano.
     const content = document.getElementById("contenido");
     if (!header || !content) return;
 
@@ -63,7 +62,6 @@ export function UnalShell({
     <div className="unal-chrome flex min-h-screen flex-col">
       <UnalHeader menuItems={menuItems} servicesTop={contentTop} />
       <AccessibilityPanel top={headerHeight} />
-      <AccountBar />
       {/*
         La clase `detalle` se mantiene siempre presente: accesibilidad.js
         busca `document.getElementsByClassName("detalle")[0]` al abrir

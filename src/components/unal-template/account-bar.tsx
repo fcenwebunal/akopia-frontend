@@ -6,11 +6,14 @@ import { useEffect, useState } from "react";
 import { pb, type AkopiaUser } from "@/lib/pb";
 
 /*
- * Franja de cuenta, en el área de contenido (no en el cabezote fijo de
- * la plantilla): "Iniciar sesión"/"Registrarse" sin sesión, o
- * "Hola, {nombre} · Salir" con sesión activa. Presente en los tres
+ * Franja de cuenta — "Iniciar sesión"/"Registrarse" sin sesión, o
+ * "Hola, {nombre} · Salir" con sesión activa — flotando a la
+ * izquierda dentro de la misma fila que "Panel de Accesibilidad"
+ * (montado desde <AccessibilityPanel>, antes de #pestania-
+ * accesibilidad, que ya trae `float:right`). Presente en los tres
  * momentos (portada, login/registro, app), pedido explícito del
- * 2026-08-18.
+ * 2026-08-18; movida de su propia franja a esta fila el mismo día,
+ * a pedido de Juan Manuel.
  */
 export function AccountBar() {
   const router = useRouter();
@@ -42,7 +45,10 @@ export function AccountBar() {
     // así que reglas genéricas de la plantilla como `a{...}` (sin capa,
     // le gana a cualquier clase de Tailwind) le borraban el fondo verde
     // y el texto blanco al botón "Registrarse".
-    <div className="akopia-content flex min-h-[42px] items-center justify-end gap-3 border-b border-(--rule) bg-(--surface-2) px-5 py-2 font-sans text-sm text-(--ink)">
+    <div
+      className="akopia-content float-left flex items-center gap-3 pl-4 font-sans text-sm text-(--ink)"
+      style={{ height: 35 }}
+    >
       {!checked ? null : user ? (
         <>
           <span className="text-(--ink-2)">
@@ -51,7 +57,7 @@ export function AccountBar() {
           <button
             type="button"
             onClick={signOut}
-            className="rounded border border-(--rule) px-3 py-1 font-bold hover:bg-(--surface)"
+            className="rounded border border-(--rule) px-3 py-1 font-bold hover:bg-(--surface-2)"
           >
             Salir
           </button>
