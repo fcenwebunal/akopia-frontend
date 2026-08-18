@@ -37,6 +37,22 @@ Interfaz en Next.js 16 + TypeScript + Tailwind v4 para el centro de acopio de la
 
 ---
 
+## Tema claro/oscuro — convención obligatoria para cualquier pantalla nueva
+
+El proyecto tiene selector de tema (claro / oscuro / según el sistema) desde el 18 de agosto de 2026, con el control en `AppShell`, junto a "Salir". La mecánica:
+
+- **`src/lib/theme.ts`** — `applyTheme()` escribe `data-theme="light"` o `"dark"` en `<html>` y lo guarda en `localStorage`; `"system"` borra el atributo y deja que decida `prefers-color-scheme`. Un `<script>` en `src/app/layout.tsx` (`THEME_INIT_SCRIPT`) aplica el tema guardado **antes** de pintar, para que no haya parpadeo.
+- **`src/components/ui/theme-toggle.tsx`** — el control de tres botones. No se necesita en cada pantalla: vive una sola vez en `AppShell` y el atributo en `<html>` es global.
+- **`globals.css`** define los valores en tres bloques que deben quedar sincronizados: `:root` (claro, por defecto), `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { … } }` (oscuro automático), y `:root[data-theme="dark"] { … }` (oscuro forzado por el selector). Los tres bloques repiten los mismos valores — es intencional, no duplicación accidental.
+
+**Regla para toda pantalla o componente nuevo:**
+
+1. **Nunca un color fijo** (`#fff`, `bg-white`, `text-black`, un hex a mano). Siempre un token: `bg-(--surface)`, `text-(--ink)`, `border-(--rule)`, o una utilidad de Tailwind que ya sea un token del proyecto (`bg-unal-green-dark`, etc.). Un color fijo se ve bien en un tema y roto en el otro.
+2. Los tokens existentes (`--surface`, `--surface-2`, `--ink`, `--ink-2`, `--muted`, `--rule`, y los de gráficos `--viz-*`) ya cubren la enorme mayoría de los casos — revisa esa lista antes de inventar uno nuevo.
+3. **Si de verdad hace falta un token nuevo**, decláralo en los tres bloques de arriba, con un valor para claro y otro para oscuro — nunca en uno solo, o el selector de tema lo deja a medias. Si el color entra en un gráfico o necesita distinguirse de otros por daltonismo, valídalo con el script de la skill de dataviz (`node scripts/validate_palette.js "<hex,hex,…>" --mode light` y de nuevo con `--mode dark`) antes de fijarlo, como se hizo con `--viz-available/reserved/quarantine`.
+4. **Los controles nativos del navegador** (selector de fecha, flechas de `<input type="number">`, barra de scroll) siguen la propiedad CSS `color-scheme`, ya declarada en los tres bloques — no hace falta nada por componente para que el ícono del calendario se vea bien en oscuro. Si un control nativo se ve mal en un tema, el arreglo va en `color-scheme`, no en el componente.
+5. No leas `window.matchMedia("(prefers-color-scheme: dark)")` directamente en un componente: el tema activo puede ser el elegido a mano, no el del sistema. Si un componente necesita saber el tema actual en JS (raro — casi todo se resuelve con CSS), usa `getStoredTheme()` de `src/lib/theme.ts`.
+
 ## Identidad visual: restricciones duras
 
 - **`#94B43B` (verde institucional) no alcanza contraste AA sobre blanco** (~2.1:1). Por eso existe `unal-green-dark` (`#6F8A24`): el verde puro se usa para superficies y acentos, nunca para texto pequeño. Este es el error más fácil de cometer y el que sí se nota en una auditoría de accesibilidad.
@@ -323,3 +339,17 @@ Verificado de punta a punta contra el servidor real, no simulado: grupo → cate
 - Se refresca solo cada 45s más un botón manual con hora de la última actualización — sin llegar a una suscripción en tiempo real por cada colección, que es mucha complejidad para un panel de lectura.
 - Paleta de los gráficos (`--viz-available`, `--viz-reserved`, `--viz-quarantine`, `--viz-magnitude` en `globals.css`, luz y oscuro) validada con el script de la skill de dataviz antes de usarse: separación por daltonismo, contraste, banda de luminosidad — no elegida a ojo.
 - Verificado con Playwright real contra el servidor en ejecución (login, navegación a `/panel`, captura de pantalla, revisión de errores de consola) — así se encontraron y corrigieron los dos bugs de arriba antes de entregar.
+
+### 2026-08-18 (noche) — Selector de tema claro/oscuro, y dos arreglos visuales puntuales
+
+**Selector de tema**, pedido explícito: tres botones (claro / según el sistema / oscuro) junto a "Salir" en `AppShell`. El proyecto ya tenía soporte de oscuro automático por `prefers-color-scheme` desde el 17 de agosto (sin selector); esto añade la capa de elección manual sobre lo que ya existía, sin rehacer nada. Mecánica y convención completas para pantallas futuras documentadas arriba, en «Tema claro/oscuro».
+
+- `src/lib/theme.ts` + `src/components/ui/theme-toggle.tsx` + un script de inicialización en `layout.tsx` para que el tema guardado se aplique antes de pintar (sin esto, se ve un parpadeo del tema por defecto).
+- El atributo vive en `<html>`, así que aplica a todo el proyecto — sitio público incluido, aunque el control solo aparece en la app de bodega — sin tocar componente por componente.
+
+**Dos arreglos visuales reportados con captura de pantalla:**
+
+- **El ícono del selector de fecha era negro fijo del navegador**, invisible en tema oscuro. No es algo que se corrija por componente: `color-scheme: light` / `dark` en los tres bloques de `globals.css` le dice al navegador que dibuje sus propios controles (fecha, flechas de número, scroll) en la variante correcta — cualquier `<input type="date">` futuro queda cubierto automáticamente, sin clase especial.
+- **Los símbolos +/− de los contadores de cantidad** (recepción de donación y alta de solicitud) eran caracteres de texto (`−`, `+`) que un motor de fuentes puede alinear distinto a como se espera. Reemplazados por `Minus`/`Plus` de `lucide-react`, igual que el resto de íconos de la app.
+
+Verificado con Playwright contra el servidor real, en tema oscuro: el selector cambia el tema al instante, el ícono de fecha es blanco y visible, y los botones +/− quedan centrados.

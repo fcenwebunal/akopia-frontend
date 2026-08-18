@@ -7,6 +7,7 @@ import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalo
 import { useAsyncData } from "@/lib/use-async-data";
 import { ProductPicker } from "@/components/app/product-picker";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { Minus, Plus } from "lucide-react";
 
 const PRIORITIES = [
   { value: "baja", label: "Baja" },
@@ -372,9 +373,9 @@ function QuantityPrompt({
             type="button"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             aria-label="Restar uno"
-            className="h-12 w-12 rounded border border-(--rule) text-xl font-bold"
+            className="flex h-12 w-12 items-center justify-center rounded border border-(--rule) hover:bg-(--surface-2)"
           >
-            −
+            <Minus size={20} strokeWidth={2.5} aria-hidden="true" />
           </button>
           <input
             type="number"
@@ -389,9 +390,9 @@ function QuantityPrompt({
             type="button"
             onClick={() => setQuantity((q) => q + 1)}
             aria-label="Sumar uno"
-            className="h-12 w-12 rounded border border-(--rule) text-xl font-bold"
+            className="flex h-12 w-12 items-center justify-center rounded border border-(--rule) hover:bg-(--surface-2)"
           >
-            +
+            <Plus size={20} strokeWidth={2.5} aria-hidden="true" />
           </button>
         </div>
 

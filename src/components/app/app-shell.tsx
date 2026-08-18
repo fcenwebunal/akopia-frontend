@@ -14,6 +14,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { pb, type AkopiaUser } from "@/lib/pb";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/panel", label: "Panel", icon: Home },
@@ -86,6 +87,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
           <span className="ml-auto hidden text-sm text-(--muted) sm:inline">
             {user.full_name}
           </span>
+          <ThemeToggle />
           <button
             type="button"
             onClick={signOut}

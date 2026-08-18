@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ancizarSans, ancizarSerif } from "@/lib/fonts";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +18,14 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${ancizarSans.variable} ${ancizarSerif.variable}`}>
+    <html
+      lang="es"
+      className={`${ancizarSans.variable} ${ancizarSerif.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="antialiased">{children}</body>
     </html>
   );
