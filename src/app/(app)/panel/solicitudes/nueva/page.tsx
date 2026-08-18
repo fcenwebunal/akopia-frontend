@@ -86,13 +86,26 @@ export default function NuevaSolicitudPage() {
   // verdad hay en bodega — filtrar el catálogo aquí es más simple que
   // enseñarle a ProductPicker (compartido con Donaciones, donde este
   // filtro no aplica) a saber de existencias.
+  //
+  // No basta con filtrar `products`: ProductPicker explora por
+  // grupo → categoría → producto, y sus grillas de grupo/categoría se
+  // arman a partir de `catalog.categories`/`catalog.groups`, no de
+  // `products`. Dejar esas dos listas completas mostraba grupos y
+  // categorías enteras cuyo único contenido ya estaba agotado — el
+  // clic no fallaba, pero prometía algo que el filtro ya había
+  // descartado. Podar categorías y grupos en cascada, junto con los
+  // productos, es lo que evita esa promesa vacía.
   const pickerCatalog = useMemo<Catalog | null>(() => {
     if (!catalog) return null;
     if (!onlyAvailable) return catalog;
-    return {
-      ...catalog,
-      products: catalog.products.filter((product) => (stockByProduct[product.id] ?? 0) > 0),
-    };
+
+    const products = catalog.products.filter((product) => (stockByProduct[product.id] ?? 0) > 0);
+    const categoryIdsWithStock = new Set(products.map((product) => product.category_id));
+    const categories = catalog.categories.filter((category) => categoryIdsWithStock.has(category.id));
+    const groupIdsWithStock = new Set(categories.map((category) => category.group_id));
+    const groups = catalog.groups.filter((group) => groupIdsWithStock.has(group.id));
+
+    return { ...catalog, groups, categories, products };
   }, [catalog, onlyAvailable, stockByProduct]);
 
   function maxFor(productId: string): number | undefined {
@@ -422,6 +435,7 @@ export default function NuevaSolicitudPage() {
           catalog={catalog}
           product={pendingProduct}
           max={maxFor(pendingProduct.id)}
+          available={stockByProduct[pendingProduct.id] ?? 0}
           initial={(() => {
             const current = lines.find((line) => line.product.id === pendingProduct.id)?.quantity ?? 1;
             const max = maxFor(pendingProduct.id);
@@ -440,6 +454,7 @@ function QuantityPrompt({
   product,
   initial,
   max,
+  available,
   onCancel,
   onConfirm,
 }: {
@@ -447,11 +462,16 @@ function QuantityPrompt({
   product: Product;
   initial: number;
   max?: number;
+  available: number;
   onCancel: () => void;
   onConfirm: (quantity: number) => void;
 }) {
   const [quantity, setQuantity] = useState(initial);
   const exceedsMax = max !== undefined && quantity > max;
+  // Con el switch apagado no hay tope (`max` viene vacío) — pedir de más
+  // sigue siendo válido, pero se avisa antes de guardar: ese excedente
+  // es justo lo que va a alimentar "Productos faltantes", no un error.
+  const shortage = max === undefined && quantity > available ? quantity - available : 0;
 
   return (
     <div className="fixed inset-0 z-20 flex items-end bg-black/40 sm:items-center sm:justify-center">
@@ -459,7 +479,7 @@ function QuantityPrompt({
         <h2 className="text-lg font-bold">{product.name}</h2>
         <p className="text-sm text-(--muted)">
           Se mide en {unitLabel(catalog, product.default_unit_id)}
-          {max !== undefined ? ` · disponible: ${max}` : ""}
+          {max !== undefined ? ` · disponible: ${max}` : ` · disponible ahora: ${available}`}
         </p>
 
         <div className="mt-4 flex items-center gap-2">
@@ -495,6 +515,14 @@ function QuantityPrompt({
         {exceedsMax ? (
           <p className="mt-2 text-sm text-unal-red">
             Solo hay {max} disponible{max === 1 ? "" : "s"}.
+          </p>
+        ) : null}
+
+        {shortage > 0 ? (
+          <p className="mt-2 text-sm text-unal-orange">
+            Solo hay {available} disponible{available === 1 ? "" : "s"} ahora mismo. El
+            faltante ({shortage}) quedará registrado como demanda insatisfecha en
+            «Productos faltantes».
           </p>
         ) : null}
 
