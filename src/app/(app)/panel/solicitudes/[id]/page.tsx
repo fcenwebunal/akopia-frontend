@@ -5,6 +5,7 @@ import Link from "next/link";
 import { callRoute, currentUser, errorMessage, pb, RouteError } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { CoordinatesDisplay } from "@/components/app/coordinates-display";
 
 interface RequestItem {
   id: string;
@@ -23,6 +24,8 @@ interface RequestRecord {
   requester_phone: string;
   requester_institution: string;
   destination: string;
+  destination_lat: number;
+  destination_lng: number;
   beneficiary_count: number;
   priority: string;
   status: string;
@@ -197,6 +200,9 @@ export default function SolicitudDetallePage({
           {request.requester_institution ? ` · ${request.requester_institution}` : ""}
         </p>
         <p>{request.destination}</p>
+        {request.destination_lat || request.destination_lng ? (
+          <CoordinatesDisplay lat={request.destination_lat} lng={request.destination_lng} />
+        ) : null}
         {request.beneficiary_count ? (
           <p>{request.beneficiary_count} personas beneficiadas</p>
         ) : null}

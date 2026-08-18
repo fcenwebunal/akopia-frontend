@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { callRoute, errorMessage, pb } from "@/lib/pb";
@@ -26,7 +26,15 @@ interface Dispatch {
   brigade: string;
   dispatch_date: string;
   notes: string;
-  expand?: { request_id?: { id: string; code?: string; status?: string; requester_name?: string } };
+  expand?: {
+    request_id?: {
+      id: string;
+      code?: string;
+      status?: string;
+      requester_name?: string;
+      requester_phone?: string;
+    };
+  };
 }
 
 interface Delivery {
@@ -103,6 +111,20 @@ export default function DespachoDetallePage({
   }, [id, version]);
 
   const { data, error: loadError } = useAsyncData(fetchData);
+
+  // Casi siempre quien pidió la ayuda es quien la recibe: se precarga
+  // como punto de partida editable, no como valor fijo — el operador
+  // sigue pudiendo cambiarlo si la entrega termina siendo a otra
+  // persona. Solo mientras el campo siga vacío, para no pisar lo que ya
+  // se haya escrito a mano si `data` se vuelve a cargar por otra razón
+  // (por ejemplo, al guardar la ubicación en el mapa).
+  useEffect(() => {
+    if (!data || data.delivery) return;
+    const request = data.dispatch.expand?.request_id;
+    if (!request) return;
+    setReceiverName((current) => current || request.requester_name || "");
+    setReceiverPhone((current) => current || request.requester_phone || "");
+  }, [data]);
 
   function startEditingLocation(dispatch: Dispatch) {
     const hasCoords = dispatch.destination_lat !== 0 || dispatch.destination_lng !== 0;

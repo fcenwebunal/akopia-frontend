@@ -1,14 +1,29 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { currentUser, errorMessage, pb } from "@/lib/pb";
+import dynamic from "next/dynamic";
+import { callRoute, currentUser, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
 import { ProductPicker } from "@/components/app/product-picker";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { Toggle } from "@/components/ui/toggle";
+import { MANIZALES_CENTER, formatCoordinates } from "@/lib/coordinates";
 import { Minus, Plus } from "lucide-react";
+
+// Leaflet toca `window` al cargarse: sin `ssr: false` el render en
+// servidor de esta página truena.
+const MapPicker = dynamic(
+  () => import("@/components/app/map-picker").then((m) => m.MapPicker),
+  { ssr: false, loading: () => <div className="h-64 w-full rounded border border-(--rule) bg-(--surface-2)" /> }
+);
+
+interface InventorySummaryRow {
+  product_id: string;
+  available_qty: number;
+}
 
 const PRIORITIES = [
   { value: "baja", label: "Baja" },
@@ -33,8 +48,23 @@ export default function NuevaSolicitudPage() {
   const router = useRouter();
   const operator = currentUser();
 
-  const fetchCatalog = useCallback(() => loadCatalog(), []);
-  const { data: catalog, error: catalogError } = useAsyncData(fetchCatalog);
+  const fetchCatalog = useCallback(async () => {
+    const [catalog, summary] = await Promise.all([
+      loadCatalog(),
+      // Disponible ya excluye lo reservado y lo retenido en revisión —
+      // son cubetas separadas de `available_qty`, ver inventory/summary
+      // en el backend. No hace falta recalcular nada aquí.
+      callRoute<{ summary: InventorySummaryRow[] }>("/api/inventory/summary"),
+    ]);
+    const stockByProduct: Record<string, number> = {};
+    for (const row of summary.summary) {
+      stockByProduct[row.product_id] = row.available_qty;
+    }
+    return { catalog, stockByProduct };
+  }, []);
+  const { data, error: catalogError } = useAsyncData(fetchCatalog);
+  const catalog = data?.catalog ?? null;
+  const stockByProduct = data?.stockByProduct ?? {};
 
   const [requesterName, setRequesterName] = useState("");
   const [requesterPhone, setRequesterPhone] = useState("");
@@ -43,11 +73,31 @@ export default function NuevaSolicitudPage() {
   const [beneficiaryCount, setBeneficiaryCount] = useState("");
   const [priority, setPriority] = useState("media");
   const [notes, setNotes] = useState("");
+  const [lat, setLat] = useState(MANIZALES_CENTER[0]);
+  const [lng, setLng] = useState(MANIZALES_CENTER[1]);
 
+  const [onlyAvailable, setOnlyAvailable] = useState(true);
   const [lines, setLines] = useState<DraftLine[]>([]);
   const [pendingProduct, setPendingProduct] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Con el switch activado, solo se puede elegir (y pedir) lo que de
+  // verdad hay en bodega — filtrar el catálogo aquí es más simple que
+  // enseñarle a ProductPicker (compartido con Donaciones, donde este
+  // filtro no aplica) a saber de existencias.
+  const pickerCatalog = useMemo<Catalog | null>(() => {
+    if (!catalog) return null;
+    if (!onlyAvailable) return catalog;
+    return {
+      ...catalog,
+      products: catalog.products.filter((product) => (stockByProduct[product.id] ?? 0) > 0),
+    };
+  }, [catalog, onlyAvailable, stockByProduct]);
+
+  function maxFor(productId: string): number | undefined {
+    return onlyAvailable ? stockByProduct[productId] ?? 0 : undefined;
+  }
 
   const recent = lines
     .map((line) => line.product)
@@ -60,10 +110,16 @@ export default function NuevaSolicitudPage() {
   function addProduct(product: Product) {
     const existing = lines.find((line) => line.product.id === product.id);
     if (existing) {
+      const max = maxFor(product.id);
+      if (max !== undefined && existing.quantity >= max) {
+        // Ya está en el tope de lo disponible: un toque más no suma
+        // nada, en vez de pedir más de lo que hay en bodega.
+        return;
+      }
       setLines((current) =>
         current.map((line) =>
           line.key === existing.key
-            ? { ...line, quantity: line.quantity + 1 }
+            ? { ...line, quantity: max !== undefined ? Math.min(max, line.quantity + 1) : line.quantity + 1 }
             : line
         )
       );
@@ -107,6 +163,8 @@ export default function NuevaSolicitudPage() {
         requester_phone: requesterPhone,
         requester_institution: requesterInstitution,
         destination,
+        destination_lat: lat,
+        destination_lng: lng,
         beneficiary_count: beneficiaryCount ? Number(beneficiaryCount) : null,
         priority,
         status: "pendiente",
@@ -222,6 +280,18 @@ export default function NuevaSolicitudPage() {
             />
           </div>
 
+          <div className="sm:col-span-2">
+            <span className="mb-1 block text-sm font-bold">Ubicación en el mapa</span>
+            <p className="mb-2 text-xs text-(--muted)">
+              Arrastra el punto verde (o toca el mapa) hasta la dirección exacta. El
+              despacho parte de aquí — se puede ajustar después si hace falta.
+            </p>
+            <MapPicker lat={lat} lng={lng} onChange={(newLat, newLng) => { setLat(newLat); setLng(newLng); }} />
+            <p className="mt-1.5 font-mono text-xs text-(--muted)">
+              {formatCoordinates(lat, lng)}
+            </p>
+          </div>
+
           <div>
             <label htmlFor="prioridad" className="mb-1 block text-sm font-bold">
               Prioridad
@@ -256,7 +326,20 @@ export default function NuevaSolicitudPage() {
 
       <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
         <h2 className="mb-3 text-sm font-bold">Qué se pide</h2>
-        <ProductPicker catalog={catalog} recent={recent} onSelect={addProduct} />
+        <div className="mb-3">
+          <Toggle
+            label="Mostrar solo productos disponibles"
+            checked={onlyAvailable}
+            onChange={setOnlyAvailable}
+          />
+          {!onlyAvailable ? (
+            <p className="mt-1.5 text-xs text-(--muted)">
+              También se muestra lo que está en cero — útil para dejar registrada
+              una demanda que hoy no se puede cubrir.
+            </p>
+          ) : null}
+        </div>
+        <ProductPicker catalog={pickerCatalog ?? catalog} recent={recent} onSelect={addProduct} />
       </section>
 
       {lines.length > 0 ? (
@@ -338,10 +421,12 @@ export default function NuevaSolicitudPage() {
         <QuantityPrompt
           catalog={catalog}
           product={pendingProduct}
-          initial={
-            lines.find((line) => line.product.id === pendingProduct.id)
-              ?.quantity ?? 1
-          }
+          max={maxFor(pendingProduct.id)}
+          initial={(() => {
+            const current = lines.find((line) => line.product.id === pendingProduct.id)?.quantity ?? 1;
+            const max = maxFor(pendingProduct.id);
+            return max !== undefined ? Math.min(current, Math.max(max, 0.01)) : current;
+          })()}
           onCancel={() => setPendingProduct(null)}
           onConfirm={confirmQuantity}
         />
@@ -354,16 +439,19 @@ function QuantityPrompt({
   catalog,
   product,
   initial,
+  max,
   onCancel,
   onConfirm,
 }: {
   catalog: Catalog;
   product: Product;
   initial: number;
+  max?: number;
   onCancel: () => void;
   onConfirm: (quantity: number) => void;
 }) {
   const [quantity, setQuantity] = useState(initial);
+  const exceedsMax = max !== undefined && quantity > max;
 
   return (
     <div className="fixed inset-0 z-20 flex items-end bg-black/40 sm:items-center sm:justify-center">
@@ -371,6 +459,7 @@ function QuantityPrompt({
         <h2 className="text-lg font-bold">{product.name}</h2>
         <p className="text-sm text-(--muted)">
           Se mide en {unitLabel(catalog, product.default_unit_id)}
+          {max !== undefined ? ` · disponible: ${max}` : ""}
         </p>
 
         <div className="mt-4 flex items-center gap-2">
@@ -386,6 +475,7 @@ function QuantityPrompt({
             type="number"
             inputMode="decimal"
             min={0.01}
+            max={max}
             step="any"
             value={quantity}
             onChange={(event) => setQuantity(Number(event.target.value))}
@@ -393,13 +483,20 @@ function QuantityPrompt({
           />
           <button
             type="button"
-            onClick={() => setQuantity((q) => q + 1)}
+            disabled={max !== undefined && quantity >= max}
+            onClick={() => setQuantity((q) => (max !== undefined ? Math.min(max, q + 1) : q + 1))}
             aria-label="Sumar uno"
-            className="flex h-12 w-12 items-center justify-center rounded border border-(--rule) hover:bg-(--surface-2)"
+            className="flex h-12 w-12 items-center justify-center rounded border border-(--rule) hover:bg-(--surface-2) disabled:opacity-40"
           >
             <Plus size={20} strokeWidth={2.5} aria-hidden="true" />
           </button>
         </div>
+
+        {exceedsMax ? (
+          <p className="mt-2 text-sm text-unal-red">
+            Solo hay {max} disponible{max === 1 ? "" : "s"}.
+          </p>
+        ) : null}
 
         <div className="mt-5 flex gap-3">
           <button
@@ -411,7 +508,7 @@ function QuantityPrompt({
           </button>
           <button
             type="button"
-            disabled={quantity <= 0}
+            disabled={quantity <= 0 || exceedsMax}
             onClick={() => onConfirm(quantity)}
             className="flex-1 rounded bg-unal-green-dark px-4 py-3 font-bold text-white disabled:opacity-50"
           >

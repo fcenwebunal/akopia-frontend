@@ -531,3 +531,23 @@ Pedido explícito: un apartado para respaldar la base manualmente (sin cron auto
 - **Rutas nuevas del backend, bajo `/api/akopia-backups`, no `/api/backups`** — ese segundo path ya lo reserva la propia API nativa de PocketBase (superusuario real, no nuestros admins) y una ruta propia con el mismo nombre queda tapada por la suya en silencio. Detalle completo del hallazgo, y de una segunda trampa real (la de los handlers de hook aislados, otra vez) en el `CLAUDE.md` del backend.
 
 Verificado de punta a punta contra los servidores reales, con Playwright: contraseña incorrecta muestra "Contraseña incorrecta." sin crear nada; con la correcta, el respaldo aparece en la lista con tamaño y fecha legibles; descargar con la contraseña correcta produce un archivo real (`akopia_manual_<fecha>.zip`, confirmado por su nombre sugerido) con el spinner de carga visible durante la operación. `npx tsc --noEmit` limpio.
+
+### 2026-08-18 (noche) — Mapa en solicitudes, herencia hacia despachos/entregas, y switch de solo-disponibles
+
+Tres pedidos en uno, con una pregunta de alcance real resuelta con `AskUserQuestion` antes de tocar el backend (ver el `CLAUDE.md` del backend): el sistema ya deja a propósito pedir más de lo disponible con el switch apagado, así que el tope duro de cantidad se quedó donde ya vivía (`approve`), no en la creación de la solicitud.
+
+**1. Mapa y coordenadas en `/panel/solicitudes/nueva`.** Mismo `MapPicker` que ya usaba Despachos, ahora también aquí: el punto se marca una vez, al pedir, en vez de inventarse de nuevo cada vez que se arma el despacho. Requiere la migración `040` del backend (`destination_lat`/`destination_lng` en `requests`).
+
+**2. Herencia hacia despachos y entregas**, la auditoría explícitamente pedida ("qué otras variables deberían heredarse"):
+- **`despachos/nueva`** — `selectRequest()` ya copiaba el texto de `destination`; ahora también copia `destination_lat`/`destination_lng` si la solicitud los tiene (con el mismo criterio que ya usa el detalle del despacho para distinguir "sin marcar" de "en 0,0": `!== 0`). Si la solicitud es de antes de esta función y nunca tuvo coordenadas, se arranca del centro de Manizales, como siempre. Sigue siendo editable — es un valor de partida, no una imposición.
+- **`despachos/[id]`** — al confirmar la entrega, `receiver_name`/`receiver_phone` se precargan (editable, con un `useEffect` que solo llena si el campo sigue vacío) desde `requester_name`/`requester_phone` de la solicitud enlazada, vía el `expand: "request_id"` que la pantalla ya pedía. Casi siempre quien pidió es quien recibe; cuando no lo es, el operador lo cambia a mano.
+- **`solicitudes/[id]`** — ganó el mismo `CoordinatesDisplay` (copiar / abrir en Google Maps) que ya usaba el detalle del despacho, reutilizado tal cual.
+- **Sin más redundancia real que resolver:** conductor, placa, brigada, tipo/número de documento son datos propios de cada paso, no copias de algo que ya existiera antes.
+
+**3. Switch "Mostrar solo productos disponibles"**, activado por defecto, en `/panel/solicitudes/nueva`:
+- `Toggle` (antes solo un componente local de `catalog-add-form.tsx`) se extrajo a `src/components/ui/toggle.tsx` para poder reutilizarlo aquí sin duplicar código.
+- Con el switch activado, el catálogo que ve `ProductPicker` se filtra a productos con `available_qty > 0` (de `/api/inventory/summary`, que ya excluye reservado y cuarentena — no hizo falta ningún cálculo nuevo) — **filtrado en la propia página, no dentro de `ProductPicker`**, porque ese componente también lo usa Donaciones, donde este filtro no aplica y no tiene sentido enseñarle a distinguir el caso.
+- El selector de cantidad muestra "disponible: N", topa el botón `+` y el campo numérico en N, y deshabilita "Agregar" con un aviso si se escribe manualmente por encima del tope — validado en la interfaz, consistente con que el backend nunca fue el lugar pensado para este tope (ver arriba).
+- Con el switch apagado, el catálogo vuelve a mostrarse completo, incluidos los productos en cero — para dejar registrada una demanda que hoy no se puede cubrir, que es justo lo que ya hace "Productos faltantes" con esos renglones.
+
+Verificado de punta a punta contra los servidores reales, con Playwright: switch activado por defecto; "Frijol · disponible: 8" mostrado correctamente en el selector de cantidad; una solicitud creada con un punto propio del mapa (no el centro de Manizales) apareció con ese mismo punto exacto en Despachos al elegirla, y el nombre del solicitante precargado (editable) al confirmar la entrega. `npx tsc --noEmit` limpio.

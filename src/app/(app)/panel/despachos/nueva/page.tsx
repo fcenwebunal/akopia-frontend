@@ -20,7 +20,10 @@ interface ApprovedRequest {
   id: string;
   code: string;
   requester_name: string;
+  requester_phone: string;
   destination: string;
+  destination_lat: number;
+  destination_lng: number;
 }
 
 /*
@@ -61,9 +64,18 @@ export default function NuevoDespachoPage() {
   function selectRequest(id: string) {
     setRequestId(id);
     const request = requests?.find((item) => item.id === id);
-    if (request) {
-      setDestination(request.destination);
-    }
+    if (!request) return;
+
+    setDestination(request.destination);
+
+    // Hereda el punto exacto de la solicitud si ya lo tiene — sigue
+    // siendo editable aquí, por si el vehículo termina yendo a un punto
+    // distinto del que se marcó al pedir. Las solicitudes de antes de
+    // esta función nunca tuvieron coordenadas (quedan en 0/0): en ese
+    // caso se arranca del centro de Manizales, como siempre.
+    const hasCoords = request.destination_lat !== 0 || request.destination_lng !== 0;
+    setLat(hasCoords ? request.destination_lat : MANIZALES_CENTER[0]);
+    setLng(hasCoords ? request.destination_lng : MANIZALES_CENTER[1]);
   }
 
   async function save() {

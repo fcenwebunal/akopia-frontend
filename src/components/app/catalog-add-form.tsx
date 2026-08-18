@@ -8,6 +8,7 @@ import type { Catalog, Category, Group, Product, Unit } from "@/lib/catalog";
 import { findDuplicateByName } from "@/lib/catalog";
 import { uploadPhoto, UploadError, type PhotoKind } from "@/lib/cloudinary";
 import { Spinner } from "@/components/ui/spinner";
+import { Toggle } from "@/components/ui/toggle";
 
 type AddKind = "group" | "category" | "product";
 
@@ -386,29 +387,3 @@ function kindArticle(kind: AddKind): string {
   return kind === "category" ? "una" : "un";
 }
 
-function Toggle({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between rounded border border-(--rule) px-3 py-2.5 text-left text-sm"
-    >
-      {label}
-      <span
-        className={`flex h-5 w-9 items-center rounded-full px-0.5 transition-colors ${checked ? "justify-end bg-unal-green-dark" : "justify-start bg-(--rule)"}`}
-      >
-        <span className="h-4 w-4 rounded-full bg-white" />
-      </span>
-    </button>
-  );
-}
