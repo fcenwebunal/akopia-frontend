@@ -120,10 +120,21 @@ export default function InventarioPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight">Inventario</h1>
-      <p className="mt-1 text-(--muted)">
-        Saldos por producto y ubicación. Se actualizan solos con cada movimiento: no se editan a mano.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight">Inventario</h1>
+          <p className="mt-1 text-(--muted)">
+            Saldos por producto y ubicación. Se actualizan solos con cada movimiento: no se editan a mano.
+          </p>
+        </div>
+        <Link
+          href="/panel/ubicaciones"
+          className="flex shrink-0 items-center gap-1.5 rounded border border-(--rule) px-4 py-2.5 font-bold hover:bg-(--surface-2)"
+        >
+          <MapPin size={16} strokeWidth={2.5} aria-hidden="true" />
+          Ubicaciones
+        </Link>
+      </div>
 
       <div className="mt-6 grid gap-2 sm:grid-cols-3">
         <label className="sr-only" htmlFor="buscar-inv">Buscar producto</label>

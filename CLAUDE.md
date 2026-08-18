@@ -437,3 +437,7 @@ Pedido explícito para el diálogo de reubicar: cambiar el `<select>` de texto d
 - El diálogo de reubicar (`RelocateDialog` en `inventario/page.tsx`) pasó de `sm:max-w-sm` a `sm:max-w-md` con scroll propio (`max-h-[90vh] overflow-y-auto`), porque una grilla con fotos necesita más espacio que una lista de texto.
 
 Verificado con Playwright contra datos reales: buscar por un término que solo aparece en la descripción ("blanco") filtra correctamente a una sola ubicación aunque no coincida con su zona/estante/posición; buscar por zona ("Latas") hace lo mismo; seleccionar una casilla marca el anillo verde y el check, y el traslado se completa con la ubicación elegida en la grilla.
+
+### 2026-08-18 (noche) — "Ubicaciones" sale del menú principal, entra como botón en Inventario
+
+Pedido explícito: `/panel/ubicaciones` deja de ser un ítem de la barra de navegación de `AppShell` y pasa a ser un botón dentro de `/panel/inventario`, junto al título, con el mismo ícono (`MapPin`). La ruta no cambió — solo de dónde se llega a ella. Verificado con Playwright: la barra de navegación ya no lo lista, el botón nuevo navega correctamente a la página existente.
