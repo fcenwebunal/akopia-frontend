@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, PackageSearch, Plus, ShieldAlert } from "lucide-react";
+import { ArrowRight, Ban, PackageSearch, Plus, ShieldAlert } from "lucide-react";
 import { currentUser, pb } from "@/lib/pb";
 import { loadLocations, locationLabel, type Location } from "@/lib/locations";
 import { useAsyncData } from "@/lib/use-async-data";
@@ -119,6 +119,25 @@ export default function UbicacionesPage() {
           <span className="text-xs font-bold">Agregar</span>
         </button>
       </div>
+
+      {/*
+        Al final a propósito, separada de las ubicaciones reales de
+        arriba: no es un sitio donde algo espera una decisión, es el
+        registro de lo que ya se decidió descartar. Tampoco es
+        seleccionable en ningún selector de destino — rechazar sale del
+        inventario, no se reubica hacia aquí.
+      */}
+      <Link
+        href="/panel/inventario#rechazados"
+        className="mt-6 flex items-center gap-3 rounded border-2 border-dashed border-(--rule) bg-(--surface) p-4 hover:border-(--ink-2)"
+      >
+        <Ban size={24} className="shrink-0 text-(--muted)" aria-hidden="true" />
+        <div className="flex-1">
+          <p className="font-bold">Rechazados</p>
+          <p className="text-xs text-(--muted)">Lo que salió del inventario tras la revisión</p>
+        </div>
+        <ArrowRight size={18} className="shrink-0 text-(--muted)" aria-hidden="true" />
+      </Link>
 
       {adding ? (
         <LocationAddForm

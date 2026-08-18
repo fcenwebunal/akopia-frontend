@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, MapPin, Warehouse } from "lucide-react";
+import { ArrowRight, Ban, MapPin, Warehouse } from "lucide-react";
 import { callRoute, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, normalize } from "@/lib/catalog";
 import { loadLocations, locationLabel, type Location } from "@/lib/locations";
@@ -25,6 +25,17 @@ interface InventoryRow {
   };
 }
 
+interface RejectionMovement {
+  id: string;
+  quantity: number;
+  notes: string;
+  created: string;
+  expand?: {
+    product_id?: { name?: string };
+    unit_id?: { code?: string; name?: string };
+  };
+}
+
 /*
  * El inventario se organiza por ubicación, no en una tabla plana: es la
  * pregunta que se hace de pie en la bodega ("¿qué hay aquí?"), no
@@ -38,10 +49,57 @@ export default function InventarioPage() {
   const [groupId, setGroupId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [relocating, setRelocating] = useState<InventoryRow | null>(null);
+  const [rejecting, setRejecting] = useState<InventoryRow | null>(null);
   const [detail, setDetail] = useState<{ row: InventoryRow; location?: Location } | null>(null);
+  const [releasingId, setReleasingId] = useState<string | null>(null);
+  const [revisionError, setRevisionError] = useState<string | null>(null);
+
+  // Libera TODA la cuarentena del renglón de una vez, reutilizando la
+  // misma actualización que ya usa el panel de detalle por remesa
+  // (`donation_items.classification_status`) — solo que aquí se aplica
+  // a todas las remesas retenidas de este producto+ubicación, no a una
+  // por una. El destino sale solo: si la remesa no tenía ubicación,
+  // "liberar" la deja en `available_qty` sin ubicar — es decir, en Por
+  // Ubicar — que es justo lo que ya pasa hoy con estos renglones.
+  async function releaseRow(row: InventoryRow) {
+    setReleasingId(row.id);
+    setRevisionError(null);
+    try {
+      const locationFilter = row.location_id
+        ? `location_id = "${row.location_id}"`
+        : `location_id = ""`;
+      const items = await pb.collection("donation_items").getFullList<{ id: string; quantity: number }>({
+        filter: `product_id = "${row.product_id}" && ${locationFilter} && classification_status = "quarantine"`,
+      });
+
+      // Rechazar es una salida a nivel de `inventory` que a propósito no
+      // toca `donation_items` (ver utils/helpers.js#rejectQuarantine en
+      // el backend) — así que un rechazo parcial puede dejar la suma de
+      // las remesas por encima de lo que de verdad queda en revisión.
+      // Sin saber cuál remesa cargó con el rechazo, liberarlas todas a
+      // ciegas fallaría con un error de saldo que no explica qué hacer;
+      // mejor remitir al panel que sí distingue remesa por remesa.
+      const itemsTotal = items.reduce((sum, item) => sum + item.quantity, 0);
+      if (itemsTotal > row.quarantine_qty) {
+        setRevisionError(
+          "Las remesas de este renglón suman más de lo que queda en revisión — probablemente porque ya se rechazó parte por separado. Abre el producto y libera remesa por remesa desde ahí."
+        );
+        return;
+      }
+
+      for (const item of items) {
+        await pb.collection("donation_items").update(item.id, { classification_status: "available" });
+      }
+    } catch (err) {
+      setRevisionError(errorMessage(err));
+    } finally {
+      setReleasingId(null);
+      setVersion((v) => v + 1);
+    }
+  }
 
   const fetchData = useCallback(async () => {
-    const [catalog, locations, allLocations, page] = await Promise.all([
+    const [catalog, locations, allLocations, page, rejections] = await Promise.all([
       loadCatalog(),
       // Solo las activas — son las únicas que tiene sentido ofrecer como
       // destino al reubicar.
@@ -56,8 +114,18 @@ export default function InventarioPage() {
         sort: "-total_qty",
         expand: "product_id,unit_id",
       }),
+      // "Rechazados" no es una ubicación con saldo — es una salida
+      // definitiva (decisión explícita de Juan Manuel), así que lo que
+      // hay para ver aquí es el registro de qué se rechazó, no un
+      // stock. Se lee directo del libro (`inventory_movements`), igual
+      // que ya hace Historial con `audit_log`.
+      pb.collection("inventory_movements").getList<RejectionMovement>(1, 50, {
+        filter: 'movement_type = "rechazo"',
+        sort: "-created",
+        expand: "product_id,unit_id",
+      }),
     ]);
-    return { catalog, locations, allLocations, rows: page, version };
+    return { catalog, locations, allLocations, rows: page, rejections: rejections.items, version };
   }, [version]);
 
   const { data, error, reload } = useAsyncData(fetchData);
@@ -233,13 +301,16 @@ export default function InventarioPage() {
               <p className="mt-0.5 text-xs text-(--muted)">
                 Retenidos hasta que se decida si pasan a disponible o se rechazan. No se pueden reservar mientras estén aquí.
               </p>
+              {revisionError ? (
+                <p role="alert" className="mt-2 text-sm text-unal-red">{revisionError}</p>
+              ) : null}
               <ul className="mt-3 divide-y divide-(--rule)">
                 {inRevision.map((row) => (
-                  <li key={row.id} className="flex items-center gap-3 py-3">
+                  <li key={row.id} className="flex flex-wrap items-center gap-3 py-3">
                     <button
                       type="button"
                       onClick={() => setDetail({ row, location: locationById.get(row.location_id) })}
-                      className="flex-1 text-left"
+                      className="min-w-0 flex-1 text-left"
                     >
                       <span className="font-bold">{row.expand?.product_id?.name ?? "—"}</span>
                       <span className="ml-2 text-sm text-unal-red">
@@ -248,6 +319,23 @@ export default function InventarioPage() {
                       <span className="block text-xs text-(--muted)">
                         {locationLabel(locationById.get(row.location_id))}
                       </span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={releasingId === row.id}
+                      onClick={() => releaseRow(row)}
+                      className="flex items-center gap-1.5 rounded bg-unal-green-dark px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+                    >
+                      {releasingId === row.id ? <Spinner /> : null}
+                      Liberar a disponible
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRejecting(row)}
+                      className="flex items-center gap-1.5 rounded border border-unal-red px-3 py-1.5 text-xs font-bold text-unal-red hover:bg-(--surface-2)"
+                    >
+                      <Ban size={13} strokeWidth={2.5} aria-hidden="true" />
+                      Rechazar
                     </button>
                   </li>
                 ))}
@@ -303,6 +391,43 @@ export default function InventarioPage() {
         </>
       )}
 
+      {data.rejections.length > 0 ? (
+        // Fuera del bloque que depende de `filteredRows`: los filtros de
+        // arriba (grupo, categoría, búsqueda) son para el catálogo que
+        // hay que ubicar, no para un libro de qué ya se descartó. Va al
+        // final a propósito — es lo último que alguien necesita ver de
+        // pie en la bodega.
+        <section id="rechazados" className="mt-6 rounded border border-(--rule) bg-(--surface) p-4">
+          <h2 className="text-sm font-bold text-(--ink-2)">Rechazados</h2>
+          <p className="mt-0.5 text-xs text-(--muted)">
+            Salió del inventario tras la revisión — no es un saldo, es el registro de qué se
+            descartó y por qué.
+          </p>
+          <ul className="mt-3 divide-y divide-(--rule)">
+            {data.rejections.map((movement) => (
+              <li key={movement.id} className="py-2.5">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="font-medium">{movement.expand?.product_id?.name ?? "—"}</span>
+                  <span className="text-sm text-(--muted)">
+                    {movement.quantity} {movement.expand?.unit_id?.code ?? movement.expand?.unit_id?.name ?? ""}
+                  </span>
+                  <span className="ml-auto text-xs text-(--muted)">
+                    {new Date(movement.created).toLocaleDateString("es-CO", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+                {movement.notes ? (
+                  <p className="mt-0.5 text-xs text-(--muted)">{movement.notes}</p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {relocating ? (
         <RelocateDialog
           row={relocating}
@@ -310,6 +435,17 @@ export default function InventarioPage() {
           onCancel={() => setRelocating(null)}
           onDone={() => {
             setRelocating(null);
+            setVersion((v) => v + 1);
+          }}
+        />
+      ) : null}
+
+      {rejecting ? (
+        <RejectDialog
+          row={rejecting}
+          onCancel={() => setRejecting(null)}
+          onDone={() => {
+            setRejecting(null);
             setVersion((v) => v + 1);
           }}
         />
@@ -466,6 +602,110 @@ function RelocateDialog({
           >
             {saving ? <Spinner /> : null}
             {saving ? "Moviendo…" : "Reubicar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Salida definitiva, sin donation_item de por medio (ver
+// utils/helpers.js#rejectQuarantine en el backend) — por eso pide un
+// motivo: es lo único que va a quedar para explicar después por qué
+// bajó ese saldo, ya que no hay ningún "deshacer".
+function RejectDialog({
+  row,
+  onCancel,
+  onDone,
+}: {
+  row: InventoryRow;
+  onCancel: () => void;
+  onDone: () => void;
+}) {
+  const [quantity, setQuantity] = useState(row.quarantine_qty);
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function reject() {
+    setError(null);
+
+    if (!(quantity > 0) || quantity > row.quarantine_qty) {
+      setError(`La cantidad debe estar entre 1 y ${row.quarantine_qty}.`);
+      return;
+    }
+    if (!reason.trim()) {
+      setError("Escribe el motivo del rechazo.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await callRoute(`/api/inventory/${row.id}/reject`, {
+        method: "POST",
+        body: { quantity, notes: reason },
+      });
+      onDone();
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-30 flex items-end bg-black/40 sm:items-center sm:justify-center">
+      <div className="w-full rounded-t-lg bg-(--surface) p-5 sm:max-w-sm sm:rounded-lg">
+        <h2 className="text-lg font-bold">Rechazar {row.expand?.product_id?.name}</h2>
+        <p className="text-sm text-(--muted)">
+          {row.quarantine_qty} en revisión · esto da de baja el inventario, no tiene deshacer
+        </p>
+
+        <div className="mt-4">
+          <label htmlFor="reject-cant" className="mb-1 block text-sm font-bold">Cantidad</label>
+          <input
+            id="reject-cant"
+            type="number"
+            min={0.01}
+            max={row.quarantine_qty}
+            step="any"
+            value={quantity}
+            onChange={(e) => setQuantity(Number(e.target.value))}
+            className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+          />
+        </div>
+
+        <div className="mt-4">
+          <label htmlFor="reject-motivo" className="mb-1 block text-sm font-bold">
+            Motivo <span className="text-unal-red">*</span>
+          </label>
+          <input
+            id="reject-motivo"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Ej.: vencido, dañado, no apto para consumo"
+            className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+          />
+        </div>
+
+        {error ? (
+          <p role="alert" className="mt-4 rounded border-l-4 border-unal-red bg-(--surface-2) px-4 py-3 text-sm">
+            {error}
+          </p>
+        ) : null}
+
+        <div className="mt-5 flex gap-3">
+          <button type="button" onClick={onCancel} className="rounded border border-(--rule) px-4 py-3 font-bold">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={reject}
+            className="flex flex-1 items-center justify-center gap-2 rounded bg-unal-red px-4 py-3 font-bold text-white disabled:opacity-50"
+          >
+            {saving ? <Spinner /> : null}
+            {saving ? "Rechazando…" : "Confirmar rechazo"}
           </button>
         </div>
       </div>
