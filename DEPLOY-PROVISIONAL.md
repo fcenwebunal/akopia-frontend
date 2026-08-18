@@ -27,22 +27,32 @@ Si no tienes `pwsh` (PowerShell 7), el mismo comando funciona igual en Windows P
 iwr https://fly.io/install.ps1 -useb | iex
 ```
 
-Cierra y vuelve a abrir la terminal para que `fly` quede en el `PATH`.
+Cierra y vuelve a abrir la terminal para que el `PATH` nuevo quede activo.
+
+> ⚠️ **El comando se llama `flyctl`, no `fly`.** El instalador deja el binario como `flyctl.exe` en `%USERPROFILE%\.fly\bin` — sin ningún `fly.exe` al lado, aunque la documentación de Fly hable de "el comando fly" en prosa. Si escribes `fly auth signup` te va a dar "no se reconoce como cmdlet", incluso con el `PATH` bien puesto. Todos los comandos de esta guía usan `flyctl` a propósito, por esto mismo — confirmado en una instalación real, no asumido.
+
+Si después de abrir una ventana nueva `flyctl` sigue sin reconocerse, comprueba con:
+
+```powershell
+Get-Command flyctl
+```
+
+Si tampoco lo encuentra ahí, es que la ventana en la que probaste no heredó el `PATH` actualizado (pasa seguido con la terminal integrada de un editor que ya estaba abierto antes de instalar) — cierra **el programa entero** (no solo la pestaña de la terminal) y ábrelo de nuevo, o usa una ventana de PowerShell abierta directo desde el menú de inicio. Como último recurso, siempre puedes llamarlo por su ruta completa sin depender del `PATH`: `& "$env:USERPROFILE\.fly\bin\flyctl.exe" auth signup`.
 
 ### 2. Crear cuenta e iniciar sesión
 
 ```powershell
-fly auth signup
+flyctl auth signup
 ```
 
-(o `fly auth login` si ya tienes cuenta). Fly pide una tarjeta al activar la cuenta, incluso para el uso gratuito — es su verificación anti-abuso. Una máquina pequeña como esta debería mantenerse dentro del uso gratuito, pero confírmalo en su panel de facturación una vez dentro; los precios no los fija este documento.
+(o `flyctl auth login` si ya tienes cuenta). Fly pide una tarjeta al activar la cuenta, incluso para el uso gratuito — es su verificación anti-abuso. Una máquina pequeña como esta debería mantenerse dentro del uso gratuito, pero confírmalo en su panel de facturación una vez dentro; los precios no los fija este documento.
 
 ### 3. Lanzar la app (sin desplegar todavía)
 
 Desde `akopia-backend/`:
 
 ```powershell
-fly launch --no-deploy
+flyctl launch --no-deploy
 ```
 
 Va a preguntar:
@@ -56,29 +66,29 @@ Esto reescribe `fly.toml` con el nombre y región reales. Revisa que conserve: u
 ### 4. Crear el volumen persistente
 
 ```powershell
-fly volumes create akopia_data --region bog --size 1
+flyctl volumes create akopia_data --region bog --size 1
 ```
 
-(`--region` con la misma que confirmaste en el paso 3; `--size 1` es 1 GB, de sobra para empezar — se amplía después con `fly volumes extend` si hace falta, sin perder datos).
+(`--region` con la misma que confirmaste en el paso 3; `--size 1` es 1 GB, de sobra para empezar — se amplía después con `flyctl volumes extend` si hace falta, sin perder datos).
 
 ### 5. Configurar la contraseña del admin inicial
 
 Es la misma variable que ya conoces de `.env` local — sin ella, la migración `023` bloquea el arranque a propósito:
 
 ```powershell
-fly secrets set AKOPIA_INITIAL_ADMIN_PASSWORD="la-misma-que-tienes-en-tu-.env-local-o-una-nueva"
+flyctl secrets set AKOPIA_INITIAL_ADMIN_PASSWORD="la-misma-que-tienes-en-tu-.env-local-o-una-nueva"
 ```
 
 ### 6. Desplegar
 
 ```powershell
-fly deploy
+flyctl deploy
 ```
 
 ### 7. Verificar
 
 ```powershell
-fly status
+flyctl status
 ```
 
 Y en el navegador: `https://<tu-app>.fly.dev/api/health` debe responder `{"message":"API is healthy."...}`.
@@ -88,7 +98,7 @@ Y en el navegador: `https://<tu-app>.fly.dev/api/health` debe responder `{"messa
 Este frontend necesita un superusuario real de PocketBase para `/api/auth/firebase` — el mismo mecanismo que ya usas en local, reutilizando el correo `admin@akopia.org` (ver la entrada del 18 de agosto en el `CLAUDE.md` de este repo sobre esta desviación deliberada).
 
 ```powershell
-fly ssh console
+flyctl ssh console
 ```
 
 Ya dentro del contenedor:
