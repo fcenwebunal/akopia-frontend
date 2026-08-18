@@ -89,7 +89,7 @@ export default function DespachosPage() {
                   className="block rounded border border-(--rule) bg-(--surface) p-4 hover:border-unal-green"
                 >
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="font-bold">{dispatch.destination}</span>
+                    <span className="font-bold text-unal-green-dark">{dispatch.destination}</span>
                     <span
                       className={`rounded px-2 py-0.5 text-xs font-bold ${REQUEST_STATUS_STYLES[status] ?? "bg-(--surface-2) text-(--ink-2)"}`}
                     >

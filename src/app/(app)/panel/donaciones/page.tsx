@@ -83,7 +83,7 @@ export default function DonacionesPage() {
                 className="block rounded border border-(--rule) bg-(--surface) p-4 hover:border-unal-green"
               >
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="font-bold">{donation.donor_name}</span>
+                  <span className="font-bold text-unal-green-dark">{donation.donor_name}</span>
                   <span className="rounded bg-(--surface-2) px-2 py-0.5 text-xs text-(--muted)">
                     {DONOR_TYPES[donation.donor_type] ?? donation.donor_type}
                   </span>

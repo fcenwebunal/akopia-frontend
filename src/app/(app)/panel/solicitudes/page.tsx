@@ -112,7 +112,7 @@ export default function SolicitudesPage() {
                 className="block rounded border border-(--rule) bg-(--surface) p-4 hover:border-unal-green"
               >
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="font-bold">{request.requester_name}</span>
+                  <span className="font-bold text-unal-green-dark">{request.requester_name}</span>
                   <span
                     className={`rounded px-2 py-0.5 text-xs font-bold ${PRIORITY_STYLES[request.priority]}`}
                   >
