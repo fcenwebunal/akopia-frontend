@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback } from "react";
 import { pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
+import { LoadingLine } from "@/components/ui/spinner";
 
 interface Dispatch {
   id: string;
@@ -63,7 +64,9 @@ export default function DespachosPage() {
       ) : null}
 
       {dispatches === null && !error ? (
-        <p className="mt-6 text-(--muted)">Cargando…</p>
+        <div className="mt-6">
+          <LoadingLine />
+        </div>
       ) : null}
 
       {dispatches !== null && dispatches.length === 0 ? (

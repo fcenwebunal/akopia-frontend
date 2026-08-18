@@ -6,6 +6,7 @@ import { currentUser, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
 import { ProductPicker } from "@/components/app/product-picker";
+import { LoadingLine, Spinner } from "@/components/ui/spinner";
 
 const DONOR_TYPES = [
   { value: "individual", label: "Persona" },
@@ -164,7 +165,7 @@ export default function NuevaDonacionPage() {
   }
 
   if (!catalog) {
-    return <p className="text-(--muted)">Cargando catálogo…</p>;
+    return <LoadingLine label="Cargando catálogo…" />;
   }
 
   return (
@@ -313,7 +314,14 @@ export default function NuevaDonacionPage() {
             disabled={saving || lines.length === 0}
             className="flex-1 rounded bg-unal-green-dark px-6 py-3 font-bold text-white disabled:opacity-50"
           >
-            {saving ? "Guardando…" : `Guardar remesa (${lines.length})`}
+            {saving ? (
+              <>
+                <Spinner className="mr-2" />
+                Guardando…
+              </>
+            ) : (
+              `Guardar remesa (${lines.length})`
+            )}
           </button>
         </div>
       </div>

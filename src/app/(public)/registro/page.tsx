@@ -10,6 +10,7 @@ import {
 } from "@/lib/firebase";
 import { errorMessage, establishFirebaseSession } from "@/lib/pb";
 import { GoogleButton } from "@/components/public/google-button";
+import { Spinner } from "@/components/ui/spinner";
 
 /*
  * El registro es real, pero no da acceso inmediato: crea la cuenta en
@@ -83,6 +84,7 @@ export default function RegistroPage() {
         <GoogleButton
           label={googlePending ? "Conectando…" : "Continuar con Google"}
           disabled={googlePending || pending}
+          loading={googlePending}
           onClick={handleGoogle}
         />
       </div>
@@ -137,8 +139,9 @@ export default function RegistroPage() {
         <button
           type="submit"
           disabled={pending || googlePending}
-          className="w-full rounded bg-unal-green-dark px-6 py-3 font-bold text-white hover:bg-unal-green disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded bg-unal-green-dark px-6 py-3 font-bold text-white hover:bg-unal-green disabled:opacity-60"
         >
+          {pending ? <Spinner /> : null}
           {pending ? "Creando cuenta…" : "Crear cuenta"}
         </button>
       </form>

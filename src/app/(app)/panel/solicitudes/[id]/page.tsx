@@ -4,6 +4,7 @@ import { use, useCallback, useState } from "react";
 import Link from "next/link";
 import { callRoute, currentUser, errorMessage, pb, RouteError } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
+import { LoadingLine, Spinner } from "@/components/ui/spinner";
 
 interface RequestItem {
   id: string;
@@ -55,6 +56,9 @@ export default function SolicitudDetallePage({
 
   const [version, setVersion] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [busyAction, setBusyAction] = useState<
+    "availability" | "approve" | "reject" | "cancel" | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const [missing, setMissing] = useState<
     { product: string; requested: number; available: number; shortage: number }[]
@@ -77,6 +81,7 @@ export default function SolicitudDetallePage({
 
   async function checkAvailability() {
     setBusy(true);
+    setBusyAction("availability");
     setError(null);
     try {
       const result = await callRoute<{ items: AvailabilityRow[] }>(
@@ -87,11 +92,13 @@ export default function SolicitudDetallePage({
       setError(errorMessage(err));
     } finally {
       setBusy(false);
+      setBusyAction(null);
     }
   }
 
   async function approve() {
     setBusy(true);
+    setBusyAction("approve");
     setError(null);
     setMissing([]);
     try {
@@ -107,6 +114,7 @@ export default function SolicitudDetallePage({
       }
     } finally {
       setBusy(false);
+      setBusyAction(null);
     }
   }
 
@@ -116,6 +124,7 @@ export default function SolicitudDetallePage({
       return;
     }
     setBusy(true);
+    setBusyAction("reject");
     setError(null);
     try {
       await callRoute(`/api/requests/${id}/reject`, {
@@ -128,11 +137,13 @@ export default function SolicitudDetallePage({
       setError(errorMessage(err));
     } finally {
       setBusy(false);
+      setBusyAction(null);
     }
   }
 
   async function cancel() {
     setBusy(true);
+    setBusyAction("cancel");
     setError(null);
     try {
       await callRoute(`/api/requests/${id}/cancel`, {
@@ -144,6 +155,7 @@ export default function SolicitudDetallePage({
       setError(errorMessage(err));
     } finally {
       setBusy(false);
+      setBusyAction(null);
     }
   }
 
@@ -156,7 +168,7 @@ export default function SolicitudDetallePage({
   }
 
   if (!data) {
-    return <p className="text-(--muted)">Cargando…</p>;
+    return <LoadingLine />;
   }
 
   const { request, items } = data;
@@ -251,8 +263,9 @@ export default function SolicitudDetallePage({
             type="button"
             disabled={busy}
             onClick={checkAvailability}
-            className="rounded border border-(--rule) px-4 py-2.5 text-sm font-bold disabled:opacity-50"
+            className="flex items-center gap-2 rounded border border-(--rule) px-4 py-2.5 text-sm font-bold disabled:opacity-50"
           >
+            {busyAction === "availability" ? <Spinner /> : null}
             Comprobar disponibilidad
           </button>
         ) : null}
@@ -262,8 +275,9 @@ export default function SolicitudDetallePage({
             type="button"
             disabled={busy}
             onClick={approve}
-            className="rounded bg-unal-green-dark px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+            className="flex items-center gap-2 rounded bg-unal-green-dark px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
           >
+            {busyAction === "approve" ? <Spinner /> : null}
             Aprobar
           </button>
         ) : null}
@@ -284,8 +298,9 @@ export default function SolicitudDetallePage({
             type="button"
             disabled={busy}
             onClick={cancel}
-            className="rounded border border-(--rule) px-4 py-2.5 text-sm font-bold disabled:opacity-50"
+            className="flex items-center gap-2 rounded border border-(--rule) px-4 py-2.5 text-sm font-bold disabled:opacity-50"
           >
+            {busyAction === "cancel" ? <Spinner /> : null}
             Cancelar solicitud
           </button>
         ) : null}
@@ -312,8 +327,9 @@ export default function SolicitudDetallePage({
             type="button"
             disabled={busy}
             onClick={reject}
-            className="mt-3 rounded bg-unal-red px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+            className="mt-3 flex items-center gap-2 rounded bg-unal-red px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
           >
+            {busyAction === "reject" ? <Spinner /> : null}
             Confirmar rechazo
           </button>
         </div>

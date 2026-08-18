@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { pb } from "@/lib/pb";
 import { loadCatalog, normalize } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
+import { LoadingLine } from "@/components/ui/spinner";
 
 interface Location {
   zone?: string;
@@ -132,7 +133,9 @@ export default function InventarioPage() {
       ) : null}
 
       {data === null && !error ? (
-        <p className="mt-6 text-(--muted)">Cargando…</p>
+        <div className="mt-6">
+          <LoadingLine />
+        </div>
       ) : null}
 
       {data !== null ? (

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { firebaseErrorMessage, loginWithFirebase, signInWithGoogle } from "@/lib/firebase";
 import { errorMessage, establishFirebaseSession, pb } from "@/lib/pb";
 import { GoogleButton } from "@/components/public/google-button";
+import { Spinner } from "@/components/ui/spinner";
 
 /*
  * Un solo formulario para las dos formas de entrar que puede tener una
@@ -88,6 +89,7 @@ export default function LoginPage() {
         <GoogleButton
           label={googlePending ? "Conectando…" : "Continuar con Google"}
           disabled={googlePending || pending}
+          loading={googlePending}
           onClick={handleGoogle}
         />
       </div>
@@ -126,8 +128,9 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={pending || googlePending}
-          className="w-full rounded bg-unal-green-dark px-6 py-3 font-bold text-white hover:bg-unal-green disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded bg-unal-green-dark px-6 py-3 font-bold text-white hover:bg-unal-green disabled:opacity-60"
         >
+          {pending ? <Spinner /> : null}
           {pending ? "Entrando…" : "Entrar"}
         </button>
       </form>

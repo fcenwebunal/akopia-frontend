@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { currentUser, pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
+import { LoadingLine } from "@/components/ui/spinner";
 
 type Action = "create" | "update" | "delete" | "status_change" | "login" | "logout";
 
@@ -95,7 +96,7 @@ export default function HistorialPage() {
   }
 
   if (!entries) {
-    return <p className="text-(--muted)">Cargando…</p>;
+    return <LoadingLine />;
   }
 
   return (

@@ -4,6 +4,7 @@ import { use, useCallback, useState } from "react";
 import Link from "next/link";
 import { callRoute, errorMessage, pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
+import { LoadingLine, Spinner } from "@/components/ui/spinner";
 
 interface Dispatch {
   id: string;
@@ -126,7 +127,7 @@ export default function DespachoDetallePage({
   }
 
   if (!data) {
-    return <p className="text-(--muted)">Cargando…</p>;
+    return <LoadingLine />;
   }
 
   const { dispatch, delivery } = data;
@@ -301,7 +302,14 @@ export default function DespachoDetallePage({
             onClick={confirmDelivery}
             className="mt-4 rounded bg-unal-green-dark px-6 py-3 font-bold text-white disabled:opacity-50"
           >
-            {saving ? "Guardando…" : "Confirmar entrega"}
+            {saving ? (
+              <>
+                <Spinner className="mr-2" />
+                Guardando…
+              </>
+            ) : (
+              "Confirmar entrega"
+            )}
           </button>
         </section>
       )}

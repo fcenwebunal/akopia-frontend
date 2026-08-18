@@ -4,6 +4,7 @@ import { use, useCallback, useState } from "react";
 import Link from "next/link";
 import { errorMessage, pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
+import { LoadingLine, Spinner } from "@/components/ui/spinner";
 
 interface Item {
   id: string;
@@ -53,6 +54,7 @@ export default function DonacionDetallePage({
 }) {
   const { id } = use(params);
   const [busy, setBusy] = useState<string | null>(null);
+  const [busyStatus, setBusyStatus] = useState<Item["classification_status"] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
 
@@ -70,6 +72,7 @@ export default function DonacionDetallePage({
 
   async function classify(item: Item, status: Item["classification_status"]) {
     setBusy(item.id);
+    setBusyStatus(status);
     setError(null);
 
     try {
@@ -81,6 +84,7 @@ export default function DonacionDetallePage({
       setError(errorMessage(err));
     } finally {
       setBusy(null);
+      setBusyStatus(null);
     }
   }
 
@@ -93,7 +97,7 @@ export default function DonacionDetallePage({
   }
 
   if (!data) {
-    return <p className="text-(--muted)">Cargando…</p>;
+    return <LoadingLine />;
   }
 
   const pending = data.items.filter(
@@ -177,7 +181,16 @@ export default function DonacionDetallePage({
                     onClick={() => classify(item, "available")}
                     className="rounded bg-unal-green-dark px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
                   >
-                    {status === "quarantine" ? "Liberar a disponible" : "Marcar apto"}
+                    {busy === item.id && busyStatus === "available" ? (
+                      <>
+                        <Spinner className="mr-2" />
+                        Guardando…
+                      </>
+                    ) : status === "quarantine" ? (
+                      "Liberar a disponible"
+                    ) : (
+                      "Marcar apto"
+                    )}
                   </button>
                 ) : null}
 
@@ -188,7 +201,14 @@ export default function DonacionDetallePage({
                     onClick={() => classify(item, "quarantine")}
                     className="rounded border border-unal-orange px-4 py-2 text-sm font-bold text-unal-orange disabled:opacity-50"
                   >
-                    A cuarentena
+                    {busy === item.id && busyStatus === "quarantine" ? (
+                      <>
+                        <Spinner className="mr-2" />
+                        Guardando…
+                      </>
+                    ) : (
+                      "A cuarentena"
+                    )}
                   </button>
                 ) : null}
 
@@ -199,7 +219,14 @@ export default function DonacionDetallePage({
                     onClick={() => classify(item, "rejected")}
                     className="rounded border border-(--rule) px-4 py-2 text-sm font-bold text-unal-red disabled:opacity-50"
                   >
-                    Rechazar
+                    {busy === item.id && busyStatus === "rejected" ? (
+                      <>
+                        <Spinner className="mr-2" />
+                        Guardando…
+                      </>
+                    ) : (
+                      "Rechazar"
+                    )}
                   </button>
                 ) : null}
               </div>

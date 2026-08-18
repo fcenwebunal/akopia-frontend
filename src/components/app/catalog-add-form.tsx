@@ -4,6 +4,7 @@ import { useState } from "react";
 import { errorMessage, pb } from "@/lib/pb";
 import type { Catalog, Category, Group, Product, Unit } from "@/lib/catalog";
 import { findDuplicateByName } from "@/lib/catalog";
+import { Spinner } from "@/components/ui/spinner";
 
 type AddKind = "group" | "category" | "product";
 
@@ -297,8 +298,9 @@ export function CatalogAddForm({
             type="button"
             disabled={saving}
             onClick={save}
-            className="flex-1 rounded bg-unal-green-dark px-4 py-3 font-bold text-white disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded bg-unal-green-dark px-4 py-3 font-bold text-white disabled:opacity-50"
           >
+            {saving ? <Spinner /> : null}
             {saving ? "Creando…" : "Crear"}
           </button>
         </div>

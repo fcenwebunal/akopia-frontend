@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { currentUser, errorMessage, pb, type UserRole } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
+import { LoadingLine, Spinner } from "@/components/ui/spinner";
 
 interface ManagedUser {
   id: string;
@@ -82,7 +83,7 @@ export default function UsuariosPage() {
   }
 
   if (!users) {
-    return <p className="text-(--muted)">Cargando…</p>;
+    return <LoadingLine />;
   }
 
   const pending = users.filter((user) => !user.active);
@@ -144,8 +145,9 @@ export default function UsuariosPage() {
                   type="button"
                   disabled={busyId === user.id}
                   onClick={() => setActive(user, true)}
-                  className="rounded bg-unal-green-dark px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+                  className="flex items-center gap-2 rounded bg-unal-green-dark px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
                 >
+                  {busyId === user.id ? <Spinner /> : null}
                   Activar
                 </button>
               </li>
@@ -181,8 +183,9 @@ export default function UsuariosPage() {
                 type="button"
                 disabled={busyId === user.id || user.id === admin?.id}
                 onClick={() => setActive(user, false)}
-                className="rounded border border-(--rule) px-3 py-1.5 text-sm font-bold text-unal-red disabled:opacity-50"
+                className="flex items-center gap-2 rounded border border-(--rule) px-3 py-1.5 text-sm font-bold text-unal-red disabled:opacity-50"
               >
+                {busyId === user.id ? <Spinner /> : null}
                 Desactivar
               </button>
             </li>
@@ -295,8 +298,9 @@ function CreateUserForm({
         type="button"
         disabled={saving}
         onClick={create}
-        className="mt-4 rounded bg-unal-green-dark px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+        className="mt-4 flex items-center gap-2 rounded bg-unal-green-dark px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
       >
+        {saving ? <Spinner /> : null}
         {saving ? "Creando…" : "Crear cuenta activa"}
       </button>
     </div>

@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { currentUser, errorMessage, pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
+import { LoadingLine, Spinner } from "@/components/ui/spinner";
 
 interface ApprovedRequest {
   id: string;
@@ -98,7 +99,7 @@ export default function NuevoDespachoPage() {
   }
 
   if (!requests) {
-    return <p className="text-(--muted)">Cargando…</p>;
+    return <LoadingLine />;
   }
 
   return (
@@ -233,7 +234,14 @@ export default function NuevoDespachoPage() {
           disabled={saving || !selected}
           className="flex-1 rounded bg-unal-green-dark px-6 py-3 font-bold text-white disabled:opacity-50"
         >
-          {saving ? "Guardando…" : "Guardar despacho"}
+          {saving ? (
+            <>
+              <Spinner className="mr-2" />
+              Guardando…
+            </>
+          ) : (
+            "Guardar despacho"
+          )}
         </button>
       </div>
     </div>
