@@ -276,3 +276,15 @@ Cuatro pedidos puntuales de diseño, más una integración nueva.
 **Resultado, verificado contra PocketBase y Cloudinary reales, no simulado:** 9 de 11 grupos y 36 de 55 categorías quedaron con foto — 45 de 66 en total. Las 21 restantes no tuvieron ningún candidato que pasara el filtro (mejor ninguna foto que una mal puesta) y quedan para completarse a mano desde el ícono de cámara, o ajustando su búsqueda en `catalog-queries.mjs` y corriendo `node scripts/seed-catalog-photos.mjs --only=categories` de nuevo — el script no repite lo que ya tiene foto salvo que se le pase `--overwrite`.
 
 Sin foto todavía: Despensas Armadas, Mascotas, Aceites y Vinagres, Alimento para Mascotas, Analgésicos, Antigripales, Bolsas de Agua, Calcetines, Cloro y Desinfectantes, Escobas y Trapos, Especias y Condimentos, Leche y Lácteos, Láminas y Estructuras, Mantas y Abarrotas, Material de Curación, Pantalones, Pañales, Protección Solar, Ropa Interior, Toallas Femeninas, Toallas Húmedas.
+
+### 2026-08-18 (noche) — Alta de grupos, categorías y productos desde el explorador
+
+Pedido explícito: que un admin pueda ampliar el catálogo (grupo, categoría o producto) sin pasar por `/_/`. Se resolvió con un único formulario en vez de tres, porque las tres altas comparten forma: nombre, padre fijado por el contexto en que se abrió, y algunos campos propios del nivel.
+
+- **`CatalogAddForm`** (`src/components/app/catalog-add-form.tsx`) — se abre desde una casilla "Agregar" al final de cada cuadrícula del explorador jerárquico en `ProductPicker` (solo visible para `isAdmin`), fijando el grupo o la categoría en la que se estaba parado. Campos por nivel: producto pide unidad (obligatoria) y los tres interruptores `requires_expiry/batch/quarantine`; categoría ofrece una unidad habitual, opcional, solo para sugerir; grupo solo pide nombre y descripción.
+- **Dos capas contra duplicados:** `findDuplicateByName()` en `catalog.ts` avisa en el propio formulario, sin red, si el nombre ya existe entre hermanos (mismo grupo para categorías, misma categoría para productos); si dos administradores chocan a la vez, el índice único del backend (migraciones `002`-`004`) lo bloquea igual, y ese `validation_not_unique` también se traduce aquí en vez de mostrarse crudo.
+- **Lo creado aparece al instante sin recargar el catálogo completo** (189 registros): `ProductPicker` guarda lo nuevo en tres listas propias (`addedGroups/Categories/Products`) y las combina con `catalog` al renderizar.
+- **`default_unit_id` en `categories`** (migración `032` del backend): sugiere la unidad al crear un producto dentro de esa categoría — no la impone, el selector queda editable.
+- **No hay borrado, solo `active`** (ya documentado en el catálogo): coherente con que tampoco hay botón de eliminar en este formulario.
+
+Verificado de punta a punta contra el servidor real, no simulado: grupo → categoría (con unidad sugerida) → producto creados con la API en ejecución, el índice único devolvió 400 en un nombre repetido, y `npx tsc --noEmit` limpio. Los tres registros de prueba quedaron desactivados (`active: false`), no borrados, porque `deleteRule` es intencionalmente nulo.

@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Catalog, Category, Group, Product } from "@/lib/catalog";
 import { searchProducts, unitLabel } from "@/lib/catalog";
 import { pb } from "@/lib/pb";
+import { CatalogAddForm } from "./catalog-add-form";
 import { PhotoTile } from "./photo-tile";
 
 /*
@@ -42,22 +43,40 @@ export function ProductPicker({
   // casilla cambie al instante sin recargar todo el catálogo.
   const [photoOverrides, setPhotoOverrides] = useState<Record<string, string>>({});
 
+  // Lo que se crea desde aquí se guarda aparte y se combina con `catalog`
+  // al renderizar, para que aparezca al instante sin recargar el
+  // catálogo entero (189 registros) por un solo elemento nuevo.
+  const [addedGroups, setAddedGroups] = useState<Group[]>([]);
+  const [addedCategories, setAddedCategories] = useState<Category[]>([]);
+  const [addedProducts, setAddedProducts] = useState<Product[]>([]);
+  const [addingKind, setAddingKind] = useState<"group" | "category" | "product" | null>(null);
+
+  const effectiveCatalog = useMemo<Catalog>(
+    () => ({
+      groups: [...catalog.groups, ...addedGroups],
+      categories: [...catalog.categories, ...addedCategories],
+      products: [...catalog.products, ...addedProducts],
+      units: catalog.units,
+    }),
+    [catalog, addedGroups, addedCategories, addedProducts]
+  );
+
   const results = useMemo(
-    () => searchProducts(catalog, query),
-    [catalog, query]
+    () => searchProducts(effectiveCatalog, query),
+    [effectiveCatalog, query]
   );
 
   const browsing = groupId !== null;
   const searching = query.trim().length >= 2;
 
   const categories = useMemo(
-    () => catalog.categories.filter((category) => category.group_id === groupId),
-    [catalog.categories, groupId]
+    () => effectiveCatalog.categories.filter((category) => category.group_id === groupId),
+    [effectiveCatalog.categories, groupId]
   );
 
   const products = useMemo(
-    () => catalog.products.filter((product) => product.category_id === categoryId),
-    [catalog.products, categoryId]
+    () => effectiveCatalog.products.filter((product) => product.category_id === categoryId),
+    [effectiveCatalog.products, categoryId]
   );
 
   async function savePhoto(
@@ -93,7 +112,7 @@ export function ProductPicker({
 
       {searching ? (
         <ProductGrid
-          catalog={catalog}
+          catalog={effectiveCatalog}
           products={results}
           photoOverrides={photoOverrides}
           isAdmin={isAdmin}
@@ -116,7 +135,7 @@ export function ProductPicker({
               <PhotoTile
                 key={product.id}
                 label={product.name}
-                sublabel={unitLabel(catalog, product.default_unit_id)}
+                sublabel={unitLabel(effectiveCatalog, product.default_unit_id)}
                 photoUrl={photoOverrides[product.id] ?? product.photo_url}
                 recordId={product.id}
                 kind="products"
@@ -136,21 +155,22 @@ export function ProductPicker({
                 Explorar por categoría
               </h3>
               <TileGrid<Group>
-                items={catalog.groups}
+                items={effectiveCatalog.groups}
                 photoOverrides={photoOverrides}
                 isAdmin={isAdmin}
                 kind="groups"
                 onUpload={(id, url) => savePhoto("groups", id, url)}
                 disabledIf={(group) =>
-                  catalog.categories.every((category) => category.group_id !== group.id)
+                  effectiveCatalog.categories.every((category) => category.group_id !== group.id)
                 }
                 sublabelFor={(group) => {
-                  const count = catalog.categories.filter(
+                  const count = effectiveCatalog.categories.filter(
                     (category) => category.group_id === group.id
                   ).length;
                   return count === 0 ? "Vacío" : `${count} categorías`;
                 }}
                 onSelect={(group) => setGroupId(group.id)}
+                onAddNew={isAdmin ? () => setAddingKind("group") : undefined}
               />
             </>
           ) : (
@@ -178,21 +198,44 @@ export function ProductPicker({
                   kind="categories"
                   onUpload={(id, url) => savePhoto("categories", id, url)}
                   onSelect={(category) => setCategoryId(category.id)}
+                  onAddNew={isAdmin ? () => setAddingKind("category") : undefined}
                 />
               ) : (
                 <ProductGrid
-                  catalog={catalog}
+                  catalog={effectiveCatalog}
                   products={products}
                   photoOverrides={photoOverrides}
                   isAdmin={isAdmin}
                   onUpload={(id, url) => savePhoto("products", id, url)}
                   empty="Esta categoría no tiene productos."
                   onSelect={onSelect}
+                  onAddNew={isAdmin ? () => setAddingKind("product") : undefined}
                 />
               )}
             </>
           )}
         </section>
+      ) : null}
+
+      {addingKind ? (
+        <CatalogAddForm
+          kind={addingKind}
+          catalog={effectiveCatalog}
+          groupId={groupId ?? undefined}
+          categoryId={categoryId ?? undefined}
+          onCancel={() => setAddingKind(null)}
+          onCreated={(record) => {
+            setAddingKind(null);
+            if (addingKind === "group") {
+              setAddedGroups((current) => [...current, record as Group]);
+            } else if (addingKind === "category") {
+              setAddedCategories((current) => [...current, record as Category]);
+            } else {
+              setAddedProducts((current) => [...current, record as Product]);
+              onSelect(record as Product);
+            }
+          }}
+        />
       ) : null}
     </div>
   );
@@ -207,6 +250,7 @@ function TileGrid<T extends { id: string; name: string; photo_url?: string }>({
   onSelect,
   disabledIf,
   sublabelFor,
+  onAddNew,
 }: {
   items: T[];
   photoOverrides: Record<string, string>;
@@ -216,6 +260,7 @@ function TileGrid<T extends { id: string; name: string; photo_url?: string }>({
   onSelect: (item: T) => void;
   disabledIf?: (item: T) => boolean;
   sublabelFor?: (item: T) => string;
+  onAddNew?: () => void;
 }) {
   return (
     <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
@@ -236,7 +281,23 @@ function TileGrid<T extends { id: string; name: string; photo_url?: string }>({
           />
         );
       })}
+      {onAddNew ? <AddTile onClick={onAddNew} /> : null}
     </div>
+  );
+}
+
+// Misma forma que una casilla de foto, para que "agregar" se vea como una
+// más de la cuadrícula en vez de un botón aparte y fuera de lugar.
+function AddTile({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex aspect-square flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-(--rule) text-(--muted) hover:border-unal-green-dark hover:text-unal-green-dark"
+    >
+      <Plus size={22} strokeWidth={2.5} />
+      <span className="text-xs font-bold">Agregar</span>
+    </button>
   );
 }
 
@@ -248,6 +309,7 @@ function ProductGrid({
   onUpload,
   empty,
   onSelect,
+  onAddNew,
 }: {
   catalog: Catalog;
   products: Product[];
@@ -256,8 +318,9 @@ function ProductGrid({
   onUpload: (id: string, url: string) => void;
   empty: string;
   onSelect: (product: Product) => void;
+  onAddNew?: () => void;
 }) {
-  if (products.length === 0) {
+  if (products.length === 0 && !onAddNew) {
     return <p className="mt-4 text-sm text-(--muted)">{empty}</p>;
   }
 
@@ -275,6 +338,7 @@ function ProductGrid({
           onUpload={isAdmin ? onUpload : undefined}
         />
       ))}
+      {onAddNew ? <AddTile onClick={onAddNew} /> : null}
     </div>
   );
 }

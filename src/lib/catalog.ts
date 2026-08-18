@@ -25,12 +25,17 @@ export interface Category {
   name: string;
   group_id: string;
   photo_url?: string;
+  // Unidad que casi siempre se usa en esta categoría — sugiere, no
+  // obliga, la unidad al crear un producto nuevo dentro de ella.
+  default_unit_id?: string;
+  active?: boolean;
 }
 
 export interface Group {
   id: string;
   name: string;
   photo_url?: string;
+  active?: boolean;
 }
 
 export interface Catalog {
@@ -60,11 +65,27 @@ export async function loadCatalog(): Promise<Catalog> {
   }
 
   return {
-    groups,
-    categories,
+    // `active` filtra lo que un admin haya desactivado desde el panel —
+    // no hay botón de borrar (el catálogo nunca se elimina, solo se
+    // desactiva) para no romper donaciones o solicitudes que ya lo
+    // referencian.
+    groups: groups.filter((group) => group.active !== false),
+    categories: categories.filter((category) => category.active !== false),
     products: products.filter((product) => product.active !== false),
     units: unitsById,
   };
+}
+
+// Compara nombres ignorando tildes y mayúsculas, para el aviso de "ya
+// existe algo con ese nombre" antes de intentar crear — el índice único
+// del backend es la garantía real, esto solo evita el viaje de ida y
+// vuelta cuando la coincidencia es obvia.
+export function findDuplicateByName<T extends { name: string }>(
+  items: T[],
+  name: string
+): T | undefined {
+  const needle = normalize(name.trim());
+  return items.find((item) => normalize(item.name) === needle);
 }
 
 // Sin acentos ni mayúsculas: quien captura de pie no escribe tildes.
