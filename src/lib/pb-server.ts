@@ -37,3 +37,32 @@ export async function requireAdmin(token: string | null) {
     throw new UnauthorizedError("La sesión no es válida.");
   }
 }
+
+// Igual que `requireAdmin`, pero para operaciones que ambos roles pueden
+// hacer — como crear una ubicación con su foto: `locations.createRule`
+// ya lo permite a cualquier operador activo, así que la firma de subida
+// no puede ser más estricta que la regla que de todas formas se va a
+// aplicar al crear el registro.
+export async function requireActiveUser(token: string | null) {
+  if (!token) {
+    throw new UnauthorizedError("Falta la sesión.");
+  }
+
+  const pb = new PocketBase(POCKETBASE_URL);
+  pb.authStore.save(token, null);
+
+  try {
+    const { record } = await pb.collection("users").authRefresh();
+
+    if (!record.active) {
+      throw new UnauthorizedError("Esta cuenta está desactivada.");
+    }
+
+    return record;
+  } catch (err) {
+    if (err instanceof UnauthorizedError) {
+      throw err;
+    }
+    throw new UnauthorizedError("La sesión no es válida.");
+  }
+}

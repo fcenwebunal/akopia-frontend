@@ -2,7 +2,7 @@
 
 import { pb } from "./pb";
 
-export type PhotoKind = "categories" | "products" | "groups";
+export type PhotoKind = "categories" | "products" | "groups" | "locations";
 
 export class UploadError extends Error {}
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
-import { requireAdmin, UnauthorizedError } from "@/lib/pb-server";
+import { requireAdmin, requireActiveUser, UnauthorizedError } from "@/lib/pb-server";
 
 export const runtime = "nodejs";
 
@@ -14,28 +14,28 @@ export const runtime = "nodejs";
  * validez de minutos (el timestamp), y el cliente sube directo a
  * Cloudinary con esa firma. El secret nunca sale de aquí.
  *
- * Solo admin: subir fotos de categorías o productos es una operación de
- * catálogo, igual que crearlos o editarlos (`categories`/`products`
- * `updateRule` ya son admin-only en el backend).
+ * Solo admin para categorías/productos/grupos: subir su foto es una
+ * operación de catálogo, igual que crearlos o editarlos (`updateRule`
+ * de esas tres colecciones ya es admin-only en el backend).
+ *
+ * `locations` es la excepción: `locations.createRule` ya admite a
+ * cualquier operador activo (una ubicación se crea en el momento, al
+ * recibir una donación), así que exigir admin aquí bloquearía subir su
+ * foto aunque el registro mismo se pudiera crear — la firma no puede
+ * ser más estricta que la regla que de todas formas se va a aplicar.
  */
 
 const FOLDERS: Record<string, string> = {
   categories: "akopia/categories",
   products: "akopia/products",
   groups: "akopia/groups",
+  locations: "akopia/locations",
 };
+
+const ADMIN_ONLY_KINDS = new Set(["categories", "products", "groups"]);
 
 export async function POST(request: NextRequest) {
   const token = request.headers.get("Authorization");
-
-  try {
-    await requireAdmin(token);
-  } catch (err) {
-    if (err instanceof UnauthorizedError) {
-      return NextResponse.json({ message: err.message }, { status: 403 });
-    }
-    throw err;
-  }
 
   const body = await request.json().catch(() => ({}));
   const kind = typeof body.kind === "string" ? body.kind : "";
@@ -43,9 +43,18 @@ export async function POST(request: NextRequest) {
 
   if (!folder) {
     return NextResponse.json(
-      { message: "kind debe ser 'categories', 'products' o 'groups'." },
+      { message: "kind debe ser 'categories', 'products', 'groups' o 'locations'." },
       { status: 400 }
     );
+  }
+
+  try {
+    await (ADMIN_ONLY_KINDS.has(kind) ? requireAdmin(token) : requireActiveUser(token));
+  } catch (err) {
+    if (err instanceof UnauthorizedError) {
+      return NextResponse.json({ message: err.message }, { status: 403 });
+    }
+    throw err;
   }
 
   const apiKey = process.env.CLOUDINARY_API_KEY;
