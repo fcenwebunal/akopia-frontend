@@ -1,19 +1,26 @@
 import { AccessibilityPanel } from "./accessibility-panel";
 import { AccountBar } from "./account-bar";
-import { Breadcrumb } from "./breadcrumb";
 import type { AppMenuItem } from "./menu-config";
 import { UnalFooter } from "./unal-footer";
 import { UnalHeader } from "./unal-header";
 
 /*
  * Único contenedor `.unal-chrome`: varias reglas del CSS escopeado
- * (`.unal-chrome main.detalle`, `.unal-chrome footer`, la miga de pan)
- * exigen que header, contenido y footer compartan el mismo ancestro —
- * no uno por componente. Los tres momentos (portada, login/registro,
- * app) usan este mismo cascarón; lo que cambia es `menuItems` (vacío
- * fuera de la app, por la directriz B3 de no enlazar a "Inicio" en el
- * menú) y `boxed` (la portada es una campaña de ancho completo, las
- * páginas internas sí llevan el margen de `.detalle`).
+ * (`.unal-chrome main.detalle`, `.unal-chrome footer`) exigen que
+ * header, contenido y footer compartan el mismo ancestro — no uno por
+ * componente. Los tres momentos (portada, login/registro, app) usan
+ * este mismo cascarón; lo que cambia es `menuItems` (vacío fuera de la
+ * app, por la directriz B3 de no enlazar a "Inicio" en el menú) y
+ * `boxed` (la portada es una campaña de ancho completo, las páginas
+ * internas sí llevan el margen de `.detalle`).
+ *
+ * `{children}` va envuelto en `.akopia-content`: scripts/scope-unal-
+ * template-css.mjs le agrega a CADA selector de la plantilla
+ * `:not(.akopia-content, .akopia-content *)`, así que ninguna regla de
+ * Bootstrap/unal.css puede aplicar ahí dentro sin importar nombre de
+ * clase o especificidad — es la frontera real entre "cromo de la
+ * plantilla" y "contenido real de la app", nunca se toca el diseño del
+ * segundo.
  */
 export function UnalShell({
   menuItems = [],
@@ -50,8 +57,7 @@ export function UnalShell({
         id="contenido"
         style={boxed ? undefined : { margin: 0 }}
       >
-        <Breadcrumb />
-        {children}
+        <div className="akopia-content">{children}</div>
       </main>
       <UnalFooter />
     </div>

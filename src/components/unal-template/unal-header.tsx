@@ -105,7 +105,15 @@ export function UnalHeader({ menuItems = [] }: Readonly<{ menuItems?: AppMenuIte
         </ul>
       </div>
 
-      <header id="unalTop">
+      {/*
+        min-height: el escudo es position:absolute (135px de alto) y no
+        empuja la altura de #unalTop por su cuenta — depende de que el
+        resto de filas (firstMenu + bs-navbar) sumen lo mismo por su
+        cuenta, y con el contenido real de AKOPIA (menos ítems que el
+        menú de ejemplo de la plantilla) no siempre llegan. Sin esto, el
+        escudo se desborda sobre la fila de Sedes/Accesibilidad.
+      */}
+      <header id="unalTop" style={{ minHeight: 145 }}>
         <div className="logo">
           <a href="https://unal.edu.co">
             <svg width="93%" height="93%">

@@ -1,5 +1,1 @@
-@layer unal-template {
-.unal-chrome main{position:relative}
-}
-
-.unal-chrome main.tx-unal-accesibilidad{position:absolute}.unal-chrome main.tx-unal-accesibilidad .panel-content{padding:1em}
+.unal-chrome main:not(.akopia-content, .akopia-content *){position:relative}.unal-chrome main.tx-unal-accesibilidad:not(.akopia-content, .akopia-content *){position:absolute}.unal-chrome main.tx-unal-accesibilidad .panel-content:not(.akopia-content, .akopia-content *){padding:1em}

@@ -1,8 +1,4 @@
-@layer unal-template {
-
-}
-
-.unal-chrome #pestania-accesibilidad {
+.unal-chrome #pestania-accesibilidad:not(.akopia-content, .akopia-content *) {
     float: right;
     cursor: pointer;
     background-color: rgba(41, 41, 41, 0.8);
@@ -15,7 +11,7 @@
     position: relative
 }
 
-.unal-chrome #pestania-accesibilidad::before {
+.unal-chrome #pestania-accesibilidad::before:not(.akopia-content, .akopia-content *) {
     position: absolute;
     left: -35px;
     top: 0;
@@ -453,11 +449,11 @@ body.tamanio-letra-200 main.accesibility-on {
 }
 
 
-.unal-chrome main.accesibility-on {
+.unal-chrome main.accesibility-on:not(.akopia-content, .akopia-content *) {
     padding-top: 200px
 }
 
-.unal-chrome .tx-unal-accesibilidad {
+.unal-chrome .tx-unal-accesibilidad:not(.akopia-content, .akopia-content *) {
 
     z-index: 2;
     top: 103px;
@@ -469,7 +465,7 @@ body.tamanio-letra-200 main.accesibility-on {
 
 @media (max-width: 767px) {
 
-    .unal-chrome .tx-unal-accesibilidad {
+    .unal-chrome .tx-unal-accesibilidad:not(.akopia-content, .akopia-content *) {
 
         z-index: 3;
         top: 103px;
@@ -484,11 +480,11 @@ body.tamanio-letra-200 main.accesibility-on {
 
 
 /*ajuste para el desplegable*/
-.unal-chrome main.home {
+.unal-chrome main.home:not(.akopia-content, .akopia-content *) {
     margin-top: -35px;
 }
 
-.unal-chrome .tx-unal-accesibilidad .panel-content {
+.unal-chrome .tx-unal-accesibilidad .panel-content:not(.akopia-content, .akopia-content *) {
     padding: 1em;
     border-bottom: 3px solid #292929;
     float: left;
@@ -497,7 +493,7 @@ body.tamanio-letra-200 main.accesibility-on {
     background-color: #fff
 }
 
-.unal-chrome .tx-unal-accesibilidad .panel-content .boton-panel {
+.unal-chrome .tx-unal-accesibilidad .panel-content .boton-panel:not(.akopia-content, .akopia-content *) {
     padding: 10px;
     background-color: #292929;
     border: none;
@@ -506,22 +502,22 @@ body.tamanio-letra-200 main.accesibility-on {
     font-weight: bold
 }
 
-.unal-chrome .tx-unal-accesibilidad .panel-content .boton-panel:hover,
-.unal-chrome .tx-unal-accesibilidad .panel-content .boton-panel:focus {
+.unal-chrome .tx-unal-accesibilidad .panel-content .boton-panel:hover:not(.akopia-content, .akopia-content *),
+.unal-chrome .tx-unal-accesibilidad .panel-content .boton-panel:focus:not(.akopia-content, .akopia-content *) {
     background-color: #0763c8
 }
 
-.unal-chrome .tx-unal-accesibilidad .panel-content .border {
+.unal-chrome .tx-unal-accesibilidad .panel-content .border:not(.akopia-content, .akopia-content *) {
     border-right: #292929 solid 1px
 }
 
-.unal-chrome .tx-unal-accesibilidad .panel-content h4 {
+.unal-chrome .tx-unal-accesibilidad .panel-content h4:not(.akopia-content, .akopia-content *) {
     color: #292929;
     font-weight: normal;
     margin-bottom: 10px
 }
 
-.unal-chrome .tx-unal-accesibilidad .panel-content input.letras-porcentaje {
+.unal-chrome .tx-unal-accesibilidad .panel-content input.letras-porcentaje:not(.akopia-content, .akopia-content *) {
     height: 35px;
     line-height: 35px;
     border: none;
@@ -546,7 +542,7 @@ body.tamanio-letra-200 main.accesibility-on {
 }*/
 
 @media(max-width: 767px) {
-    .unal-chrome #pestania-accesibilidad {
+    .unal-chrome #pestania-accesibilidad:not(.akopia-content, .akopia-content *) {
         position: absolute;
         color: transparent;
         top: 11px;
@@ -557,7 +553,7 @@ body.tamanio-letra-200 main.accesibility-on {
     }
 
 
-    .unal-chrome #pestania-accesibilidad::before {
+    .unal-chrome #pestania-accesibilidad::before:not(.akopia-content, .akopia-content *) {
         position: absolute;
         left: -35px;
         top: 0;

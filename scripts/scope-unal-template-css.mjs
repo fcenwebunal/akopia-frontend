@@ -39,78 +39,45 @@ function shouldSkip(selector) {
   return /^(html|body)\b/.test(selector.trim());
 }
 
-// Un segmento de selector "genérico puro" es solo un nombre de etiqueta
-// (con, como mucho, una pseudo-clase simple): "h1", ".unal-chrome p",
-// "a:hover". Nada de clases/ids/atributos propios de la plantilla.
-const GENERIC_SEGMENT = /^(\.unal-chrome\s+)?[a-zA-Z][a-zA-Z0-9]*(::?[a-zA-Z-]+(\([^)]*\))?)?$/;
-
-// Divide un selector compuesto ("a b > c") en sus segmentos simples,
-// para juzgar cada uno por separado.
-function splitCompound(part) {
-  return part
-    .replaceAll(".unal-chrome", "")
-    .split(/(?:>|\+|~|\s)+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-// Una regla va a la capa de BAJA precedencia (pierde contra Tailwind)
-// solo si TODAS sus partes (separadas por coma) son, en TODOS sus
-// segmentos, selectores de etiqueta genéricos sin calificar — el reset
-// universal (reset.css) y los `h1..h6`/`p`/`a` sueltos de unal.css caen
-// aquí, porque esos SÍ compiten con el contenido real de la app.
+// Cascade layers looked like the right tool at first (Tailwind v4 puts
+// its own CSS in layers, and unlayered CSS always wins over layered CSS
+// regardless of specificity) but turned into a game of whack-a-mole:
+// Bootstrap utility classes share exact names with Tailwind ones
+// (".overflow-hidden", ".text-white"), and Bootstrap's responsive
+// utilities live inside @media blocks that, combined with !important,
+// flipped the intended precedence entirely (".d-none" started beating
+// ".d-md-block" at any screen width).
 //
-// Todo lo demás (cualquier cosa con una clase o id de la plantilla en
-// la cadena, como "#unalTop .logo svg") va a la capa ALTA: layout
-// propio del cabezote que tiene que ganar siempre, y que nunca podría
-// coincidir por accidente con el contenido de React de todas formas.
-function isGenericRule(selector) {
+// The robust fix is a positive exclusion instead of a priority race:
+// every template selector gets ":not(.akopia-content, .akopia-content
+// *)" appended, so it can never match anything inside the real app
+// content — regardless of specificity, layers, or !important. The
+// template's own chrome (header/footer/accessibility panel) never
+// carries that class, so its own styling is completely unaffected.
+const EXCLUDE = ":not(.akopia-content, .akopia-content *)";
+
+function excludeAppContent(selector) {
   return selector
     .split(",")
-    .every((part) => splitCompound(part).every((seg) => GENERIC_SEGMENT.test(seg)));
+    .map((part) => `${part.trim()}${EXCLUDE}`)
+    .join(", ");
 }
 
 async function scopeCss(fileName) {
   const src = path.join(TEMPLATE_DIR, "css", fileName);
   const css = await readFile(src, "utf8");
 
-  const root = postcss.parse(css, { from: src });
-
-  postcss([
+  const result = await postcss([
     prefixSelector({
       prefix: ".unal-chrome",
       transform(prefix, selector, prefixedSelector) {
-        return shouldSkip(selector) ? selector : prefixedSelector;
+        if (shouldSkip(selector)) return selector;
+        return excludeAppContent(prefixedSelector);
       },
     }),
-  ]).process(root, { from: src, to: undefined }).sync();
+  ]).process(css, { from: src, to: undefined });
 
-  const low = postcss.root();
-  const high = postcss.root();
-
-  root.each((node) => {
-    if (node.type === "rule" && !shouldSkip(node.selector)) {
-      (isGenericRule(node.selector) ? low : high).append(node.clone());
-    } else {
-      // @media, @font-face, y las reglas de body/html sin escopear
-      // (accesibilidad) quedan tal cual, fuera de las dos capas.
-      high.append(node.clone());
-    }
-  });
-
-  // Tailwind v4 pone todo su CSS en cascade layers (theme/base/components/
-  // utilities). En CSS, una regla SIN capa le gana a CUALQUIER regla CON
-  // capa, sin importar especificidad — así que un simple
-  // ".unal-chrome h1{font-family:...}" de la plantilla le ganaría a
-  // cualquier clase de Tailwind puesta directamente en un <h1> real de
-  // la app. Los selectores genéricos puros (arriba) van a una capa con
-  // MENOR precedencia que las de Tailwind (ver globals.css), para que
-  // el contenido real de la app siempre gane ahí. El layout propio del
-  // cabezote (selectores calificados: `.logo`, `#unalTop`, `.mainMenu`…)
-  // va SIN capa — necesita ganar siempre, y nunca coincide por
-  // accidente con nada de React.
-  const layered = `@layer unal-template {\n${low.toString()}\n}\n\n${high.toString()}\n`;
-  await writeFile(path.join(OUT_DIR, "css", fileName), layered, "utf8");
+  await writeFile(path.join(OUT_DIR, "css", fileName), result.css, "utf8");
   console.log(`scoped  ${fileName}`);
 }
 
