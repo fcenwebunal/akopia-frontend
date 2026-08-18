@@ -49,6 +49,8 @@ En el servicio recién creado → pestaña **Variables** → agrega:
 
 **Settings → Networking → Generate Domain**. Da un dominio `https://<algo>.up.railway.app`, con HTTPS ya resuelto — nada que configurar.
 
+> ⚠️ **Revisa el puerto del dominio.** Railway suele mostrar el dominio junto a un puerto (por ejemplo "Port 8090", tomado de `EXPOSE 8090` en el `Dockerfile`), pero el puerto donde el contenedor *de verdad* escucha depende de la variable `$PORT` que Railway inyecta — en una prueba real resultó ser 8080, no 8090, y el desajuste dio 502 "Application failed to respond" sin explicar por qué. Confirma el puerto real en **Deploy Logs** (busca la línea `Server started at http://0.0.0.0:PUERTO`) y, si no coincide con el que aparece junto al dominio, edítalo ahí con el ícono de lápiz.
+
 ### 6. Redeploy y verificar
 
 Si agregaste el volumen o las variables después del primer build, Railway normalmente redespliega solo; si no, **Deployments → ⋮ → Redeploy** en el último. Luego:
@@ -57,7 +59,7 @@ Si agregaste el volumen o las variables después del primer build, Railway norma
 curl https://<tu-dominio>.up.railway.app/api/health
 ```
 
-Debe responder `{"message":"API is healthy."...}`. Revisa también los **Logs** del servicio: deberías ver las dos líneas de `docker-entrypoint.sh` confirmando los superusuarios (`Successfully saved superuser "..."`) antes de la línea de `Server started`.
+Debe responder `{"message":"API is healthy."...}`. Si en cambio da `502 Application failed to respond`, ve primero al aviso del paso 5 (el puerto). Si el puerto ya coincide y sigue el 502, revisa los **Deploy Logs**: deberías ver las líneas de `docker-entrypoint.sh` confirmando los superusuarios (`Successfully saved superuser "..."`, o un `AVISO:` si la contraseña tiene menos de 8 caracteres) antes de la línea de `Server started` — si el log se corta antes de esa línea, algo distinto está fallando y hace falta leer el mensaje de error específico.
 
 > ⚠️ **A diferencia del plan para el VPS de la UNAL** (`akopia-backend/DESPLIEGUE.md`, donde `/_/` se pensaba restringir por IP o túnel SSH), en este despliegue provisional `/_/` queda alcanzable desde cualquier lugar de internet. Usa una contraseña fuerte para tu superusuario personal. Cuando se migre al servidor definitivo, se retoma la restricción real.
 
@@ -111,7 +113,23 @@ Solo si vas a usar "Continuar con Google" (el login con correo y contraseña no 
 
 Login, panel, una donación de prueba, clasificar, ver el inventario moverse — el mismo criterio de "funcionando" que ya define este proyecto. No asumas que porque compiló ya sirve.
 
-### 3. Primer respaldo
+### 3. Catálogo con fotos, sin traer datos de más
+
+**No uses "Restaurar" un respaldo completo para esto** — trae también donaciones, solicitudes y todo lo demás que ya exista en el respaldo, y el destino debe quedar limpio salvo el catálogo. El catálogo (nombres, categorías, unidades) ya está sembrado igual en Railway por las propias migraciones; lo único que falta ahí es `photo_url`, cargado después a mano con Cloudinary. Usa `scripts/sync-catalog-photos-to-remote.mjs` (en este mismo repo) en su lugar — copia solo ese campo, emparejando por nombre:
+
+```powershell
+$env:SOURCE_ADMIN_EMAIL="admin@akopia.org"
+$env:SOURCE_ADMIN_PASSWORD="<tu AKOPIA_INITIAL_ADMIN_PASSWORD local>"
+$env:REMOTE_PB_URL="https://<tu-dominio>.up.railway.app"
+$env:REMOTE_SUPERUSER_EMAIL="admin@akopia.org"
+$env:REMOTE_SUPERUSER_PASSWORD="<tu SERVICE_SUPERUSER_PASSWORD de Railway>"
+node scripts/sync-catalog-photos-to-remote.mjs --dry-run   # revisa los emparejamientos primero
+node scripts/sync-catalog-photos-to-remote.mjs             # sin --dry-run, para escribir de verdad
+```
+
+> ⚠️ **Si cambias `SERVICE_SUPERUSER_PASSWORD` en Railway** (por ejemplo, para que este script pueda autenticarse), actualiza también `POCKETBASE_SERVICE_PASSWORD` en las variables de Vercel con el mismo valor — si quedan desincronizadas, el login por Firebase falla en silencio con un 500 genérico, aunque el resto del sitio (fotos incluidas) se vea perfecto.
+
+### 4. Primer respaldo
 
 En cuanto el backend quede en pie, entra a `/panel/respaldos` y crea el primero — es el punto de partida limpio de este despliegue, y el archivo que vas a necesitar el día que se migre al servidor definitivo.
 
