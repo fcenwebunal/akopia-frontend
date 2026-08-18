@@ -400,3 +400,16 @@ Verificado con Playwright, sesión de operador real: 11 grupos, 11 cámaras visi
 `CatalogAddForm` ya exigía foto para categoría y producto; ahora la exige igual para grupo — el bloque de subida (antes oculto con `kind !== "group"`) se volvió incondicional, y la validación de `save()` dejó de tener la excepción. `PHOTO_KINDS` reemplaza el ternario que solo sabía elegir entre "categories"/"products" para incluir "groups" también, y el `create` de grupo ya manda `photo_url`.
 
 Verificado con Playwright contra el servidor real: crear un grupo sin foto muestra "Sube una foto antes de crear." y no llega a la API; con foto, el grupo se crea y `photo_url` queda guardado (confirmado releyendo el registro).
+
+### 2026-08-18 (noche) — Logo e ícono de marca reales, y un bug preexistente encontrado de paso
+
+Juan Manuel entregó dos SVG (`akopia_favicon.svg`, `akopia_logo.svg`) para reemplazar el texto "AKOPIA" y el favicon genérico.
+
+- **`src/app/icon.svg`** — convención de Next.js App Router: se sirve solo como favicon junto al `favicon.ico` existente (confirmado en el HTML: dos `<link rel="icon">`, uno `image/svg+xml` para navegadores modernos y el `.ico` como respaldo).
+- **`public/brand/akopia-logo.svg`** — reemplaza el texto "AKOPIA" en los dos headers que lo tenían: `InstitutionalHeader` (sitio público) y `AppShell` (app de bodega).
+
+**Bug real, preexistente, encontrado al verificar con Playwright — no introducido por este cambio:** ningún SVG local se estaba sirviendo a través de `next/image` (`/_next/image` devolvía 400 para el logo nuevo Y para el escudo de la UNAL, que ya estaba ahí desde el primer commit). Next.js bloquea optimizar SVG por defecto —puede llevar script embebido— salvo que se autorice explícitamente. Corregido en `next.config.ts` con `images.dangerouslyAllowSVG: true` más `contentSecurityPolicy` restrictiva (la mitigación que la propia documentación de Next.js recomienda junto con la bandera): razonable aquí porque los únicos SVG que sirve `next/image` en este proyecto son propios del repositorio, nunca subidos por un usuario.
+
+**Encontrado de paso, no corregido — fuera de alcance de este pedido:** `escudo-unal.svg` solo tiene relleno blanco (`fill:#FFFFFF`) en las 134 formas que lo componen, así que es invisible sobre el fondo blanco del header — probablemente pensado para un fondo oscuro que nunca se usó. No se toca: recolorear el escudo institucional violaría la directriz B1 ("no se recolorea"), y no fue lo que se pidió. Queda para que alguien con autoridad sobre la identidad visual lo confirme.
+
+Verificado con Playwright contra el servidor real (tras el arreglo de `next.config.ts`, que exige reiniciar `npm run dev`): el logo se ve correctamente en ambos headers, con las dimensiones reales confirmadas en el DOM (no un `<img>` roto), y los dos `<link rel="icon">` presentes en el HTML.

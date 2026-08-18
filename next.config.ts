@@ -16,13 +16,23 @@ const nextConfig: NextConfig = {
    */
   allowedDevOrigins: ["192.168.0.100"],
 
-  // Fotos de categorías y productos, subidas a Cloudinary. next/image
-  // exige autorizar el dominio explícitamente para optimizar imágenes
-  // externas.
   images: {
+    // Fotos de categorías y productos, subidas a Cloudinary. next/image
+    // exige autorizar el dominio explícitamente para optimizar imágenes
+    // externas.
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
     ],
+
+    // Sin esto, next/image rechaza con 400 CUALQUIER SVG local — el
+    // escudo de la UNAL y el logo de AKOPIA incluidos — porque un SVG
+    // puede llevar script embebido. Los nuestros son estáticos, propios
+    // del repositorio, nunca subidos por un usuario, así que el riesgo
+    // que esta bandera desactiva no aplica aquí. `contentSecurityPolicy`
+    // es la mitigación que Next.js recomienda junto con la bandera: por
+    // si acaso, bloquea que el SVG servido ejecute script propio.
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 };
 

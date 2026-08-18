@@ -27,9 +27,13 @@ export function InstitutionalHeader() {
 
         <div className="min-w-0 flex-1 self-stretch border-l border-(--rule) py-1 pl-6">
           <Link href="/" className="inline-block">
-            <span className="block text-xl font-black tracking-tight text-unal-green-dark sm:text-2xl">
-              AKOPIA
-            </span>
+            <Image
+              src="/brand/akopia-logo.svg"
+              alt="AKOPIA"
+              width={6292}
+              height={1844}
+              className="h-7 w-auto sm:h-8"
+            />
             <span className="block text-xs leading-tight text-(--muted) sm:text-sm">
               Centro de acopio · Sede Manizales
             </span>

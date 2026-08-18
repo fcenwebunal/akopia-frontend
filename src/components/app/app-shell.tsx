@@ -11,6 +11,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -82,8 +83,8 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
     <div className="flex min-h-screen flex-col bg-(--surface-2)">
       <header className="sticky top-0 z-10 border-b border-(--rule) bg-(--surface)">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-          <Link href="/panel" className="text-lg font-black text-unal-green-dark">
-            AKOPIA
+          <Link href="/panel" className="shrink-0">
+            <Image src="/brand/akopia-logo.svg" alt="AKOPIA" width={6292} height={1844} className="h-6 w-auto" />
           </Link>
 
           <span className="ml-auto hidden text-sm text-(--muted) sm:inline">
