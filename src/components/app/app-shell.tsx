@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Download,
+  Gift,
   History,
   Home,
   ClipboardList,
@@ -19,7 +19,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/panel", label: "Panel", icon: Home },
-  { href: "/panel/donaciones", label: "Donaciones", icon: Download },
+  { href: "/panel/donaciones", label: "Donaciones", icon: Gift },
   { href: "/panel/solicitudes", label: "Solicitudes", icon: ClipboardList },
   { href: "/panel/despachos", label: "Despachos", icon: Truck },
   { href: "/panel/inventario", label: "Inventario", icon: Package },
