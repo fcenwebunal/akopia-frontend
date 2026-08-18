@@ -224,3 +224,19 @@ Es justo el patrón que el proyecto ya documentaba como el error más caro de co
 - Filtro por entidad (donación, solicitud, despacho…).
 - Para `status_change`/`update` muestra los campos que cambiaron, `viejo → nuevo`; para `create` solo la marca de creación, sin volcar el snapshot completo — es ruido, no señal.
 - Verificado con movimientos reales generados contra el servidor (una donación, un artículo clasificado): `audit_log` trae `create` y `status_change` con el operador expandido, tal como los muestra la pantalla.
+
+### 2026-08-18 (noche) — La causa real de "no me deja registrarme ni entrar", y Google Sign-In
+
+**El síntoma no era un bug del formulario: era que React nunca se hidrataba.** En la consola del usuario, las peticiones de login/registro aparecían como `GET /login?identity=...&password=...` — un **envío de formulario nativo del navegador por GET**, con la contraseña en la URL. Eso solo pasa cuando el `onSubmit` de React nunca se enganchó al formulario.
+
+Causa confirmada con el propio log: `⚠ Blocked cross-origin request ... from "192.168.0.100"` repetido para cada chunk de `_next/static/` y para `_next/hmr`. El usuario probaba desde el celular por la IP de la red local (`http://192.168.0.100:3000`) — que es exactamente el caso de uso correcto para una app móvil primero — y Next.js en modo desarrollo bloquea por seguridad los recursos de `_next/` a cualquier origen que no sea `localhost`, salvo que se autorice explícitamente. Sin esos archivos JS, React nunca se hidrata, ningún `onSubmit` se activa, y el navegador cae al comportamiento por defecto de un `<form>` sin JavaScript: recargar la página por GET con los campos como parámetros de la URL.
+
+- **`next.config.ts`** — `allowedDevOrigins: ["192.168.0.100"]`. Verificado pidiendo un chunk real de `_next/static/` con `Origin: http://192.168.0.100:3000`: antes del cambio se habría bloqueado (según el log del usuario), después se sirvió completo (864 KB, sin ninguna advertencia). Si la IP de red cambia, hay que agregarla aquí y reiniciar `npm run dev` — Next.js exige IPs concretas, no rangos.
+- **Hay que reiniciar `npm run dev`** después de este cambio: `next.config.ts` no se recarga en caliente.
+
+**Google Sign-In**, pedido explícitamente:
+
+- `signInWithGoogle()` en `firebase.ts`, con `signInWithPopup`. Se probó **por qué popup y no redirect**: es más simple de seguir en el código y funciona bien en escritorio y en Chrome para Android; si algún navegador lo bloquea (Safari dentro de una app, por ejemplo), la salida conocida es `signInWithRedirect`, no implementada porque no hacía falta todavía.
+- Mismo botón (`GoogleButton`, compartido) en `/login` y `/registro` — Google no distingue "cuenta nueva" de "cuenta existente", y el puente tampoco: `/api/auth/firebase` crea o enlaza según corresponda, sin cambios en esa ruta.
+- **Lo que sí se verificó:** el puente que consume el token de Google es el mismo que ya se probó contra Firebase real con correo y contraseña — no es código nuevo. Lo que **no se pudo verificar desde aquí** es el propio botón: `signInWithPopup` abre una ventana interactiva de Google que exige un navegador real, y no hay forma de simularlo por terminal.
+- **Advertencia real, no verificada, que puede repetir el mismo problema de origen:** Firebase Authentication solo permite el flujo de Google desde dominios en su lista de *Authorized domains* (consola de Firebase → Authentication → Settings). Por defecto trae `localhost` y los dominios de Firebase Hosting, pero **no** una IP de red como `192.168.0.100`. Si se prueba Google desde el celular por esa IP, es esperable un error `auth/unauthorized-domain` — un problema de Firebase, no de Next.js, y sin relación con el `allowedDevOrigins` de arriba aunque el síntoma inicial se parezca. Si aparece, hay que agregar esa IP (o el dominio real, en producción) a la lista de dominios autorizados desde la consola de Firebase.

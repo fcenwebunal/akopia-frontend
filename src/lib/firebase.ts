@@ -5,6 +5,8 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   updateProfile,
 } from "firebase/auth";
 
@@ -61,6 +63,26 @@ export async function loginWithFirebase(
   return credential.user.getIdToken();
 }
 
+const googleProvider = new GoogleAuthProvider();
+
+/*
+ * Sirve igual para registrar que para entrar: Google no distingue "cuenta
+ * nueva" de "cuenta existente", y el puente del backend tampoco —
+ * /api/auth/firebase crea el registro en `users` si es la primera vez
+ * que ve ese correo o ese uid, y si no lo enlaza al que ya existía.
+ *
+ * Usa una ventana emergente en vez de redirigir a la página de Google y
+ * volver. Es más simple de seguir en el código, y funciona bien en
+ * escritorio y en Chrome para Android. Si algún navegador (Safari en
+ * iOS dentro de una app, por ejemplo) bloquea la ventana emergente, la
+ * solución conocida es cambiar a signInWithRedirect — no se hizo aquí
+ * para no complicar el flujo mientras no haga falta.
+ */
+export async function signInWithGoogle(): Promise<string> {
+  const credential = await signInWithPopup(firebaseAuth, googleProvider);
+  return credential.user.getIdToken();
+}
+
 /*
  * Traduce los códigos de error de Firebase Auth a mensajes en español
  * para un operador, en vez de dejar pasar el "auth/email-already-in-use"
@@ -78,6 +100,10 @@ export function firebaseErrorMessage(error: unknown): string {
     "auth/invalid-credential": "Correo o contraseña incorrectos.",
     "auth/too-many-requests":
       "Demasiados intentos. Espera un momento y vuelve a intentar.",
+    "auth/popup-closed-by-user": "Cerraste la ventana antes de terminar.",
+    "auth/popup-blocked":
+      "El navegador bloqueó la ventana de Google. Permite ventanas emergentes para este sitio e intenta de nuevo.",
+    "auth/cancelled-popup-request": "Se canceló el intento anterior.",
   };
 
   return messages[code] ?? "Ocurrió un error inesperado. Intenta de nuevo.";

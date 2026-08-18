@@ -1,0 +1,20 @@
+
+> akopia-frontend@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.100:3000
+- Environments: .env.local
+✓ Ready in 7.7s
+✓ Running next.config.ts took 593ms
+⚠ Slow filesystem detected. The benchmark took 267ms. If \\?\D:\Sistema\Carpetas\Programacion\WEB\AKOPIA\akopia-frontend\.next\dev is a network drive, consider moving it to a local folder.
+See more: https://nextjs.org/docs/app/guides/local-development
+
+○ Compiling / ...
+ GET / 200 in 17.7s (next.js: 17.0s, application-code: 716ms)
+ GET /registro 200 in 17.7s (next.js: 17.1s, application-code: 601ms)
+ GET /login 200 in 170ms (next.js: 71ms, application-code: 99ms)
+ GET /login 200 in 80ms (next.js: 12ms, application-code: 68ms)
+○ Compiling /api/auth/firebase ...
+ POST /api/auth/firebase 200 in 9.7s (next.js: 9.2s, application-code: 540ms)

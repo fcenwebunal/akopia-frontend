@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { loginWithFirebase } from "@/lib/firebase";
+import { firebaseErrorMessage, loginWithFirebase, signInWithGoogle } from "@/lib/firebase";
 import { errorMessage, establishFirebaseSession, pb } from "@/lib/pb";
+import { GoogleButton } from "@/components/public/google-button";
 
 /*
  * Un solo formulario para las dos formas de entrar que puede tener una
@@ -24,6 +25,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [googlePending, setGooglePending] = useState(false);
+
+  function afterSession(active: boolean) {
+    router.push(active ? "/panel" : "/panel/pendiente");
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,7 +48,7 @@ export default function LoginPage() {
         active = auth.record.active;
       }
 
-      router.push(active ? "/panel" : "/panel/pendiente");
+      afterSession(active);
     } catch (err) {
       pb.authStore.clear();
       setError(
@@ -55,6 +61,22 @@ export default function LoginPage() {
     }
   }
 
+  async function handleGoogle() {
+    setError(null);
+    setGooglePending(true);
+
+    try {
+      const idToken = await signInWithGoogle();
+      const user = await establishFirebaseSession(idToken);
+      afterSession(user.active);
+    } catch (err) {
+      pb.authStore.clear();
+      setError(firebaseErrorMessage(err));
+    } finally {
+      setGooglePending(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-md px-5 py-16">
       <h1 className="text-3xl font-black tracking-tight">Iniciar sesión</h1>
@@ -62,7 +84,19 @@ export default function LoginPage() {
         Acceso para operadores del centro de acopio.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+      <div className="mt-8">
+        <GoogleButton
+          label={googlePending ? "Conectando…" : "Continuar con Google"}
+          disabled={googlePending || pending}
+          onClick={handleGoogle}
+        />
+      </div>
+
+      <div className="my-6 flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-(--muted)">
+        <span className="h-px flex-1 bg-(--rule)" />o<span className="h-px flex-1 bg-(--rule)" />
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
         <Field
           id="identity"
           label="Correo"
@@ -91,7 +125,7 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || googlePending}
           className="w-full rounded bg-unal-green-dark px-6 py-3 font-bold text-white hover:bg-unal-green disabled:opacity-60"
         >
           {pending ? "Entrando…" : "Entrar"}

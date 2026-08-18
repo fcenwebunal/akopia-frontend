@@ -3,8 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { firebaseErrorMessage, registerWithFirebase } from "@/lib/firebase";
+import {
+  firebaseErrorMessage,
+  registerWithFirebase,
+  signInWithGoogle,
+} from "@/lib/firebase";
 import { errorMessage, establishFirebaseSession } from "@/lib/pb";
+import { GoogleButton } from "@/components/public/google-button";
 
 /*
  * El registro es real, pero no da acceso inmediato: crea la cuenta en
@@ -22,7 +27,23 @@ export default function RegistroPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [pending, setPending] = useState(false);
+  const [googlePending, setGooglePending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleGoogle() {
+    setError(null);
+    setGooglePending(true);
+
+    try {
+      const idToken = await signInWithGoogle();
+      const user = await establishFirebaseSession(idToken);
+      router.push(user.active ? "/panel" : "/panel/pendiente");
+    } catch (err) {
+      setError(firebaseErrorMessage(err));
+    } finally {
+      setGooglePending(false);
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,7 +79,19 @@ export default function RegistroPage() {
         Un administrador debe activarla antes de que puedas entrar a operar.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+      <div className="mt-8">
+        <GoogleButton
+          label={googlePending ? "Conectando…" : "Continuar con Google"}
+          disabled={googlePending || pending}
+          onClick={handleGoogle}
+        />
+      </div>
+
+      <div className="my-6 flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-(--muted)">
+        <span className="h-px flex-1 bg-(--rule)" />o<span className="h-px flex-1 bg-(--rule)" />
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
         <Field
           id="nombre"
           label="Nombre completo"
@@ -103,7 +136,7 @@ export default function RegistroPage() {
 
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || googlePending}
           className="w-full rounded bg-unal-green-dark px-6 py-3 font-bold text-white hover:bg-unal-green disabled:opacity-60"
         >
           {pending ? "Creando cuenta…" : "Crear cuenta"}
