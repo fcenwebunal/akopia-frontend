@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Camera } from "lucide-react";
+import Image from "next/image";
 import { errorMessage, pb } from "@/lib/pb";
 import type { Catalog, Category, Group, Product, Unit } from "@/lib/catalog";
 import { findDuplicateByName } from "@/lib/catalog";
+import { uploadPhoto, UploadError } from "@/lib/cloudinary";
 import { Spinner } from "@/components/ui/spinner";
 
 type AddKind = "group" | "category" | "product";
@@ -26,6 +29,10 @@ const KIND_LABELS: Record<AddKind, string> = {
  * misma categoría para productos) — y si aun así dos administradores
  * chocan al mismo tiempo, el índice único del backend (migraciones
  * 002-004) lo bloquea igual; ese mensaje también se traduce aquí.
+ *
+ * La foto es obligatoria para categoría y producto (no para grupo, que
+ * no se pidió) — se sube antes de crear, igual que en
+ * `LocationAddForm`, y sin ella el botón "Crear" ni se intenta.
  */
 export function CatalogAddForm({
   kind,
@@ -55,12 +62,34 @@ export function CatalogAddForm({
   const [showMore, setShowMore] = useState(false);
   const [minStockAlert, setMinStockAlert] = useState("");
 
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const units = Object.values(catalog.units).sort((a, b) =>
     a.name.localeCompare(b.name)
   );
+
+  async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setUploading(true);
+    setError(null);
+
+    try {
+      const url = await uploadPhoto(file, kind === "category" ? "categories" : "products");
+      setPhotoUrl(url);
+    } catch (err) {
+      setError(err instanceof UploadError ? err.message : "No se pudo subir la foto.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   function siblings(): { name: string }[] {
     if (kind === "group") return catalog.groups;
@@ -90,6 +119,11 @@ export function CatalogAddForm({
       return;
     }
 
+    if (kind !== "group" && !photoUrl) {
+      setError("Sube una foto antes de crear.");
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -107,6 +141,7 @@ export function CatalogAddForm({
           group_id: groupId,
           description,
           default_unit_id: unitId || null,
+          photo_url: photoUrl,
           active: true,
         });
       } else {
@@ -119,6 +154,7 @@ export function CatalogAddForm({
           requires_expiry: requiresExpiry,
           requires_batch: requiresBatch,
           requires_quarantine: requiresQuarantine,
+          photo_url: photoUrl,
           active: true,
         });
       }
@@ -162,6 +198,38 @@ export function CatalogAddForm({
             className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
           />
         </div>
+
+        {kind !== "group" ? (
+          <div className="mt-4">
+            <span className="mb-1 block text-sm font-bold">
+              Foto <span className="text-unal-red">*</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading}
+              className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-(--rule) bg-(--surface-2) text-(--muted) hover:border-unal-green-dark disabled:opacity-60"
+            >
+              {photoUrl ? (
+                <Image src={photoUrl} alt="" width={96} height={96} className="h-full w-full object-cover" />
+              ) : uploading ? (
+                <Spinner />
+              ) : (
+                <span className="flex flex-col items-center gap-1 text-xs font-bold">
+                  <Camera size={18} aria-hidden="true" />
+                  Foto
+                </span>
+              )}
+            </button>
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFile}
+              className="hidden"
+            />
+          </div>
+        ) : null}
 
         {kind === "product" ? (
           <div className="mt-4">
@@ -296,7 +364,7 @@ export function CatalogAddForm({
           </button>
           <button
             type="button"
-            disabled={saving}
+            disabled={saving || uploading}
             onClick={save}
             className="flex flex-1 items-center justify-center gap-2 rounded bg-unal-green-dark px-4 py-3 font-bold text-white disabled:opacity-50"
           >

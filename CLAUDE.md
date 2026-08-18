@@ -373,3 +373,15 @@ Pedido explícito, con análisis de arquitectura previo (confirmado con Juan Man
 **Alcance dejado fuera a propósito:** la reubicación solo mueve `available_qty` — lo reservado está comprometido con una solicitud y lo que está en cuarentena espera revisión, ninguno se reubica de paso. Mover cuarentena entre ubicaciones (p. ej. a una zona de cuarentena física) queda como posible ampliación futura, no pedida todavía.
 
 Verificado de punta a punta con Playwright contra el servidor real: ubicación creada como operador con foto, reubicación de 1 unidad (con capturas del origen y destino cuadrando), y el panel de detalle abriendo la remesa real con su código de donación, mostrando y manejando correctamente el caso de cantidad insuficiente.
+
+### 2026-08-18 (noche) — Operadores editan fotos de categorías/productos, y foto obligatoria al crear
+
+Pedido explícito, dos partes:
+
+**Un operador ya puede cambiar la foto de una categoría o un producto existente**, no solo de lo que él mismo crea. La cámara de `PhotoTile` en `ProductPicker` dejó de depender de `isAdmin` para esos dos niveles — el `TileGrid`/`ProductGrid` compartido pasó de un prop `isAdmin` a `canUpload`, para que grupos (sigue admin-only, no se pidió abrirlo) y categorías/productos (ahora abierto) puedan tener reglas distintas sin duplicar el componente. El backend es quien de verdad limita el alcance: `categories.updateRule`/`products.updateRule` se abren a cualquier activo (migración `037`), pero un hook nuevo (`06_catalog_photo_guard.pb.js`) rechaza con 403 cualquier cambio de un no-admin que no sea `photo_url` — nombre, categoría/grupo padre, unidad, `active`, todo eso sigue siendo solo de admin. Detalle completo, incluida la trampa real en la que se cayó (una constante a nivel de archivo invisible dentro del handler serializado — el mismo error que el propio backend ya documentaba como riesgo), en el `CLAUDE.md` del backend.
+
+**La foto es obligatoria al crear una categoría o un producto** (no un grupo, no se pidió). `CatalogAddForm` ganó el mismo bloque de subida que ya tenía `LocationAddForm` — se sube antes de crear, con vista previa — y `save()` rechaza continuar sin `photo_url` con un mensaje claro, antes de llamar a la API.
+
+La ruta de firma (`/api/uploads/sign`) ahora solo exige admin para `groups`; `categories`/`products`/`locations` admiten cualquier activo, coherente con lo que sus reglas de colección ya permiten.
+
+Verificado con Playwright, con sesión de un operador real (no admin): la cámara aparece en categorías del explorador, la subida de una foto nueva se refleja de inmediato y persiste (confirmado releyendo el registro), y crear una categoría sin foto muestra "Sube una foto antes de crear." sin llegar a la API.

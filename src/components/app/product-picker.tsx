@@ -21,11 +21,13 @@ import { PhotoTile } from "./photo-tile";
  * elegir entre tres opciones), por eso no es el que se ve primero.
  *
  * El explorador se ve como un menú de restaurante: foto y nombre, no
- * solo texto. `isAdmin` decide si aparece el distintivo de cámara para
- * poner o cambiar esa foto — el resto solo la ve. La casilla "Agregar"
- * no depende de `isAdmin`: admin y operador pueden ampliar el catálogo
- * por igual (el backend lo autoriza desde la migración 033), solo la
- * foto de lo ya existente sigue siendo cosa de admin.
+ * solo texto. La cámara para poner o cambiar la foto de una categoría o
+ * un producto la ve cualquier activo desde el 18 de agosto (el backend
+ * limita a un operador a tocar solo `photo_url`, nunca el resto del
+ * registro — ver `06_catalog_photo_guard.pb.js`); la de un GRUPO sigue
+ * siendo solo de `isAdmin`, no se pidió abrirla. La casilla "Agregar"
+ * tampoco depende de `isAdmin`: admin y operador pueden ampliar el
+ * catálogo por igual desde la migración 033.
  */
 export function ProductPicker({
   catalog,
@@ -118,7 +120,7 @@ export function ProductPicker({
           catalog={effectiveCatalog}
           products={results}
           photoOverrides={photoOverrides}
-          isAdmin={isAdmin}
+          canUpload
           onUpload={(id, url) => savePhoto("products", id, url)}
           empty="Ningún producto coincide."
           onSelect={(product) => {
@@ -143,7 +145,7 @@ export function ProductPicker({
                 recordId={product.id}
                 kind="products"
                 onSelect={() => onSelect(product)}
-                onUpload={isAdmin ? (id, url) => savePhoto("products", id, url) : undefined}
+                onUpload={(id, url) => savePhoto("products", id, url)}
               />
             ))}
           </div>
@@ -160,7 +162,7 @@ export function ProductPicker({
               <TileGrid<Group>
                 items={effectiveCatalog.groups}
                 photoOverrides={photoOverrides}
-                isAdmin={isAdmin}
+                canUpload={isAdmin}
                 kind="groups"
                 onUpload={(id, url) => savePhoto("groups", id, url)}
                 disabledIf={(group) =>
@@ -197,7 +199,7 @@ export function ProductPicker({
                 <TileGrid<Category>
                   items={categories}
                   photoOverrides={photoOverrides}
-                  isAdmin={isAdmin}
+                  canUpload
                   kind="categories"
                   onUpload={(id, url) => savePhoto("categories", id, url)}
                   onSelect={(category) => setCategoryId(category.id)}
@@ -208,7 +210,7 @@ export function ProductPicker({
                   catalog={effectiveCatalog}
                   products={products}
                   photoOverrides={photoOverrides}
-                  isAdmin={isAdmin}
+                  canUpload
                   onUpload={(id, url) => savePhoto("products", id, url)}
                   empty="Esta categoría no tiene productos."
                   onSelect={onSelect}
@@ -247,7 +249,7 @@ export function ProductPicker({
 function TileGrid<T extends { id: string; name: string; photo_url?: string }>({
   items,
   photoOverrides,
-  isAdmin,
+  canUpload,
   kind,
   onUpload,
   onSelect,
@@ -257,7 +259,7 @@ function TileGrid<T extends { id: string; name: string; photo_url?: string }>({
 }: {
   items: T[];
   photoOverrides: Record<string, string>;
-  isAdmin: boolean;
+  canUpload: boolean;
   kind: "groups" | "categories";
   onUpload: (id: string, url: string) => void;
   onSelect: (item: T) => void;
@@ -280,7 +282,7 @@ function TileGrid<T extends { id: string; name: string; photo_url?: string }>({
             kind={kind}
             disabled={disabled}
             onSelect={() => onSelect(item)}
-            onUpload={isAdmin ? onUpload : undefined}
+            onUpload={canUpload ? onUpload : undefined}
           />
         );
       })}
@@ -308,7 +310,7 @@ function ProductGrid({
   catalog,
   products,
   photoOverrides,
-  isAdmin,
+  canUpload,
   onUpload,
   empty,
   onSelect,
@@ -317,7 +319,7 @@ function ProductGrid({
   catalog: Catalog;
   products: Product[];
   photoOverrides: Record<string, string>;
-  isAdmin: boolean;
+  canUpload: boolean;
   onUpload: (id: string, url: string) => void;
   empty: string;
   onSelect: (product: Product) => void;
@@ -338,7 +340,7 @@ function ProductGrid({
           recordId={product.id}
           kind="products"
           onSelect={() => onSelect(product)}
-          onUpload={isAdmin ? onUpload : undefined}
+          onUpload={canUpload ? onUpload : undefined}
         />
       ))}
       {onAddNew ? <AddTile onClick={onAddNew} /> : null}

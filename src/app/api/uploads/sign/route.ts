@@ -14,15 +14,15 @@ export const runtime = "nodejs";
  * validez de minutos (el timestamp), y el cliente sube directo a
  * Cloudinary con esa firma. El secret nunca sale de aquí.
  *
- * Solo admin para categorías/productos/grupos: subir su foto es una
- * operación de catálogo, igual que crearlos o editarlos (`updateRule`
- * de esas tres colecciones ya es admin-only en el backend).
+ * Solo admin para `groups`: no se pidió abrirlo y sus fotos ya se
+ * resuelven bien con el sembrado por lote de Wikimedia.
  *
- * `locations` es la excepción: `locations.createRule` ya admite a
- * cualquier operador activo (una ubicación se crea en el momento, al
- * recibir una donación), así que exigir admin aquí bloquearía subir su
- * foto aunque el registro mismo se pudiera crear — la firma no puede
- * ser más estricta que la regla que de todas formas se va a aplicar.
+ * `categories`/`products`/`locations` admiten a cualquier activo desde
+ * el 18 de agosto — sus `updateRule`/`createRule` ya lo permiten en el
+ * backend, y para categorías/productos el hook
+ * `06_catalog_photo_guard.pb.js` es quien de verdad limita a un
+ * operador a tocar solo `photo_url`: la firma no puede ser más
+ * estricta que la regla que de todas formas se va a aplicar al guardar.
  */
 
 const FOLDERS: Record<string, string> = {
@@ -32,7 +32,7 @@ const FOLDERS: Record<string, string> = {
   locations: "akopia/locations",
 };
 
-const ADMIN_ONLY_KINDS = new Set(["categories", "products", "groups"]);
+const ADMIN_ONLY_KINDS = new Set(["groups"]);
 
 export async function POST(request: NextRequest) {
   const token = request.headers.get("Authorization");
