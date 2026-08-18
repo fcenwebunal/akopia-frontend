@@ -1,0 +1,121 @@
+@layer unal-template {
+
+}
+
+
+
+@media print {
+  .unal-chrome * {
+  -webkit-transition: none !important;
+  transition: none !important;
+  background-color: transparent;
+}
+
+
+body, .unal-chrome header, .unal-chrome main, .unal-chrome footer {
+  display: block !important;
+  width: 992px;
+}
+
+
+.unal-chrome header#unalTop {
+  min-height: 104px;
+}
+
+.unal-chrome header#unalTop div.logo, .unal-chrome header#unalTop div.seal, .unal-chrome header#unalTop div#bs-navbar {
+  display: inline-block;
+}
+
+.unal-chrome header#unalTop div.site-url {
+  display: block;
+}
+
+
+.unal-chrome main a {
+  font-weight: bolder;
+  text-decoration: none;
+}
+
+
+body, .unal-chrome header, .unal-chrome footer {
+  width: 100% !important;
+  display: table !important;
+  margin: 0;
+  padding: 0;
+}
+
+
+.unal-chrome * body * {
+  color: black;
+  background: white;
+}
+
+.unal-chrome * body #services, .unal-chrome * body .navigation .buscador, .unal-chrome * body .socialLinks {
+  display: none !important;
+}
+
+.unal-chrome * body>#unalTop a[href]:after, .unal-chrome * body>footer a[href]:after {
+  content: none;
+}
+
+.unal-chrome * body>#unalTop {
+  border-bottom: solid 1px #333333;
+}
+.unal-chrome * body>#unalTop .firstMenu .navbar-default {
+  border-bottom: solid 1px #333333;
+}
+.unal-chrome * body>#unalTop .navigation .site-url {
+  padding-left: 0;
+}
+.unal-chrome * body>#unalTop .seal {
+  position: absolute;
+  height: 60px;
+  width: 60px;
+  right: 0px;
+}
+.unal-chrome * body>#unalTop .seal img {
+  height: 60px;
+  width: 60px;
+  display: none;
+}
+.unal-chrome * body>#unalTop .logo a .visible-print {
+  width: 100%;
+  display: block;
+  position: relative;
+  top: -11px;
+}
+.unal-chrome * body>#unalTop .logo a svg {
+  display: none;
+}
+.unal-chrome * body>#unalTop .logo a img {
+  display: none;
+}
+
+.unal-chrome * body main .breadcrumb-class {
+  margin-top: 10px;
+  border-bottom: none;
+}
+
+.unal-chrome * body>footer {
+  border-top: solid 1px #333333;
+  padding-top: 11px;
+}
+.unal-chrome * body>footer .gobiernoLinea {
+  width: 25%;
+}
+.unal-chrome * body>footer .footer-info {
+  width: 33.333%;
+}
+.unal-chrome * body>footer .logos {
+  width: 16.667%;
+  padding: 0;
+}
+.unal-chrome * body>footer .logos>a {
+  width: 50%;
+  float: left;
+  display: block;
+}
+.unal-chrome * body>footer .logos>a img {
+  height: 25px;
+}
+}

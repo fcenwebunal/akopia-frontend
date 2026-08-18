@@ -1,0 +1,12 @@
+@font-face {
+    font-family: "Abel";
+    src: url("../fonts/Abel/Abel-Regular.ttf");
+    src: url("../fonts/Abel/Abel-Regular.ttf") format('truetype')
+
+    }
+@font-face {
+    font-family: "Wix Madefor Display'),";
+    src: url("../fonts/Wix_Madefor_Display/WixMadeforDisplay-VariableFont_wght.ttf");
+    src: url("../fonts/Wix_Madefor_Display/WixMadeforDisplay-VariableFont_wght.ttf") format('truetype')
+    
+    }

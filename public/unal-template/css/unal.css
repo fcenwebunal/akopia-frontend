@@ -1,0 +1,926 @@
+@layer unal-template {
+
+
+
+.unal-chrome h1, .unal-chrome h2, .unal-chrome h3, .unal-chrome h4, .unal-chrome h5, .unal-chrome h6 {
+	font-family: "Ancizar serif", "MS Serif", "New York", serif;
+}
+
+
+.unal-chrome a {
+	color: #94b43b;
+}
+
+.unal-chrome a:hover {
+	text-decoration: underline; color: #333333;
+}
+
+.unal-chrome main {
+	-webkit-box-flex: 1; -webkit-flex: 1 0 auto; -moz-box-flex: 1; -moz-flex: 1 0 auto; -ms-flex: 1 0 auto; flex: 1 0 auto; min-height: 30em;
+}
+
+.unal-chrome ol {list-style: decimal outside none;}
+
+.unal-chrome li a {font-size: 1em;}
+
+.unal-chrome ul, .unal-chrome ol {margin-left: 1.2em;}
+
+.unal-chrome footer {
+	height: auto; background: #666; font-size: .9em; color: #ddd; padding: 15px 0 25px 0;
+}
+
+.unal-chrome footer nav {
+	display: block;
+}
+
+.unal-chrome footer nav a {
+	display: inline-block; width: 49%;
+}
+
+.unal-chrome footer a {
+	color: white;
+}
+
+.unal-chrome footer a:hover {
+	color: #eee; text-decoration: underline;
+}
+}
+
+@font-face {
+	font-family: 'Ancizar sans'; font-weight: bold; font-style: italic; src: url("../fonts/ancizarsans_bold_italic-webfont.eot"), url("../fonts/ancizarsans_bold_italic-webfont.eot?#iefix") format('embedded-opentype'), url("../fonts/ancizarsans_bold_italic-webfont.woff") format('woff'), url("../fonts/ancizarsans_bold_italic-webfont.ttf") format('truetype'), url("../fonts/ancizarsans_bold_italic-webfont.svg#ancizar_sansbold_italic") format('svg');
+}
+
+@font-face {
+	font-family: 'Ancizar sans'; font-weight: bold; font-style: normal; src: url("../fonts/ancizarsans_bold-webfont.eot"), url("../fonts/ancizarsans_bold-webfont.eot?#iefix") format('embedded-opentype'), url("../fonts/ancizarsans_bold-webfont.woff") format('woff'), url("../fonts/ancizarsans_bold-webfont.ttf") format('truetype'), url("../fonts/ancizarsans_bold-webfont.svg#ancizar_sansbold_italic") format('svg');
+}
+
+@font-face {
+	font-family: 'Ancizar sans'; font-weight: normal; font-style: italic; src: url("../fonts/ancizarsans_italic-webfont.eot"), url("../fonts/ancizarsans_italic-webfont.eot?#iefix") format('embedded-opentype'), url("../fonts/ancizarsans_italic-webfont.woff") format('woff'), url("../fonts/ancizarsans_italic-webfont.ttf") format('truetype'), url("../fonts/ancizarsans_italic-webfont.svg#ancizar_sansbold_italic") format('svg');
+}
+
+@font-face {
+	font-family: 'Ancizar sans'; font-weight: normal; font-style: normal; src: url("../fonts/ancizarsans_regular-webfont.eot"), url("../fonts/ancizarsans_regular-webfont.eot?#iefix") format('embedded-opentype'), url("../fonts/ancizarsans_regular-webfont.woff") format('woff'), url("../fonts/ancizarsans_regular-webfont.ttf") format('truetype'), url("../fonts/ancizarsans_regular-webfont.svg#ancizar_sansbold_italic") format('svg');
+}
+
+@font-face {
+	font-family: 'Ancizar serif'; font-weight: bold; font-style: italic; src: url("../fonts/ancizarserif_bold_italic-webfont.eot"), url("../fonts/ancizarserif_bold_italic-webfont.eot?#iefix") format('embedded-opentype'), url("../fonts/ancizarserif_bold_italic-webfont.woff") format('woff'), url("../fonts/ancizarserif_bold_italic-webfont.ttf") format('truetype'), url("../fonts/ancizarserif_bold_italic-webfont.svg#ancizar_sansbold_italic") format('svg');
+}
+
+@font-face {
+	font-family: 'Ancizar serif'; font-weight: bold; font-style: normal; src: url("../fonts/ancizarserif_bold-webfont.eot"), url("../fonts/ancizarserif_bold-webfont.eot?#iefix") format('embedded-opentype'), url("../fonts/ancizarserif_bold-webfont.woff") format('woff'), url("../fonts/ancizarserif_bold-webfont.ttf") format('truetype'), url("../fonts/ancizarserif_bold-webfont.svg#ancizar_sansbold_italic") format('svg');
+}
+
+@font-face {
+	font-family: 'Ancizar serif'; font-weight: normal; font-style: italic; src: url("../fonts/ancizarserif_italic-webfont.eot"), url("../fonts/ancizarserif_italic-webfont.eot?#iefix") format('embedded-opentype'), url("../fonts/ancizarserif_italic-webfont.woff") format('woff'), url("../fonts/ancizarserif_italic-webfont.ttf") format('truetype'), url("../fonts/ancizarserif_italic-webfont.svg#ancizar_sansbold_italic") format('svg');
+}
+
+@font-face {
+	font-family: 'Ancizar serif'; font-weight: normal; font-style: normal; src: url("../fonts/ancizarserif_regular-webfont.eot"), url("../fonts/ancizarserif_regular-webfont.eot?#iefix") format('embedded-opentype'), url("../fonts/ancizarserif_regular-webfont.woff") format('woff'), url("../fonts/ancizarserif_regular-webfont.ttf") format('truetype'), url("../fonts/ancizarserif_regular-webfont.svg#ancizar_sansbold_italic") format('svg');
+}
+
+body {
+	background-color: #ddd; font-family: "Ancizar sans", Tahoma, Geneva, sans-serif; display: -webkit-box; display: -webkit-flex; display: -moz-flex; display: -ms-flexbox; display: flex; min-height: 100vh; -webkit-box-direction: normal; -webkit-box-orient: vertical; -webkit-flex-direction: column; -moz-flex-direction: column; -ms-flex-direction: column; flex-direction: column; overflow-y: scroll;
+}
+
+body>footer:before {
+	content: " "; display: table
+}
+
+body>footer:after {clear: both; }
+
+.unal-chrome blockquote, .unal-chrome div.indent {margin: 1em 1.2em;}
+
+.unal-chrome .align-center {text-align: center;}
+
+.unal-chrome .align-justify {text-align: justify;}
+
+.unal-chrome .align-left {text-align: left;}
+
+.unal-chrome .align-right {text-align: right;}
+
+.unal-chrome .no-padding {padding: 0;}
+
+.unal-chrome #services {
+	background: #333; position: fixed; right: -800px; left: auto; top: 0; -webkit-transition: all .25s ease-out; -moz-transition: all .25s ease-out; -o-transition: all .25s ease-out; transition: all .25s ease-out; z-index: 20000;
+}
+
+.unal-chrome #services.active {
+	right: 0;
+}
+
+.unal-chrome #services .navbar-default .navbar-nav>li>a:hover,
+.unal-chrome #services .navbar-default .navbar-nav>li>a:focus {
+	background-color: yellow; color: pink;
+}
+
+.unal-chrome #services ul {
+	margin: 0; overflow-x: hidden; padding: 0 10px;
+}
+
+.unal-chrome #services ul li {
+	border-bottom: 1px solid #222; border-top: 1px solid #444; width: 240px; padding: 10px 0; height: 52px;
+}
+
+.unal-chrome #services ul li:hover {
+	background: #444;
+}
+
+.unal-chrome #services ul li:first-child {
+	border-top: 0;
+}
+
+.unal-chrome #services ul li:last-child {
+	border-bottom: 0;
+}
+
+.unal-chrome #services ul li a {
+	color: white; font-size: .9em; line-height: 32px; white-space: nowrap; display: inline; background: transparent; padding: 0;
+}
+
+.unal-chrome #services ul li a img {
+	display: block; float: left; height: 32px; margin: 0 5px; width: 32px;
+}
+
+.unal-chrome #services .indicator {
+	background-color: #94b43b; background-image: url(../images/backServices.png); background-position: 0 0; cursor: pointer; height: 126px; left: -34px; position: absolute; top: 150px; width: 34px;
+}
+
+.unal-chrome #services .indicator:hover {
+	background-position: 0 -127px;
+}
+
+.unal-chrome #services .indicator.active {
+	background-position: -35px 0;
+}
+
+.unal-chrome #services .indicator.active:hover {
+	background-position: -35px -127px;
+}
+
+.unal-chrome ul.dropdown-menu {
+	min-width: 54px; background: #333; border-color: #222; padding: 0;
+}
+
+.unal-chrome .dropdown-item{ padding: 5px 15px!important; }
+
+.unal-chrome ul.dropdown-menu a {
+	color: white; padding: 3px 10px;
+}
+
+.unal-chrome ul.dropdown-menu a:hover,
+.unal-chrome ul.dropdown-menu a:active,
+.unal-chrome ul.dropdown-menu a:focus {
+	background: #4b4b4b; color: white;
+}
+
+.unal-chrome #unalTop {
+	position: relative; z-index: 3;
+}
+
+.unal-chrome #unalTop .logo {
+	-webkit-transition: width .5s; -moz-transition: width .5s; -o-transition: width .5s; transition: width .5s; background: no-repeat url(../images/sealBck.png); float: left; height: 135px; width: 234px; margin-left: 10px; position: absolute; text-align: center; z-index: 1;
+}
+
+.unal-chrome #unalTop .logo img,
+.unal-chrome #unalTop .logo svg {
+	-webkit-transition: width .5s; -moz-transition: width .5s; -o-transition: width .5s; transition: width .5s;
+}
+
+.unal-chrome #unalTop .btn-group {
+	-webkit-border-radius: 5px; -moz-border-radius: 5px; -ms-border-radius: 5px; -o-border-radius: 5px; border-radius: 5px;
+}
+
+.unal-chrome #unalTop .btn-group .btn {
+	background: transparent; border: 0; color: white; text-shadow: none; -webkit-box-shadow: none; -moz-box-shadow: none; -o-box-shadow: none; box-shadow: none; text-transform: uppercase; font-size: 1.125em;
+}
+
+.unal-chrome #unalTop .btn-group .btn .caret {
+	border-top-color: #94b43b; margin-left: 6px;
+}
+
+.unal-chrome #unalTop .btn-group:hover,
+.unal-chrome #unalTop .btn-group.open {
+	background-color: #666; border-color: #333;
+}
+
+.unal-chrome #unalTop .seal {
+	position: absolute; right: 10px; top: 35px; z-index: 2;
+}
+
+.unal-chrome #unalTop .firstMenu {
+	background: #666; height: 30px;
+}
+
+.unal-chrome #navbar_content{ background: url(../images/navigationBack_small.png);	}
+.unal-chrome #unalTop .firstMenu .navbar-toggler{ margin-top: 5px; }
+
+.unal-chrome #btn_hamburguer{
+	background-image: url("../Icons/menu.svg");
+	background-repeat: no-repeat 95% 50%;
+	border: none;
+	height: 54px;
+	width: 54px;
+}
+
+.unal-chrome .main_menu{
+	background-color: #666;
+	display: none;
+	height: 54px;
+	margin: 0;
+	padding: 0;
+}
+
+.unal-chrome #unalTop .firstMenu .navbar {
+	padding: 0;
+}
+
+.unal-chrome #unalTop .firstMenu .navbar-toggle {
+	margin-top: 11px; margin-right: 11px;
+}
+
+.unal-chrome #unalTop .firstMenu .navbar-toggle .icon-bar {
+	background: white;
+}
+
+.unal-chrome #unalTop .firstMenu .languageMenu {
+	margin: 0 5px;
+	/* text-transform: uppercase; */
+}
+
+.unal-chrome .languageMenu ul{
+	text-align: right;
+	width: 130px;
+}
+.unal-chrome .languageMenu ul li{
+	padding-top: 5px;
+	padding-bottom: 5px;
+	width: 100%;
+}
+.unal-chrome .languageMenu ul li a:hover{text-decoration: none;}
+
+.unal-chrome #unalTop .firstMenu .languageMenu:hover,
+.unal-chrome #unalTop .firstMenu .languageMenu.open {
+	background-color: transparent;
+	border-color: transparent
+}
+
+.unal-chrome #unalTop .firstMenu .languageMenu .btn {
+	padding: 5px .8em 2px;
+}
+
+.unal-chrome #unalTop .firstMenu .navbar-default {
+	background: transparent;
+	float: right;
+}
+
+.unal-chrome #unalTop .firstMenu .navbar #navbarSupportedContent,
+.unal-chrome #unalTop .firstMenu .navbar ul.socialLinks,
+.unal-chrome #unalTop .firstMenu .navbar .languageMenu{ display: inline-block !important; }
+
+.unal-chrome #unalTop .firstMenu .navbar-default nav { padding: 0;}
+
+.unal-chrome #unalTop .firstMenu .navbar-default nav li {
+	border-right: 1px solid #3d3d3d; height: 30px; padding-top: 6px; -webkit-transition: background .5s; -moz-transition: background .5s; -o-transition: background .5s; transition: background .5s;
+}
+
+.unal-chrome #unalTop .firstMenu .navbar-default nav li .dropdown-menu {
+	width: 14em;
+}
+
+.unal-chrome #unalTop .firstMenu .navbar-default nav li:first-child {
+	border-left: 1px solid #333;
+}
+
+.unal-chrome #unalTop .firstMenu .navbar-default nav li a {
+	color: white; text-shadow: none; background: none; display: inline;
+}
+
+.unal-chrome #container_servicios_mobil,.unal-chrome #container_sedes_mobil,.unal-chrome #container_profiles_mobil{ background-color: #333;}
+
+.unal-chrome #container_servicios_mobil ul{
+	margin: 0;
+	padding: 10px 0px;
+}
+.unal-chrome #container_servicios_mobil li{
+	padding: 5px 0px 5px 10px
+}
+.unal-chrome #container_servicios_mobil ul li a{
+	display: flex;
+	align-items: center;
+}
+.unal-chrome #container_servicios_mobil ul li img{ margin-right: 5px;}
+.unal-chrome #container_servicios_mobil li a,
+.unal-chrome #container_sedes_mobil li a{ color: #fff }
+
+.unal-chrome #container_profiles_mobil a:hover,
+.unal-chrome #container_sedes_mobil li a:hover{
+	color: #000;
+	text-decoration: none;
+}
+.unal-chrome #container_servicios_mobil li:hover{ background-color: #666; }
+.unal-chrome #container_servicios_mobil li a:hover{
+	color: #fff;
+	text-decoration: none;
+}
+
+.unal-chrome #unalTop .firstMenu .navbar-default nav li a:hover {
+	color: #333;
+	text-decoration: none;
+}
+
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.active>a {
+	color: black;
+}
+
+.unal-chrome #unalTop .firstMenu .navbar #navbarSupportedContent {-webkit-box-shadow: none; box-shadow: none;}
+
+.unal-chrome #unalTop .firstMenu .navbar-default .justify-content-end .nav-item {padding: 7px 10px;}
+
+.unal-chrome #container_profiles_mobil ul{ margin: 0;}
+.unal-chrome #container_profiles_mobil li{
+	padding: 5px 0px 5px 10px;
+	width: 100%;
+}
+.unal-chrome #container_profiles_mobil li a{ color: #fff;}
+
+.unal-chrome #container_profiles_mobil .item_Aspirantes:hover,
+.unal-chrome #container_profiles_mobil .item_Aspirantes.active,
+.unal-chrome #container_profiles_mobil .item_Aspirantes.active:hover,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Aspirantes:hover,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Aspirantes.active,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Aspirantes.active:hover {
+	background: #fd0; border-right: 1px solid #998400!important;
+}
+
+.unal-chrome #container_profiles_mobil .item_Estudiantes:hover,
+.unal-chrome #container_profiles_mobil .item_Estudiantes.active,
+.unal-chrome #container_profiles_mobil .item_Estudiantes.active:hover,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Estudiantes:hover,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Estudiantes.active,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Estudiantes.active:hover {
+	background: #ffb600; border-right: 1px solid #996d00!important;
+}
+
+.unal-chrome #container_profiles_mobil .item_Egresados:hover,
+.unal-chrome #container_profiles_mobil .item_Egresados.active,
+.unal-chrome #container_profiles_mobil .item_Egresados.active:hover,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Egresados:hover,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Egresados.active,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Egresados.active:hover {
+	background: #51b8be; border-right: 1px solid #306e71!important;
+}
+
+.unal-chrome #container_profiles_mobil .item_Docentes:hover,
+.unal-chrome #container_profiles_mobil .item_Docentes.active,
+.unal-chrome #container_profiles_mobil .item_Docentes.active:hover,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Docentes:hover,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Docentes.active,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Docentes.active:hover {
+	background: #008c95; border-right: 1px solid #005459!important;
+}
+
+.unal-chrome #container_profiles_mobil .item_Administrativos:hover,
+.unal-chrome #container_profiles_mobil .item_Administrativos.active,
+.unal-chrome #container_profiles_mobil .item_Administrativos.active:hover,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Administrativos:hover,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Administrativos.active,
+.unal-chrome #unalTop .firstMenu .navbar-default nav li.item_Administrativos.active:hover {
+	background: #ff3d30; border-right: 1px solid #99241d!important
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks {
+	float: right; margin: 0 5px 0 20px; padding: 0;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li {
+	float: left; margin: 5px 2px; padding: 0
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a {
+	display: block; height: 20px; width: 20px;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.twitter, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.twitter:hover, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.facebook, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.facebook:hover, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.youtube, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.youtube:hover, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.flickr, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.flickr:hover, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.rss, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.rss:hover, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.blogger, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.blogger:hover, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.email, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.email:hover {
+	background: no-repeat 0 0 url(../images/icnSocial.png);
+}
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.twitter:hover, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.facebook, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.facebook:hover, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.youtube, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.youtube:hover, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.flickr, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.flickr:hover, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.rss, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.rss:hover, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.blogger, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.blogger:hover, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.email, .unal-chrome #unalTop .firstMenu ul.socialLinks li a.email:hover {
+	background-position: 0 -21px;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.facebook {
+	background-position: -21px 0;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.facebook:hover {
+	background-position: -21px -21px;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.youtube {
+	background-position: -84px 0;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.youtube:hover {
+	background-position: -84px -21px;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.flickr {
+	background-position: -42px 0;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.flickr:hover {
+	background-position: -42px -21px;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.rss {
+	background-position: -126px 0;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.rss:hover {
+	background-position: -126px -21px;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.blogger {
+	background-position: -63px 0;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.blogger:hover {
+	background-position: -63px -21px;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.email {
+	background-position: -105px 0;
+}
+
+.unal-chrome #unalTop .firstMenu ul.socialLinks li a.email:hover {
+	background-position: -105px -21px;
+}
+
+.unal-chrome #unalTop .navigation {
+	background: url(../images/navigationBack.png); color: white; padding: 0;
+}
+
+.unal-chrome .main_menu .site-url,
+.unal-chrome #unalTop .navigation .site-url {
+	background: no-repeat 0 0 url(../images/locDot.png); clear: both; float: left; font-size: 1.72em; height: 17px; line-height: 18px; margin: 12px 10px 10px 250px; padding: 0 0 0 20px;
+}
+.unal-chrome .main_menu .site-url a,
+.unal-chrome #unalTop .navigation .site-url a {
+	color: white;
+}
+
+.unal-chrome .main_menu .buscador,
+.unal-chrome #unalTop .navigation .buscador {
+	-webkit-border-radius: 5px; -moz-border-radius: 5px; -ms-border-radius: 5px; -o-border-radius: 5px; border-radius: 5px; background: none; color: white; margin: 0; overflow: hidden; width: 200px; position: absolute; right: 85px; top: 36px; height: 30px;
+}
+
+.unal-chrome .main_menu .buscador .gscb_a,
+.unal-chrome #unalTop .navigation .buscador .gscb_a {
+	line-height: 20px;
+}
+
+.unal-chrome .main_menu .buscador .gsc-search-box .gsc-input>input:hover,
+.unal-chrome .main_menu .buscador .gsc-input-box-hover,
+.unal-chrome #unalTop .navigation .buscador .gsc-search-box .gsc-input>input:hover,
+.unal-chrome #unalTop .navigation .buscador .gsc-input-box-hover {
+	border: 0; -moz-box-shadow: none; -webkit-box-shadow: none; box-shadow: none; outline: 0;
+}
+
+.unal-chrome .main_menu .buscador .gsc-control-searchbox-only .gsc-input,
+.unal-chrome #unalTop .navigation .buscador .gsc-control-searchbox-only .gsc-input {
+	background-color: #777; background-image: none!important; width: 100%; padding: 0;
+}
+
+.unal-chrome .main_menu .buscador .gsc-control-searchbox-only .gsc-input input,
+.unal-chrome #unalTop .navigation .buscador .gsc-control-searchbox-only .gsc-input input {
+	background: none !important; text-indent: 0 !important; color: #ddd; display: inline; font-size: 1.2em; width: 150px!important;
+}
+
+.unal-chrome .main_menu .buscador .gsc-control-searchbox-only .gsc-input input::placeholder,
+.unal-chrome #unalTop .navigation .buscador .gsc-control-searchbox-only .gsc-input input::placeholder {
+	color: #ddd;
+}
+
+.unal-chrome .main_menu .buscador .gsc-control-searchbox-only .gsc-input td.gsib_b,
+.unal-chrome #unalTop .navigation .buscador .gsc-control-searchbox-only .gsc-input td.gsib_b {
+	display: none;
+}
+
+.unal-chrome .main_menu .buscador .gsc-control-searchbox-only .gsc-search-box,
+.unal-chrome #unalTop .navigation .buscador .gsc-control-searchbox-only .gsc-search-box {
+	height: 30px; margin: 0; position: relative;
+}
+
+.unal-chrome .main_menu .buscador .gsc-input-box-focus,
+.unal-chrome #unalTop .navigation .buscador .gsc-input-box-focus {
+	-webkit-box-shadow: none; -moz-box-shadow: none; -o-box-shadow: none; box-shadow: none;
+}
+
+.unal-chrome .main_menu .buscador .gsc-search-button,
+.unal-chrome #unalTop .navigation .buscador .gsc-search-button {
+	-webkit-border-radius: 0; -moz-border-radius: 0; -ms-border-radius: 0; -o-border-radius: 0; border-radius: 0; background-color: #94b43b!important; border: 0 none; -webkit-box-shadow: none; -moz-box-shadow: none; -o-box-shadow: none; box-shadow: none; cursor: pointer; float: right; height: 30px; padding: 0; width: 30px; margin-left: 0 !important;
+}
+
+.unal-chrome .main_menu .buscador .gsc-search-button input.gsc-search-button,
+.unal-chrome #unalTop .navigation .buscador .gsc-search-button input.gsc-search-button {
+	border: 0; -webkit-box-shadow: none; -moz-box-shadow: none; -o-box-shadow: none; box-shadow: none; margin: 0; outline: 0; padding: 0; height: 30px; width: 30px;
+}
+
+.unal-chrome .main_menu .buscador .gsc-search-button button.gsc-search-button-v2 svg,
+.unal-chrome #unalTop .navigation .buscador .gsc-search-button button.gsc-search-button-v2 svg {
+	width: 16px !important; height: 16px !important; margin: 7px !important;
+}
+
+.unal-chrome .main_menu .buscador .gsc-input-box,
+.unal-chrome #unalTop .navigation .buscador .gsc-input-box {
+	background: #777; border: 0; color: white; padding: 0;
+}
+
+.unal-chrome table.gsc-completion-container {
+	font-family: 'Ancizar sans' !important; font-weight: normal !important;
+}
+
+.unal-chrome #unalTop .navigation .mainMenu {
+	clear: both; margin: 0 0 0 240px;
+}
+
+.unal-chrome #unalTop .navigation .mainMenu .btn-group:last-child {
+	float: right; margin-right: 85px;
+}
+
+.unal-chrome #unalTop .navigation .mainMenu .btn-group:last-child .caret {
+	border-top-color: #94b43b!important;
+}
+
+.unal-chrome #unalTop .navigation .mainMenu .btn-group ul.dropdown-menu {
+	margin-top: -3px;
+}
+
+.unal-chrome main .breadcrumb-class {
+	border-bottom: 1px dotted #646464; color: #323232; line-height: 30px; margin: 50px 0 0;
+}
+
+.unal-chrome main .breadcrumb-class span,
+.unal-chrome main .breadcrumb-class a {
+	margin: 0 .3em; font-weight: bold;
+}
+
+.unal-chrome main .breadcrumb-class a {
+	color: #94b43b; font-weight: normal;
+}
+
+.unal-chrome main .breadcrumb-class a:hover {
+	color: #333;
+}
+
+.unal-chrome main.detalle {
+	margin: 0 10% 50px 10%;
+}
+
+.unal-chrome footer div.footer-info p {
+	display: inline-block; padding: 0;
+}
+
+.unal-chrome footer div.footer-info p.contacto,
+.unal-chrome footer div.footer-info body footer div.footer-info p.derechos,
+body footer div.footer-info footer div.footer-info p.derechos {
+	padding-left: 20px; border-left: solid 1px #555;
+}
+
+.unal-chrome footer div.footer-info p.derechos {
+	text-align: right; padding-right: 20px; border-right: solid 1px #555;
+}
+
+.unal-chrome footer .logos a {
+	text-align: center; padding: 0;
+}
+
+.unal-chrome footer .logos a img {
+	max-width: 100%; max-height: 37px; width: auto; height: auto; display: block; margin: auto;
+}
+
+.unal-chrome .oldie {
+	display: block;
+}
+
+.unal-chrome .oldie body {
+	font-size: 12px;
+}
+
+.unal-chrome .oldie #unalTop .logo img {
+	height: auto!important;
+}
+
+.unal-chrome .oldie #unalTop .mainMenu .dropdown-menu li a {
+	display: inline;
+}
+
+.unal-chrome .oldie #unalTop .mainMenu .dropdown-menu li a:hover {
+	background-color: #4b4b4b;
+}
+
+.unal-chrome .oldie #unalTop .firstMenu .navbar-default nav li a {
+	font-size: .9em; line-height: 1.1em;
+}
+
+.unal-chrome .oldie #services {
+	width: 262px;
+}
+
+.unal-chrome .oldie #services ul li a {
+	font-size: .8em;
+}
+
+.unal-chrome .oldie footer {
+	display: table;
+}
+
+.unal-chrome .oldie footer .gobiernoLinea {
+	margin: 10px auto 20px;
+}
+
+.unal-chrome .oldie footer .gobiernoLinea a {
+	margin-top: 4px;
+}
+
+.unal-chrome .oldie footer .footer-info {
+	margin: 10px auto 20px;
+}
+
+.unal-chrome .oldie footer .footer-info p {
+	line-height: 15px;
+}
+
+.unal-chrome .oldie footer .logos {
+	margin: 10px auto 20px;
+}
+
+@media screen and (min-width:992px) and (max-width:1199px) {
+	.unal-chrome #unalTop .seal {
+		right: 8px;
+	}
+	.unal-chrome #unalTop .seal img {
+		height: 50px; width: auto; top: 5px; position: relative;
+	}
+	.unal-chrome #unalTop .navigation .buscador {
+		right: 70px;
+	}
+	.unal-chrome #unalTop .navigation .mainMenu .btn-group .btn {
+		padding: 6px; font-size: 1.1em;
+	}
+	.unal-chrome #unalTop .navigation .mainMenu .btn-group:last-child {
+		margin-right: 70px;
+	}
+	.unal-chrome main .breadcrumb-class {
+		margin-top: 20px;
+	}
+	.unal-chrome footer {
+		font-size: .8em; line-height: 1.1em; padding-bottom: 15px;
+	}
+	.unal-chrome footer div.footer-info p.contacto {
+		padding-left: 10px;
+	}
+	.unal-chrome footer div.footer-info p.derechos {
+		padding-right: 10px;
+	}
+	.unal-chrome footer .logos .imgAgencia {
+		margin-bottom: 6px;
+	}
+	.unal-chrome footer .logos a img {
+		margin: auto;
+		width: auto;
+		max-height: 27px;
+	}
+}
+
+@media screen and (min-width:768px) and (max-width:991px) {
+	.unal-chrome #unalTop .logo {
+		width: 195px; height: 114px; margin-left: 0; background-size: cover; background-position: center bottom;
+	}
+	.unal-chrome #unalTop .logo img {
+		margin: 12px auto; height: 46px; width: auto;
+	}
+	.unal-chrome #unalTop .firstMenu .languageMenu {
+		margin: 0;
+	}
+	.unal-chrome #unalTop .firstMenu .navbar-default .justify-content-end .nav-item {padding: 7px 4px;}
+	.unal-chrome #unalTop .firstMenu ul.socialLinks {
+		margin: 0 5px;
+	}
+	.unal-chrome #unalTop .firstMenu .navbar-default nav li a {
+		padding: 6px 5px 4px;
+	}
+	.unal-chrome #unalTop .navigation {
+		height: 68px;
+	}
+	.unal-chrome #unalTop .navigation .buscador {
+		right: 60px; width: 166px; top: 42px; height: 22px;
+	}
+	.unal-chrome #unalTop .navigation .buscador .gsc-control-searchbox-only .gsc-input input {
+		font-size: 1em;
+	}
+	.unal-chrome #unalTop .navigation .buscador .gsc-control-searchbox-only .gsc-search-box {
+		height: 22px;
+	}
+	.unal-chrome #unalTop .navigation .buscador .gsc-search-button {
+		height: 22px; width: 22px;
+	}
+	.unal-chrome #unalTop .navigation .buscador .gsc-search-button input.gsc-search-button {
+		height: 22px; width: 22px;
+	}
+	.unal-chrome #unalTop .navigation .site-url {
+		margin-left: 200px; font-size: 1.4em;
+	}
+	.unal-chrome #unalTop .navigation .mainMenu {
+		margin-left: 200px;
+	}
+	.unal-chrome #unalTop .navigation .mainMenu .btn {
+		font-size: .9em; padding: 7px 4px 0;
+	}
+	.unal-chrome #unalTop .navigation .mainMenu .btn-group:last-child {
+		margin-right: 60px;
+	}
+	.unal-chrome #unalTop .seal {
+		right: 5px;
+	}
+	.unal-chrome #unalTop .seal img {
+		width: 45px; height: 45px; margin-top: 5px;
+	}
+	.unal-chrome main.detalle {
+		margin: 0 5% 50px;
+	}
+	.unal-chrome main .breadcrumb-class {
+		margin-top: 15px;
+	}
+	body footer .gobiernoLinea a {
+		width: 100%
+	}
+	body footer .footer-info {
+		border-left: solid 1px #555; border-right: solid 1px #555;
+	}
+	body footer .footer-info p.contacto {
+		border-left: none;
+	}
+	body footer .footer-info p.derechos {
+		text-align: left; border-right: 0; padding-left: 20px;
+	}
+}
+
+@media screen and (max-width:575px) {
+	body #unalTop .seal {
+		display: none;
+	}
+	body #unalTop .firstMenu .navbar-toggle {
+		margin-right: 11px;
+	}
+	body main.detalle {
+		margin: 0 2% 50px;
+	}
+	body footer {
+		padding: 15px 0 25px;
+	}
+	.unal-chrome .footer-info-spacing{
+		padding-left: 15px;
+		padding-right: 10px;
+	}
+	body footer .gobiernoLinea a {
+		width: 100%;
+	}
+	body footer .gobiernoLinea:nth-child(2) {
+		text-align: right;
+	}
+	body footer div.footer-info {
+		padding: 10px 15px; margin: 10px auto; font-size: .9em; border-top: solid 1px #555; border-bottom: solid 1px #555;
+	}
+	body footer div.footer-info p.contacto,
+	body footer div.footer-info p.derechos {
+		border: 0; padding: 0; width: 49%;
+	}
+	body footer div.footer-info p.derechos {
+		text-align: right; border-left: none;
+	}
+	body footer .logos {
+		margin-top: 0;
+	}
+	.unal-chrome .col-xxs-6 {
+		width: 50%;
+	}
+	.unal-chrome .col-xxs-12 {
+		width: 100%;
+	}
+}
+
+@media screen and (max-width:767px) {
+	.unal-chrome .main_menu{ display: flex;}
+	.unal-chrome #services,
+	.unal-chrome #profiles {
+		margin-left: 1.2em; height: auto!important; width: 90%; position: absolute; -webkit-transition: none; -moz-transition: none; -o-transition: none; transition: none;
+	}
+	.unal-chrome #services ul,
+	.unal-chrome #profiles ul {
+		height: auto!important; width: 100%; background: #333; border-color: #222; padding: 0;
+	}
+	.unal-chrome #services ul li,
+	.unal-chrome #profiles ul li {
+		width: 100%; border: 0;
+	}
+	.unal-chrome #services ul li img,
+	.unal-chrome #profiles ul li img {
+		display: none;
+	}
+	.unal-chrome #services ul li a,
+	.unal-chrome #profiles ul li a {
+		line-height: inherit; color: white; padding: 3px 10px; font-size: 1em; line-height: 1.429em;
+	}
+	.unal-chrome #unalTop .logo {
+		background: none; width: 103px; margin-left: 0; height: 54px; z-index: 1;
+	}
+	.unal-chrome #unalTop .logo a {
+		display: block; height: 100%; width: 100%;
+	}
+	.unal-chrome #unalTop .logo a svg,
+	.unal-chrome #unalTop .logo a img {
+		height: 100%; width: 100%; margin: 0;
+	}
+	.unal-chrome #unalTop .seal {
+		top: 10px; right: 60px;
+	}
+	.unal-chrome #unalTop .seal img {
+		width: 35px; height: 35px;
+	}
+	.unal-chrome #unalTop .firstMenu {
+		height: 54px;
+	}
+	.unal-chrome #unalTop .navigation {
+		height: auto; position: absolute; max-height: 5000px; width: 100%; background: url(../images/navigationBack_small.png);
+	}
+	.unal-chrome #unalTop .navigation:last-child {
+		padding-bottom: 15px;
+	}
+	.unal-chrome #unalTop .navigation.collapse.in {
+		overflow: visible
+	}
+	.unal-chrome .main_menu .site-url,
+	.unal-chrome #unalTop .navigation .site-url {
+		font-size: 1.1em; margin: 10px 0 5px 14px;
+	}
+
+	.unal-chrome .main_menu .buscador,
+	.unal-chrome #unalTop .navigation .buscador {
+		clear: both;
+		left: 0;
+		margin: 5px 2%;
+		position: relative;
+		top: 0;
+		width: 96%;
+	}
+	.unal-chrome #container_mainmenu_mobil,
+	.unal-chrome #unalTop .navigation .mainMenu { margin: 0;	}
+
+	.unal-chrome #container_mainmenu_mobil .btn-group:last-child,
+	.unal-chrome #unalTop .navigation .mainMenu .btn-group:last-child { margin: 0; float: none; }
+
+	.unal-chrome #container_mainmenu_mobil .btn-group .dropdown-menu,
+	.unal-chrome #unalTop .navigation .mainMenu .btn-group .dropdown-menu {
+		clear: both; margin-left: 1.2em; width: 90%;
+	}
+	.unal-chrome #container_mainmenu_mobil .btn-group,
+	.unal-chrome #unalTop .navigation .btn-group { width: 100%; }
+	.unal-chrome #container_mainmenu_mobil .btn-default{ text-align: left; }
+
+	.unal-chrome main.detalle {
+		margin: 0 5% 50px;
+	}
+	.unal-chrome main .breadcrumb-class {
+		margin-top: 10px;
+	}
+	.unal-chrome footer .gobiernoLinea {
+		text-align: left;
+	}
+	.unal-chrome footer .gobiernoLinea a {
+		width: 100%;
+	}
+	.unal-chrome footer div.footer-info p.derechos {
+		border-right: 0; border-left: solid 1px #555; padding-right: 0; padding-left: 20px; text-align: left;
+	}
+	.unal-chrome footer .logos {
+		margin-top: 10px;
+	}
+}
+
+@media screen and (min-width:768px) {
+	.unal-chrome #services {
+		display: block; border: 0; -webkit-border-radius: none; -moz-border-radius: none; -ms-border-radius: none; -o-border-radius: none; border-radius: none; -webkit-box-shadow: none; -moz-box-shadow: none; -o-box-shadow: none; box-shadow: none;
+	}
+	.unal-chrome #services ul {
+		position: relative; display: block; background: transparent; top: 0;
+	}
+	.unal-chrome #services ul li a {
+		clear: inherit;
+	}
+	.unal-chrome #unalTop .firstMenu #bs-navbar {
+		display: none!important;
+	}
+	.unal-chrome #unalTop .firstMenu #profiles ul.dropdown-menu {
+		display: block; border: 0; -webkit-border-radius: none; -moz-border-radius: none; -ms-border-radius: none; -o-border-radius: none; border-radius: none; -webkit-box-shadow: none; -moz-box-shadow: none; -o-box-shadow: none; box-shadow: none; position: relative; background-color: transparent; padding: 0;
+	}
+}

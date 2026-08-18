@@ -1,0 +1,11 @@
+/*
+ * Solo fija el orden de precedencia de las cascade layers: registrar
+ * "unal-template" aquí, antes de que Tailwind declare las suyas, la deja
+ * con MENOR prioridad que theme/base/components/utilities. Así, ninguna
+ * regla de la plantilla UNAL (bootstrap.min.css, unal.css, etc., cargada
+ * en scripts/scope-unal-template-css.mjs dentro de esta misma capa)
+ * puede ganarle a una clase de Tailwind puesta directamente en un
+ * elemento real de la app, sin importar la especificidad de ninguna de
+ * las dos — así es como funcionan las cascade layers en CSS.
+ */
+@layer unal-template;

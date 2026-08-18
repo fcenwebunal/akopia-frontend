@@ -1,0 +1,5 @@
+@layer unal-template {
+.unal-chrome main{position:relative}
+}
+
+.unal-chrome main.tx-unal-accesibilidad{position:absolute}.unal-chrome main.tx-unal-accesibilidad .panel-content{padding:1em}

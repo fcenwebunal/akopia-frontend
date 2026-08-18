@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import { ancizarSans, ancizarSerif } from "@/lib/fonts";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { TemplateScripts } from "@/components/unal-template/template-scripts";
+import { TemplateStyles } from "@/components/unal-template/template-styles";
 import "./globals.css";
 
+// Formato exigido por la directriz B3: "Nombre del sitio | Universidad
+// Nacional de Colombia".
 export const metadata: Metadata = {
   title: {
-    default: "Akopia",
-    template: "%s",
+    default: "AKOPIA | Universidad Nacional de Colombia",
+    template: "%s | Universidad Nacional de Colombia",
   },
   description:
     "Sistema de gestión del centro de acopio de la Universidad Nacional de Colombia, sede Manizales. Recibe, clasifica, almacena y entrega donaciones con trazabilidad.",
@@ -25,8 +29,12 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <TemplateStyles />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <TemplateScripts />
+      </body>
     </html>
   );
 }

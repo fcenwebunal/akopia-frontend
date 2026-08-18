@@ -1,12 +1,24 @@
-import { AppShell } from "@/components/app/app-shell";
+"use client";
+
+import { menuForRole } from "@/components/unal-template/menu-config";
+import { UnalShell } from "@/components/unal-template/unal-shell";
+import { useSessionGuard } from "@/lib/use-session-guard";
 
 /*
- * App de bodega: layout propio, móvil primero. No lleva la plantilla
- * institucional — estas pantallas se usan de pie y con una sola mano.
- * Ver la nota sobre la directriz B3 en CLAUDE.md.
+ * Momento 3: la app de bodega. Ya no lleva su propio cromo (AppShell,
+ * retirado) — usa el mismo <UnalShell> que la portada y el login, con
+ * el menú principal agrupado por rol (menuForRole) resolviendo el
+ * límite de 6 elementos de primer nivel de la plantilla. La guarda de
+ * sesión es la misma de siempre, ahora en el hook useSessionGuard.
  */
 export default function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return <AppShell>{children}</AppShell>;
+  const { user, checked } = useSessionGuard();
+
+  if (!checked || !user) {
+    return null;
+  }
+
+  return <UnalShell menuItems={menuForRole(user.role)}>{children}</UnalShell>;
 }
