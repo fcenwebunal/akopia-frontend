@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  DatabaseBackup,
   Gift,
   History,
   Home,
@@ -28,6 +29,7 @@ const NAV: { href: string; label: string; icon: LucideIcon }[] = [
 const ADMIN_NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/panel/usuarios", label: "Usuarios", icon: Users },
   { href: "/panel/historial", label: "Historial", icon: History },
+  { href: "/panel/respaldos", label: "Respaldos", icon: DatabaseBackup },
 ];
 
 /*
