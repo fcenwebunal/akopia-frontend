@@ -4,6 +4,8 @@ Interfaz web del sistema de gestión del **Centro de Acopio de la Universidad Na
 
 > 🚀 **¿Primera vez?** Empieza por **[PUESTA-EN-MARCHA.md](PUESTA-EN-MARCHA.md)**: levanta el frontend y el backend juntos, y comprueba que se están hablando. Unos 15 minutos.
 >
+> 🖥️ **¿Vas a desplegar?** Mientras no haya acceso al servidor de la UNAL, el despliegue real vive en hosting público — ver **[DEPLOY-PROVISIONAL.md](DEPLOY-PROVISIONAL.md)** (Fly.io + Vercel).
+>
 > Este README es la referencia del frontend: identidad visual, estructura de pantallas y cómo aportar código.
 
 ---

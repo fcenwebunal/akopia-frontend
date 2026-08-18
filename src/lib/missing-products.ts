@@ -3,8 +3,8 @@
 import { callRoute } from "./pb";
 
 /*
- * Forma de dato compartida entre el panel y —más adelante— la landing
- * pública: no lleva nada del solicitante, solo qué falta. Ver el
+ * Forma de dato compartida entre el panel y la landing pública: no
+ * lleva nada del solicitante, solo qué falta y su foto. Ver el
  * comentario de la ruta en el backend (`05_routes.pb.js`,
  * `/api/requests/missing-products`) para la razón completa.
  */
@@ -16,14 +16,14 @@ export interface MissingProduct {
   requested_qty: number;
   available_qty: number;
   missing_qty: number;
+  photo_url: string;
 }
 
 /*
  * Fetcher del panel: pasa por `callRoute`, que manda el token de sesión
- * de `pb.authStore`. Esto es justo lo que NO debe usar una versión
- * pública del mismo dato — cuando esa vista exista, va a tener su propio
- * fetcher (probablemente un `fetch()` liso, sin auth, contra la misma
- * ruta ya abierta al público). Ambos fetchers devuelven `MissingProduct[]`
+ * de `pb.authStore`. La landing pública NO usa esto — la ruta ya está
+ * abierta sin sesión, así que `(public)/page.tsx` la llama con un
+ * `fetch()` liso, del lado del servidor. Ambos devuelven `MissingProduct[]`
  * y pueden alimentar el mismo `<MissingProductsList>` sin que ese
  * componente sepa ni le importe de dónde vinieron los datos.
  */
