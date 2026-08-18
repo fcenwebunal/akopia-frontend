@@ -611,3 +611,11 @@ Reportado con captura: el logo de AKOPIA y "Centro de acopio · Sede Manizales" 
 Pedido explícito: el selector de tema claro/oscuro solo vivía en `AppShell` (la app de bodega); se agregó también a `InstitutionalHeader`, que es compartido por `(public)/layout.tsx` — cubre `/` y `/login` de una sola vez, sin tocar cada página. Mismo componente `ThemeToggle`, sin cambios: el atributo `data-theme` en `<html>` ya era global desde que se creó, así que no hizo falta ninguna mecánica nueva, solo mostrar el control donde antes no estaba.
 
 Verificado con Playwright contra el servidor real, en `/` y `/login`: el selector aparece junto a "Iniciar sesión"/"Registrarse", cambia el tema al instante en ambas páginas (capturas en claro y oscuro), sin errores de consola. `npx tsc --noEmit` limpio.
+
+### 2026-08-18 (noche) — El escudo UNAL se corrige en tema claro, sin recolorear el archivo
+
+Reportado con captura, justo al agregar el selector de tema al header público: `escudo-unal.svg` es todo relleno blanco fijo (`fill:#FFFFFF`) — hallazgo ya documentado como pendiente el 18 de agosto, al entregar el logo de AKOPIA, pero sin corregir entonces por no ser parte de ese pedido. Con el selector de tema ahora visible en la portada, el problema dejó de ser un caso raro (fondo oscuro poco usado) para ser el estado por defecto de cualquiera que entre en claro.
+
+**No se tocó el SVG fuente** — sigue siendo la marca oficial tal como la entregó Unimedios, coherente con la directriz B1 ("no se recolorea"). En vez de eso, un filtro CSS (`filter: invert(1)`) se aplica solo en tema claro, a través del mismo patrón de tres bloques que ya sincroniza el resto de tokens de tema (`globals.css`): `--unal-shield-filter` vale `invert(1)` en `:root` (claro) y `none` en los dos bloques oscuros — como el escudo es un solo color sólido, invertir blanco produce negro exacto, sin artefactos. Aplicado con la sintaxis de propiedad arbitraria de Tailwind v4 (`[filter:var(--unal-shield-filter)]`) en el único lugar donde se usa el escudo, `InstitutionalHeader`.
+
+Verificado con Playwright contra el servidor real: negro y legible en tema claro, blanco como ya estaba en tema oscuro, sin errores de consola. `npx tsc --noEmit` limpio.

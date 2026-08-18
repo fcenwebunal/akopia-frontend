@@ -22,7 +22,7 @@ export function InstitutionalHeader() {
             width={280}
             height={147}
             priority
-            className="h-16 w-auto sm:h-20"
+            className="h-16 w-auto sm:h-20 [filter:var(--unal-shield-filter)]"
           />
         </a>
 
