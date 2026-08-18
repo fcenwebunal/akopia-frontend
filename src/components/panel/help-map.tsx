@@ -17,6 +17,11 @@ import type { DispatchLocation } from "@/lib/dispatch-locations";
  * mismas calles, manzanas y verde, sin una sola palabra encima. Es la
  * diferencia entre un mapa de referencia y un mapa de vigilancia: se ve
  * que se ayudó por toda la ciudad, no la dirección exacta de nadie.
+ *
+ * Con zoom: controles +/-, rueda del mouse y pellizco en táctil. La
+ * atribución se queda visible aunque sea un mapa "simplificado" — las
+ * teselas gratuitas de CARTO lo exigen en sus términos de uso, no es
+ * decoración.
  */
 export function HelpMap({ points }: { points: DispatchLocation[] }) {
   return (
@@ -24,13 +29,16 @@ export function HelpMap({ points }: { points: DispatchLocation[] }) {
       <MapContainer
         center={MANIZALES_CENTER}
         zoom={12}
-        scrollWheelZoom={false}
-        dragging={points.length > 0}
-        zoomControl={false}
-        attributionControl={false}
+        scrollWheelZoom
+        dragging
+        zoomControl
+        attributionControl
         style={{ height: "100%", width: "100%" }}
       >
-        <TileLayer url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png" />
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        />
         {points.map((point) => (
           <CircleMarker
             key={point.id}
