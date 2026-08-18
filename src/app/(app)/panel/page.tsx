@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import { pb } from "@/lib/pb";
 import { loadCatalog } from "@/lib/catalog";
@@ -9,6 +10,14 @@ import { LoadingLine } from "@/components/ui/spinner";
 import { StatTile, DistributionBar, HorizontalBarChart, DailyBarChart } from "@/components/panel/charts";
 import { fetchMissingProducts, type MissingProduct } from "@/lib/missing-products";
 import { MissingProductsList } from "@/components/inventory/missing-products-list";
+import { fetchDispatchLocations, type DispatchLocation } from "@/lib/dispatch-locations";
+
+// Leaflet toca `window` al cargarse: sin `ssr: false` el render en
+// servidor de esta página truena.
+const HelpMap = dynamic(() => import("@/components/panel/help-map").then((m) => m.HelpMap), {
+  ssr: false,
+  loading: () => <div className="h-72 w-full rounded border border-(--rule) bg-(--surface-2)" />,
+});
 
 interface InventoryRow {
   product_id: string;
@@ -27,6 +36,7 @@ interface Dashboard {
   byGroup: { label: string; value: number }[];
   donationsByDay: { key: string; label: string; value: number; isToday: boolean }[];
   donationsInPeriod: number;
+  helpLocations: DispatchLocation[];
 }
 
 async function count(collection: string, filter: string): Promise<number> {
@@ -63,6 +73,7 @@ export default function PanelPage() {
       requestsUrgent,
       dispatchesAwaitingConfirmation,
       missingProducts,
+      helpLocations,
     ] = await Promise.all([
       loadCatalog(),
       pb.collection("inventory").getFullList<InventoryRow>({
@@ -77,6 +88,7 @@ export default function PanelPage() {
       count("requests", 'status = "pendiente" && (priority = "alta" || priority = "critica")'),
       count("dispatches", 'request_id.status = "despachada"'),
       fetchMissingProducts(),
+      fetchDispatchLocations(),
     ]);
 
     const productById = new Map(catalog.products.map((p) => [p.id, p]));
@@ -144,6 +156,7 @@ export default function PanelPage() {
       byGroup: byGroupTop,
       donationsByDay,
       donationsInPeriod: donations.length,
+      helpLocations,
     };
   }, []);
 
@@ -293,6 +306,24 @@ export default function PanelPage() {
         </div>
         <div className="mt-4">
           <DailyBarChart days={dashboard.donationsByDay} />
+        </div>
+      </section>
+
+      <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-bold">Dónde ha llegado la ayuda</h2>
+          <p className="text-xs text-(--muted)">
+            {dashboard.helpLocations.length} despacho{dashboard.helpLocations.length === 1 ? "" : "s"} con ubicación marcada
+          </p>
+        </div>
+        <div className="mt-4">
+          {dashboard.helpLocations.length > 0 ? (
+            <HelpMap points={dashboard.helpLocations} />
+          ) : (
+            <p className="text-sm text-(--muted)">
+              Ningún despacho tiene todavía un punto marcado en el mapa.
+            </p>
+          )}
         </div>
       </section>
 

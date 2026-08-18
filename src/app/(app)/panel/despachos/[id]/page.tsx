@@ -2,14 +2,24 @@
 
 import { use, useCallback, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { callRoute, errorMessage, pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { CoordinatesDisplay } from "@/components/app/coordinates-display";
+import { MANIZALES_CENTER } from "@/lib/coordinates";
+
+const MapPicker = dynamic(
+  () => import("@/components/app/map-picker").then((m) => m.MapPicker),
+  { ssr: false, loading: () => <div className="h-64 w-full rounded border border-(--rule) bg-(--surface-2)" /> }
+);
 
 interface Dispatch {
   id: string;
   code: string;
   destination: string;
+  destination_lat: number;
+  destination_lng: number;
   driver_name: string;
   driver_phone: string;
   vehicle_plate: string;
@@ -70,6 +80,11 @@ export default function DespachoDetallePage({
   const [status, setStatus] = useState<Delivery["status"]>("entregado");
   const [notes, setNotes] = useState("");
 
+  const [editingLocation, setEditingLocation] = useState(false);
+  const [editLat, setEditLat] = useState(MANIZALES_CENTER[0]);
+  const [editLng, setEditLng] = useState(MANIZALES_CENTER[1]);
+  const [savingLocation, setSavingLocation] = useState(false);
+
   const fetchData = useCallback(async () => {
     const dispatch = await pb.collection("dispatches").getOne<Dispatch>(id, {
       expand: "request_id",
@@ -88,6 +103,30 @@ export default function DespachoDetallePage({
   }, [id, version]);
 
   const { data, error: loadError } = useAsyncData(fetchData);
+
+  function startEditingLocation(dispatch: Dispatch) {
+    const hasCoords = dispatch.destination_lat !== 0 || dispatch.destination_lng !== 0;
+    setEditLat(hasCoords ? dispatch.destination_lat : MANIZALES_CENTER[0]);
+    setEditLng(hasCoords ? dispatch.destination_lng : MANIZALES_CENTER[1]);
+    setEditingLocation(true);
+  }
+
+  async function saveLocation() {
+    setSavingLocation(true);
+    setError(null);
+    try {
+      await pb.collection("dispatches").update(id, {
+        destination_lat: editLat,
+        destination_lng: editLng,
+      });
+      setEditingLocation(false);
+      setVersion((v) => v + 1);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setSavingLocation(false);
+    }
+  }
 
   async function confirmDelivery() {
     if (!receiverName.trim()) {
@@ -165,6 +204,57 @@ export default function DespachoDetallePage({
         {dispatch.brigade ? <p>Brigada: {dispatch.brigade}</p> : null}
         {dispatch.notes ? <p className="italic">{dispatch.notes}</p> : null}
       </div>
+
+      <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-bold">Ubicación</h2>
+          {!editingLocation ? (
+            <button
+              type="button"
+              onClick={() => startEditingLocation(dispatch)}
+              className="text-xs font-bold text-unal-green-dark hover:underline"
+            >
+              {dispatch.destination_lat || dispatch.destination_lng ? "Editar ubicación" : "Marcar en el mapa"}
+            </button>
+          ) : null}
+        </div>
+
+        {editingLocation ? (
+          <div className="mt-3">
+            <p className="mb-2 text-xs text-(--muted)">
+              Arrastra el punto verde (o toca el mapa) hasta la dirección exacta.
+            </p>
+            <MapPicker lat={editLat} lng={editLng} onChange={(newLat, newLng) => { setEditLat(newLat); setEditLng(newLng); }} />
+            <p className="mt-1.5 font-mono text-xs text-(--muted)">
+              {editLat.toFixed(6)}, {editLng.toFixed(6)}
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingLocation(false)}
+                className="rounded border border-(--rule) px-3 py-2 text-sm font-bold"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={savingLocation}
+                onClick={saveLocation}
+                className="flex items-center gap-2 rounded bg-unal-green-dark px-3 py-2 text-sm font-bold text-white disabled:opacity-50"
+              >
+                {savingLocation ? <Spinner /> : null}
+                Guardar ubicación
+              </button>
+            </div>
+          </div>
+        ) : dispatch.destination_lat || dispatch.destination_lng ? (
+          <div className="mt-2">
+            <CoordinatesDisplay lat={dispatch.destination_lat} lng={dispatch.destination_lng} />
+          </div>
+        ) : (
+          <p className="mt-1 text-sm text-(--muted)">Todavía no se marcó el punto exacto en el mapa.</p>
+        )}
+      </section>
 
       {error ? (
         <p role="alert" className="mt-4 rounded border-l-4 border-unal-red bg-(--surface) px-4 py-3">

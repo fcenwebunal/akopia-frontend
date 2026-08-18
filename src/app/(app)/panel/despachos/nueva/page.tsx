@@ -2,9 +2,18 @@
 
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { currentUser, errorMessage, pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { MANIZALES_CENTER, formatCoordinates } from "@/lib/coordinates";
+
+// Leaflet toca `window` al cargarse: sin `ssr: false` el render en
+// servidor de esta página truena.
+const MapPicker = dynamic(
+  () => import("@/components/app/map-picker").then((m) => m.MapPicker),
+  { ssr: false, loading: () => <div className="h-64 w-full rounded border border-(--rule) bg-(--surface-2)" /> }
+);
 
 interface ApprovedRequest {
   id: string;
@@ -41,6 +50,8 @@ export default function NuevoDespachoPage() {
   const [brigade, setBrigade] = useState("");
   const [destination, setDestination] = useState("");
   const [notes, setNotes] = useState("");
+  const [lat, setLat] = useState(MANIZALES_CENTER[0]);
+  const [lng, setLng] = useState(MANIZALES_CENTER[1]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,6 +86,8 @@ export default function NuevoDespachoPage() {
         vehicle_plate: vehiclePlate,
         brigade,
         destination,
+        destination_lat: lat,
+        destination_lng: lng,
         dispatch_date: new Date().toISOString().replace("T", " "),
         operator_id: operator.id,
         notes,
@@ -146,6 +159,17 @@ export default function NuevoDespachoPage() {
                   onChange={(event) => setDestination(event.target.value)}
                   className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
                 />
+              </div>
+
+              <div className="sm:col-span-2">
+                <span className="mb-1 block text-sm font-bold">Ubicación en el mapa</span>
+                <p className="mb-2 text-xs text-(--muted)">
+                  Arrastra el punto verde (o toca el mapa) hasta la dirección exacta.
+                </p>
+                <MapPicker lat={lat} lng={lng} onChange={(newLat, newLng) => { setLat(newLat); setLng(newLng); }} />
+                <p className="mt-1.5 font-mono text-xs text-(--muted)">
+                  {formatCoordinates(lat, lng)}
+                </p>
               </div>
 
               <div>
