@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 /*
  * Cabecera institucional. El escudo enlaza a unal.edu.co y conserva su
@@ -41,6 +42,7 @@ export function InstitutionalHeader() {
         </div>
 
         <nav className="flex items-center gap-2" aria-label="Acceso">
+          <ThemeToggle />
           <Link
             href="/login"
             className="rounded px-3 py-2 text-sm font-bold text-unal-green-dark hover:bg-unal-green-soft"

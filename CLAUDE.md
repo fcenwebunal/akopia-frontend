@@ -605,3 +605,9 @@ Detalle no menor: al cambiar `SERVICE_SUPERUSER_PASSWORD` en Railway para resolv
 ### 2026-08-18 (noche) — Aire entre el logo y el subtítulo en la cabecera institucional
 
 Reportado con captura: el logo de AKOPIA y "Centro de acopio · Sede Manizales" se veían pegados en `InstitutionalHeader`, sin espacio entre ellos ni centrados verticalmente contra el resto de la cabecera. El contenedor usaba `inline-block` con el `<span>` en `block` (sin margen) para apilarlos, y aunque `self-stretch` alargaba el contenedor a toda la altura de la cabecera, no había nada que centrara el contenido dentro de ese alto. Cambiado a `flex flex-col items-start gap-1.5` en el enlace (separa logo y subtítulo con aire real) y `flex items-center` en el contenedor que ya tenía `self-stretch` (centra ese bloque verticalmente contra el escudo). Verificado con Playwright, capturando solo el `<header>`.
+
+### 2026-08-18 (noche) — Selector de tema también en la portada pública y en login
+
+Pedido explícito: el selector de tema claro/oscuro solo vivía en `AppShell` (la app de bodega); se agregó también a `InstitutionalHeader`, que es compartido por `(public)/layout.tsx` — cubre `/` y `/login` de una sola vez, sin tocar cada página. Mismo componente `ThemeToggle`, sin cambios: el atributo `data-theme` en `<html>` ya era global desde que se creó, así que no hizo falta ninguna mecánica nueva, solo mostrar el control donde antes no estaba.
+
+Verificado con Playwright contra el servidor real, en `/` y `/login`: el selector aparece junto a "Iniciar sesión"/"Registrarse", cambia el tema al instante en ambas páginas (capturas en claro y oscuro), sin errores de consola. `npx tsc --noEmit` limpio.
