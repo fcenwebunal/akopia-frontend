@@ -35,6 +35,17 @@
   --ink-2: #4b4b4b;
   --muted: #646464;
   --rule: #d9d9d9;
+
+  /*
+   * Paleta de gráficos del panel — validada con el script de la skill de
+   * dataviz (separación CVD y de visión normal, contraste, banda de
+   * luminosidad) antes de usarse. No cambiar un valor sin revalidar el
+   * conjunto completo: el trío se eligió junto, no color por color.
+   */
+  --viz-available: #6f8a24;
+  --viz-reserved: #33b3bc;
+  --viz-quarantine: #dc313a;
+  --viz-magnitude: #6f8a24;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -45,6 +56,11 @@
     --ink-2: #c2c7bb;
     --muted: #949a8e;
     --rule: #2e332b;
+
+    --viz-available: #769a37;
+    --viz-reserved: #0f9aa8;
+    --viz-quarantine: #d1583d;
+    --viz-magnitude: #8bad4a;
   }
 }
 
@@ -55,6 +71,11 @@
   --ink-2: #c2c7bb;
   --muted: #949a8e;
   --rule: #2e332b;
+
+  --viz-available: #769a37;
+  --viz-reserved: #0f9aa8;
+  --viz-quarantine: #d1583d;
+  --viz-magnitude: #8bad4a;
 }
 
 html {

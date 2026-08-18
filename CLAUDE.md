@@ -306,3 +306,20 @@ Verificado de punta a punta contra el servidor real, no simulado: grupo → cate
 - **`seed-catalog-photos.mjs` corrido de nuevo** (es idempotente: nunca pisa lo que ya tiene foto) para recuperar el resto desde Wikimedia: 29 más.
 - **Resultado final: 11/14 grupos y 38/57 categorías con foto** — mejor cobertura que el 45/66 que había antes de la pérdida.
 - Los usuarios perdidos (cuentas de operador creadas a mano, vínculos de Firebase) no se pueden recuperar automáticamente — hay que volver a crearlas o esperar a que cada quien vuelva a registrarse.
+
+### 2026-08-18 (noche) — Feedback de carga en toda la app, número de documento en entregas, y panel con estadísticas reales
+
+**Feedback visual de carga**, pedido explícito: hasta ahora un botón se deshabilitaba y a veces cambiaba de texto, pero sin ningún ícono — fácil de confundir con "no hizo nada". Nuevo `src/components/ui/spinner.tsx` (`Spinner`, `LoadingLine`), aplicado a todos los botones que disparan una acción async (donaciones, solicitudes, despachos, usuarios, login/registro, alta de catálogo) y a toda pantalla que espera su primera carga de datos. `GoogleButton` ganó una prop `loading` que cambia el ícono de Google por el spinner mientras firma.
+
+**Bug real corregido en el propio spinner del panel:** mezclar `background` (atajo) y `backgroundColor` (propiedad larga) en el mismo objeto de estilo de React hace que asignar `background` después borre el color que ya había puesto `backgroundColor` — el navegador trata el atajo como un reinicio de sus componentes. Se encontró probando con Playwright real, no a simple vista: la barra de "hoy" en el gráfico de donaciones no se pintaba. Corregido calculando un solo valor de color en vez de mezclar ambas propiedades.
+
+**Bug real corregido en despachos:** `deliveries` guardaba `receiver_id_type` (tipo de documento) pero nunca tuvo un campo para el NÚMERO — el formulario de "Confirmar entrega" lo pedía y no había dónde ponerlo, así que se descartaba en silencio. Migración `034` del backend agrega `receiver_id_number`; la ruta `confirm-delivery` y el formulario ya lo capturan y lo muestran.
+
+**Panel de inicio rediseñado**, conectado a datos reales (no una lista fija de KPIs por agregar):
+- Cuatro tarjetas de estado: artículos por clasificar, solicitudes pendientes (con aviso de las de prioridad alta/crítica), despachos por confirmar, productos bajo el mínimo — cada una enlaza a su sección.
+- **Distribución del inventario** (disponible / reservado / cuarentena) como franja de tres tramos con leyenda directa. Se advierte explícitamente que la cifra mezcla unidades distintas (kg, litros, unidades…), sumadas como referencia agregada — igual que ya hace `/api/inventory/summary` en el backend, no una invención nueva.
+- **Productos con existencia por grupo**: a propósito NO suma cantidades (mezclaría kilos con litros), sino que cuenta cuántas referencias distintas tienen saldo por grupo — la única forma dimensionalmente honesta de comparar grupos.
+- **Donaciones de los últimos 14 días**, barras por día.
+- Se refresca solo cada 45s más un botón manual con hora de la última actualización — sin llegar a una suscripción en tiempo real por cada colección, que es mucha complejidad para un panel de lectura.
+- Paleta de los gráficos (`--viz-available`, `--viz-reserved`, `--viz-quarantine`, `--viz-magnitude` en `globals.css`, luz y oscuro) validada con el script de la skill de dataviz antes de usarse: separación por daltonismo, contraste, banda de luminosidad — no elegida a ojo.
+- Verificado con Playwright real contra el servidor en ejecución (login, navegación a `/panel`, captura de pantalla, revisión de errores de consola) — así se encontraron y corrigieron los dos bugs de arriba antes de entregar.

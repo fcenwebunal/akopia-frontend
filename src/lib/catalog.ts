@@ -18,6 +18,7 @@ export interface Product {
   requires_quarantine: boolean;
   active: boolean;
   photo_url?: string;
+  min_stock_alert?: number;
 }
 
 export interface Category {
