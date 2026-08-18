@@ -394,3 +394,9 @@ Dos ajustes puntuales sobre lo anterior:
 - **"Explorar por categoría" pasó a "Explorar por grupo"** — corrige una imprecisión real: ese primer nivel del explorador navega `groups`, no `categories`; el texto llevaba diciendo lo que no era desde que se escribió.
 
 Verificado con Playwright, sesión de operador real: 11 grupos, 11 cámaras visibles (antes 0), y la etiqueta "EXPLORAR POR GRUPO" en pantalla.
+
+### 2026-08-18 (noche) — Foto obligatoria también al crear un grupo
+
+`CatalogAddForm` ya exigía foto para categoría y producto; ahora la exige igual para grupo — el bloque de subida (antes oculto con `kind !== "group"`) se volvió incondicional, y la validación de `save()` dejó de tener la excepción. `PHOTO_KINDS` reemplaza el ternario que solo sabía elegir entre "categories"/"products" para incluir "groups" también, y el `create` de grupo ya manda `photo_url`.
+
+Verificado con Playwright contra el servidor real: crear un grupo sin foto muestra "Sube una foto antes de crear." y no llega a la API; con foto, el grupo se crea y `photo_url` queda guardado (confirmado releyendo el registro).

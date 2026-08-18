@@ -6,7 +6,7 @@ import Image from "next/image";
 import { errorMessage, pb } from "@/lib/pb";
 import type { Catalog, Category, Group, Product, Unit } from "@/lib/catalog";
 import { findDuplicateByName } from "@/lib/catalog";
-import { uploadPhoto, UploadError } from "@/lib/cloudinary";
+import { uploadPhoto, UploadError, type PhotoKind } from "@/lib/cloudinary";
 import { Spinner } from "@/components/ui/spinner";
 
 type AddKind = "group" | "category" | "product";
@@ -15,6 +15,12 @@ const KIND_LABELS: Record<AddKind, string> = {
   group: "grupo",
   category: "categoría",
   product: "producto",
+};
+
+const PHOTO_KINDS: Record<AddKind, PhotoKind> = {
+  group: "groups",
+  category: "categories",
+  product: "products",
 };
 
 /*
@@ -30,9 +36,9 @@ const KIND_LABELS: Record<AddKind, string> = {
  * chocan al mismo tiempo, el índice único del backend (migraciones
  * 002-004) lo bloquea igual; ese mensaje también se traduce aquí.
  *
- * La foto es obligatoria para categoría y producto (no para grupo, que
- * no se pidió) — se sube antes de crear, igual que en
- * `LocationAddForm`, y sin ella el botón "Crear" ni se intenta.
+ * La foto es obligatoria en los tres niveles — se sube antes de crear,
+ * igual que en `LocationAddForm`, y sin ella el botón "Crear" ni se
+ * intenta.
  */
 export function CatalogAddForm({
   kind,
@@ -82,7 +88,7 @@ export function CatalogAddForm({
     setError(null);
 
     try {
-      const url = await uploadPhoto(file, kind === "category" ? "categories" : "products");
+      const url = await uploadPhoto(file, PHOTO_KINDS[kind]);
       setPhotoUrl(url);
     } catch (err) {
       setError(err instanceof UploadError ? err.message : "No se pudo subir la foto.");
@@ -119,7 +125,7 @@ export function CatalogAddForm({
       return;
     }
 
-    if (kind !== "group" && !photoUrl) {
+    if (!photoUrl) {
       setError("Sube una foto antes de crear.");
       return;
     }
@@ -133,6 +139,7 @@ export function CatalogAddForm({
         record = await pb.collection("groups").create<Group>({
           name: trimmed,
           description,
+          photo_url: photoUrl,
           active: true,
         });
       } else if (kind === "category") {
@@ -199,37 +206,35 @@ export function CatalogAddForm({
           />
         </div>
 
-        {kind !== "group" ? (
-          <div className="mt-4">
-            <span className="mb-1 block text-sm font-bold">
-              Foto <span className="text-unal-red">*</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading}
-              className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-(--rule) bg-(--surface-2) text-(--muted) hover:border-unal-green-dark disabled:opacity-60"
-            >
-              {photoUrl ? (
-                <Image src={photoUrl} alt="" width={96} height={96} className="h-full w-full object-cover" />
-              ) : uploading ? (
-                <Spinner />
-              ) : (
-                <span className="flex flex-col items-center gap-1 text-xs font-bold">
-                  <Camera size={18} aria-hidden="true" />
-                  Foto
-                </span>
-              )}
-            </button>
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFile}
-              className="hidden"
-            />
-          </div>
-        ) : null}
+        <div className="mt-4">
+          <span className="mb-1 block text-sm font-bold">
+            Foto <span className="text-unal-red">*</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-(--rule) bg-(--surface-2) text-(--muted) hover:border-unal-green-dark disabled:opacity-60"
+          >
+            {photoUrl ? (
+              <Image src={photoUrl} alt="" width={96} height={96} className="h-full w-full object-cover" />
+            ) : uploading ? (
+              <Spinner />
+            ) : (
+              <span className="flex flex-col items-center gap-1 text-xs font-bold">
+                <Camera size={18} aria-hidden="true" />
+                Foto
+              </span>
+            )}
+          </button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFile}
+            className="hidden"
+          />
+        </div>
 
         {kind === "product" ? (
           <div className="mt-4">
