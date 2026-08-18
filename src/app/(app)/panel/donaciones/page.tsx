@@ -82,27 +82,25 @@ export default function DonacionesPage() {
                 href={`/panel/donaciones/${donation.id}`}
                 className="block rounded border border-(--rule) bg-(--surface) p-4 hover:border-unal-green"
               >
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="font-mono font-bold text-unal-green-dark">
-                  {donation.code}
-                </span>
-                <span className="font-medium">{donation.donor_name}</span>
-                <span className="rounded bg-(--surface-2) px-2 py-0.5 text-xs text-(--muted)">
-                  {DONOR_TYPES[donation.donor_type] ?? donation.donor_type}
-                </span>
-                <span className="ml-auto text-sm text-(--muted)">
-                  {new Date(donation.receipt_date).toLocaleDateString("es-CO", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </span>
-              </div>
-                {donation.expand?.operator_id?.full_name ? (
-                  <p className="mt-1 text-sm text-(--muted)">
-                    Recibió: {donation.expand.operator_id.full_name}
-                  </p>
-                ) : null}
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="font-bold">{donation.donor_name}</span>
+                  <span className="rounded bg-(--surface-2) px-2 py-0.5 text-xs text-(--muted)">
+                    {DONOR_TYPES[donation.donor_type] ?? donation.donor_type}
+                  </span>
+                  <span className="ml-auto text-sm text-(--muted)">
+                    {new Date(donation.receipt_date).toLocaleDateString("es-CO", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+                <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-(--muted)">
+                  <span className="font-mono">{donation.code}</span>
+                  {donation.expand?.operator_id?.full_name ? (
+                    <span>· Recibió: {donation.expand.operator_id.full_name}</span>
+                  ) : null}
+                </p>
               </Link>
             </li>
           ))}

@@ -438,6 +438,15 @@ Pedido explícito para el diálogo de reubicar: cambiar el `<select>` de texto d
 
 Verificado con Playwright contra datos reales: buscar por un término que solo aparece en la descripción ("blanco") filtra correctamente a una sola ubicación aunque no coincida con su zona/estante/posición; buscar por zona ("Latas") hace lo mismo; seleccionar una casilla marca el anillo verde y el check, y el traslado se completa con la ubicación elegida en la grilla.
 
+### 2026-08-18 (noche) — Las listas priorizan el nombre sobre el código
+
+Pedido explícito, con capturas: en Donaciones, Solicitudes y Despachos, el código (`DON-000005`, `SOL-000003`, `DES-000002`) se veía primero y en negrita — antes que el donante, el solicitante o el destino, que es lo que de verdad identifica un registro de un vistazo. Se invirtió la jerarquía en las tres listas:
+
+- **Renglón principal, en negrita:** el dato humano (`donor_name`, `requester_name`, `destination`) + sus insignias de estado/tipo/prioridad + la fecha a la derecha.
+- **Renglón secundario, gris y pequeño:** el código en mono, seguido del resto de contexto (`Recibió: …`, `conduce …`, el código de la solicitud enlazada, el destino).
+
+El código no desaparece — sigue ahí para quien lo busca por número — pero ya no compite por la atención con el nombre. Las páginas de detalle (que sí abren directo con el código como título, p. ej. `DON-000002`) no se tocaron: ahí el código ya es la referencia que alguien trae en la mano al buscar ese registro puntual, es un contexto distinto al de una lista.
+
 ### 2026-08-18 (noche) — "Ubicaciones" sale del menú principal, entra como botón en Inventario
 
 Pedido explícito: `/panel/ubicaciones` deja de ser un ítem de la barra de navegación de `AppShell` y pasa a ser un botón dentro de `/panel/inventario`, junto al título, con el mismo ícono (`MapPin`). La ruta no cambió — solo de dónde se llega a ella. Verificado con Playwright: la barra de navegación ya no lo lista, el botón nuevo navega correctamente a la página existente.

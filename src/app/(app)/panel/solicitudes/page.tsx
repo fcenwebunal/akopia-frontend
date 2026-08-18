@@ -112,10 +112,7 @@ export default function SolicitudesPage() {
                 className="block rounded border border-(--rule) bg-(--surface) p-4 hover:border-unal-green"
               >
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="font-mono font-bold text-unal-green-dark">
-                    {request.code}
-                  </span>
-                  <span className="font-medium">{request.requester_name}</span>
+                  <span className="font-bold">{request.requester_name}</span>
                   <span
                     className={`rounded px-2 py-0.5 text-xs font-bold ${PRIORITY_STYLES[request.priority]}`}
                   >
@@ -133,8 +130,9 @@ export default function SolicitudesPage() {
                     })}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-(--muted)">
-                  {request.destination}
+                <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-(--muted)">
+                  <span className="font-mono">{request.code}</span>
+                  <span>· {request.destination}</span>
                 </p>
               </Link>
             </li>

@@ -89,14 +89,7 @@ export default function DespachosPage() {
                   className="block rounded border border-(--rule) bg-(--surface) p-4 hover:border-unal-green"
                 >
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="font-mono font-bold text-unal-green-dark">
-                      {dispatch.code}
-                    </span>
-                    {dispatch.expand?.request_id?.code ? (
-                      <span className="text-sm text-(--muted)">
-                        {dispatch.expand.request_id.code}
-                      </span>
-                    ) : null}
+                    <span className="font-bold">{dispatch.destination}</span>
                     <span
                       className={`rounded px-2 py-0.5 text-xs font-bold ${REQUEST_STATUS_STYLES[status] ?? "bg-(--surface-2) text-(--ink-2)"}`}
                     >
@@ -109,8 +102,12 @@ export default function DespachosPage() {
                       })}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm text-(--muted)">
-                    {dispatch.destination} · conduce {dispatch.driver_name}
+                  <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-(--muted)">
+                    <span className="font-mono">{dispatch.code}</span>
+                    <span>· conduce {dispatch.driver_name}</span>
+                    {dispatch.expand?.request_id?.code ? (
+                      <span>· {dispatch.expand.request_id.code}</span>
+                    ) : null}
                   </p>
                 </Link>
               </li>
