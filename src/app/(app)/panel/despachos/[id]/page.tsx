@@ -23,6 +23,7 @@ interface Delivery {
   receiver_name: string;
   receiver_phone: string;
   receiver_id_type: string;
+  receiver_id_number: string;
   delivery_date: string;
   status: "entregado" | "parcial" | "no_entregado";
   notes: string;
@@ -64,6 +65,7 @@ export default function DespachoDetallePage({
   const [receiverName, setReceiverName] = useState("");
   const [receiverPhone, setReceiverPhone] = useState("");
   const [receiverIdType, setReceiverIdType] = useState("ine");
+  const [receiverIdNumber, setReceiverIdNumber] = useState("");
   const [status, setStatus] = useState<Delivery["status"]>("entregado");
   const [notes, setNotes] = useState("");
 
@@ -102,6 +104,7 @@ export default function DespachoDetallePage({
           receiver_name: receiverName,
           receiver_phone: receiverPhone,
           receiver_id_type: receiverIdType,
+          receiver_id_number: receiverIdNumber,
           status,
           notes,
         },
@@ -177,6 +180,7 @@ export default function DespachoDetallePage({
           </p>
           <p className="mt-1 text-sm text-(--muted)">
             {ID_TYPE_LABELS[delivery.receiver_id_type] ?? delivery.receiver_id_type}
+            {delivery.receiver_id_number ? ` ${delivery.receiver_id_number}` : ""}
             {" · "}
             {DELIVERY_STATUS_LABELS[delivery.status]}
             {" · "}
@@ -233,6 +237,18 @@ export default function DespachoDetallePage({
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label htmlFor="numdoc" className="mb-1 block text-sm font-bold">
+                Número de documento
+              </label>
+              <input
+                id="numdoc"
+                value={receiverIdNumber}
+                onChange={(event) => setReceiverIdNumber(event.target.value)}
+                className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+              />
             </div>
 
             <div className="sm:col-span-2">
