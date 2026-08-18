@@ -427,3 +427,13 @@ Pedido explícito con requisito de arquitectura: la lista de faltantes debe pode
 - **Panel de inicio** — la tarjeta "Productos bajo el mínimo" (basada en `min_stock_alert`, un umbral que nadie llegó a configurar) se reemplazó por "Productos solicitados faltantes", con una vista previa de los tres primeros reutilizando el mismo `<MissingProductsList>` — la reutilización pedida ya se demuestra dentro del propio panel, antes de llegar a la landing.
 
 Verificado de punta a punta contra el servidor real: una solicitud pidiendo más de lo disponible aparece con la cantidad exacta que falta; una que pide menos de lo disponible no aparece. Con Playwright: la tarjeta nueva y su vista previa en el panel, el enlace desde Solicitudes, y la página completa — los tres coinciden con la respuesta real de la API.
+
+### 2026-08-18 (noche) — Selector de ubicación con foto y buscador, en vez de un `<select>`
+
+Pedido explícito para el diálogo de reubicar: cambiar el `<select>` de texto de "Ubicación destino" por una grilla con foto, filtrable por zona, estante, posición o descripción a la vez.
+
+- **`PhotoTile` ganó un prop `selected`** (anillo verde + insignia de check) — antes solo distinguía `disabled`. Es la pieza que hacía falta para usar la misma casilla del catálogo como control de una sola elección, no solo de navegación.
+- **`src/components/app/location-picker.tsx`** — `<LocationPicker>`, nuevo y reutilizable: buscador (filtra en memoria, sin acentos ni mayúsculas, contra los cuatro campos a la vez) + grilla de `PhotoTile`. La casilla "Mesa de pendientes" (sin ubicar) se dibuja aparte, sin foto, con el mismo comportamiento de selección. `currentLocationId` deshabilita la ubicación actual en vez de ocultarla — confirma dónde está antes de elegir hacia dónde se mueve, igual que ya hacía el `<select>` anterior con `disabled` en la opción actual.
+- El diálogo de reubicar (`RelocateDialog` en `inventario/page.tsx`) pasó de `sm:max-w-sm` a `sm:max-w-md` con scroll propio (`max-h-[90vh] overflow-y-auto`), porque una grilla con fotos necesita más espacio que una lista de texto.
+
+Verificado con Playwright contra datos reales: buscar por un término que solo aparece en la descripción ("blanco") filtra correctamente a una sola ubicación aunque no coincida con su zona/estante/posición; buscar por zona ("Latas") hace lo mismo; seleccionar una casilla marca el anillo verde y el check, y el traslado se completa con la ubicación elegida en la grilla.

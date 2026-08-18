@@ -9,6 +9,7 @@ import { loadCatalog, normalize } from "@/lib/catalog";
 import { loadLocations, locationLabel, type Location } from "@/lib/locations";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { LocationPicker } from "@/components/app/location-picker";
 
 interface InventoryRow {
   id: string;
@@ -363,7 +364,7 @@ function RelocateDialog({
 
   return (
     <div className="fixed inset-0 z-30 flex items-end bg-black/40 sm:items-center sm:justify-center">
-      <div className="w-full rounded-t-lg bg-(--surface) p-5 sm:max-w-sm sm:rounded-lg">
+      <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-lg bg-(--surface) p-5 sm:max-w-md sm:rounded-lg">
         <h2 className="text-lg font-bold">Reubicar {row.expand?.product_id?.name}</h2>
         <p className="text-sm text-(--muted)">
           Actualmente en {row.location_id ? "una ubicación" : "la mesa de pendientes"} · {row.available_qty} disponible
@@ -383,21 +384,14 @@ function RelocateDialog({
           />
         </div>
 
-        <div className="mt-3">
-          <label htmlFor="reloc-destino" className="mb-1 block text-sm font-bold">Ubicación destino</label>
-          <select
-            id="reloc-destino"
+        <div className="mt-4">
+          <span className="mb-1 block text-sm font-bold">Ubicación destino</span>
+          <LocationPicker
+            locations={locations}
             value={locationId}
-            onChange={(e) => setLocationId(e.target.value)}
-            className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
-          >
-            <option value="">— Mesa de pendientes (sin ubicar) —</option>
-            {locations.map((l) => (
-              <option key={l.id} value={l.id} disabled={l.id === row.location_id}>
-                {locationLabel(l)}
-              </option>
-            ))}
-          </select>
+            onChange={setLocationId}
+            currentLocationId={row.location_id}
+          />
         </div>
 
         {error ? (

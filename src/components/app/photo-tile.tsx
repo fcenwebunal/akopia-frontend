@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Check, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { type PhotoKind, uploadPhoto, UploadError } from "@/lib/cloudinary";
@@ -48,6 +48,7 @@ export function PhotoTile({
   onSelect,
   onUpload,
   disabled,
+  selected,
 }: {
   label: string;
   sublabel?: string;
@@ -57,6 +58,10 @@ export function PhotoTile({
   onSelect?: () => void;
   onUpload?: (recordId: string, url: string) => void;
   disabled?: boolean;
+  /** Anillo verde para marcar la casilla elegida — un selector de una
+   * sola opción (p. ej. la ubicación destino de un traslado) en vez de
+   * la navegación habitual de `onSelect`. */
+  selected?: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,7 +103,11 @@ export function PhotoTile({
       }
       className={`relative text-left ${onSelect && !disabled ? "cursor-pointer" : ""} ${disabled ? "opacity-40" : ""}`}
     >
-      <div className="aspect-square w-full overflow-hidden rounded-lg border border-(--rule) bg-(--surface)">
+      <div
+        className={`relative aspect-square w-full overflow-hidden rounded-lg border bg-(--surface) ${
+          selected ? "border-unal-green-dark ring-2 ring-unal-green-dark" : "border-(--rule)"
+        }`}
+      >
         {photoUrl ? (
           <Image
             src={photoUrl}
@@ -115,6 +124,11 @@ export function PhotoTile({
             {label.charAt(0).toUpperCase()}
           </div>
         )}
+        {selected ? (
+          <span className="absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-unal-green-dark text-white">
+            <Check size={12} strokeWidth={3} aria-hidden="true" />
+          </span>
+        ) : null}
       </div>
 
       <p className="mt-1.5 text-sm font-bold leading-tight">{label}</p>
