@@ -90,6 +90,20 @@ export default function InventarioPage() {
     [filteredRows]
   );
 
+  // En Revisión no es una ubicación real — es un estado que puede coexistir
+  // con cualquier renglón, tenga o no ubicación asignada. Por eso la lista
+  // no se resta de `byLocation`: el mismo producto puede aparecer ahí (por
+  // su parte disponible) y aquí (por su parte retenida) a la vez.
+  const inRevision = useMemo(
+    () => filteredRows.filter((row) => row.quarantine_qty > 0),
+    [filteredRows]
+  );
+
+  const locationById = useMemo(
+    () => new Map((data?.allLocations ?? []).map((l) => [l.id, l])),
+    [data]
+  );
+
   const byLocation = useMemo(() => {
     if (!data) return [];
     const groups = new Map<string, InventoryRow[]>();
@@ -98,11 +112,10 @@ export default function InventarioPage() {
       if (!groups.has(row.location_id)) groups.set(row.location_id, []);
       groups.get(row.location_id)!.push(row);
     }
-    const locationById = new Map(data.allLocations.map((l) => [l.id, l]));
     return Array.from(groups.entries())
       .map(([locationId, rows]) => ({ location: locationById.get(locationId), locationId, rows }))
       .sort((a, b) => locationLabel(a.location).localeCompare(locationLabel(b.location)));
-  }, [data, filteredRows]);
+  }, [data, filteredRows, locationById]);
 
   const hasFilters = Boolean(query || groupId || categoryId);
 
@@ -192,7 +205,7 @@ export default function InventarioPage() {
       ) : (
         <>
           {staging.length > 0 ? (
-            <section className="mt-6 rounded border border-unal-yellow bg-(--surface) p-4">
+            <section id="por-ubicar" className="mt-6 rounded border border-unal-yellow bg-(--surface) p-4">
               <h2 className="text-sm font-bold text-unal-orange">
                 Por Ubicar — {staging.length} sin ubicación final
               </h2>
@@ -207,6 +220,36 @@ export default function InventarioPage() {
                     onOpen={() => setDetail({ row, location: undefined })}
                     onRelocate={() => setRelocating(row)}
                   />
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {inRevision.length > 0 ? (
+            <section id="en-revision" className="mt-6 rounded border border-unal-red bg-(--surface) p-4">
+              <h2 className="text-sm font-bold text-unal-red">
+                En Revisión — {inRevision.length} en espera
+              </h2>
+              <p className="mt-0.5 text-xs text-(--muted)">
+                Retenidos hasta que se decida si pasan a disponible o se rechazan. No se pueden reservar mientras estén aquí.
+              </p>
+              <ul className="mt-3 divide-y divide-(--rule)">
+                {inRevision.map((row) => (
+                  <li key={row.id} className="flex items-center gap-3 py-3">
+                    <button
+                      type="button"
+                      onClick={() => setDetail({ row, location: locationById.get(row.location_id) })}
+                      className="flex-1 text-left"
+                    >
+                      <span className="font-bold">{row.expand?.product_id?.name ?? "—"}</span>
+                      <span className="ml-2 text-sm text-unal-red">
+                        {row.quarantine_qty} {row.expand?.unit_id?.code ?? row.expand?.unit_id?.name ?? ""}
+                      </span>
+                      <span className="block text-xs text-(--muted)">
+                        {locationLabel(locationById.get(row.location_id))}
+                      </span>
+                    </button>
+                  </li>
                 ))}
               </ul>
             </section>
@@ -446,7 +489,7 @@ interface DonationItemRow {
 const STATUS_LABELS: Record<DonationItemRow["classification_status"], string> = {
   pending: "Por clasificar",
   available: "Apto",
-  quarantine: "Cuarentena",
+  quarantine: "En Revisión",
   rejected: "Rechazado",
 };
 
@@ -455,7 +498,7 @@ const STATUS_LABELS: Record<DonationItemRow["classification_status"], string> = 
  * donaciones distintas, cada una con su propio vencimiento o lote — así
  * que en vez de redirigir a ciegas a "la" donación, este panel lista
  * las remesas que de verdad componen el saldo, cada una con su enlace y
- * sus propios botones de apto/cuarentena.
+ * sus propios botones de apto/en revisión.
  */
 function ProductLocationDetail({
   row,
@@ -575,7 +618,7 @@ function ProductLocationDetail({
                   }
                 >
                   {busy === item.id ? <Spinner /> : null}
-                  {item.classification_status === "quarantine" ? "Liberar a disponible" : "Enviar a cuarentena"}
+                  {item.classification_status === "quarantine" ? "Liberar a disponible" : "Enviar a revisión"}
                 </button>
               </li>
             ))}

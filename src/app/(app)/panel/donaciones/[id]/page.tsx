@@ -31,7 +31,7 @@ interface Donation {
 const STATUS_LABELS: Record<Item["classification_status"], string> = {
   pending: "Por clasificar",
   available: "Apto",
-  quarantine: "Cuarentena",
+  quarantine: "En Revisión",
   rejected: "Rechazado",
 };
 
@@ -44,7 +44,7 @@ const STATUS_STYLES: Record<Item["classification_status"], string> = {
 
 /*
  * Clasificar es lo que mueve el inventario: al pasar un artículo a apto o
- * a cuarentena, los hooks del backend generan el movimiento y ajustan el
+ * a revisión, los hooks del backend generan el movimiento y ajustan el
  * saldo. Desde aquí solo se cambia el estado — nunca se toca `inventory`.
  */
 export default function DonacionDetallePage({
@@ -207,7 +207,7 @@ export default function DonacionDetallePage({
                         Guardando…
                       </>
                     ) : (
-                      "A cuarentena"
+                      "A revisión"
                     )}
                   </button>
                 ) : null}

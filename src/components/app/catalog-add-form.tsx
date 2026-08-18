@@ -301,7 +301,7 @@ export function CatalogAddForm({
                 onChange={setRequiresBatch}
               />
               <Toggle
-                label="Revisión en cuarentena"
+                label="Requiere revisión al recibir"
                 checked={requiresQuarantine}
                 onChange={setRequiresQuarantine}
               />

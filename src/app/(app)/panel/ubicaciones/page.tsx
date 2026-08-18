@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { ArrowRight, PackageSearch, Plus, ShieldAlert } from "lucide-react";
 import { currentUser, pb } from "@/lib/pb";
 import { loadLocations, locationLabel, type Location } from "@/lib/locations";
 import { useAsyncData } from "@/lib/use-async-data";
@@ -64,6 +64,38 @@ export default function UbicacionesPage() {
       <p className="mt-1 text-(--muted)">
         Dónde vive cada cosa en la bodega — zona, estante y posición.
       </p>
+
+      {/*
+        No son ubicaciones reales — son estados de inventario que todavía no
+        tienen (o ya no deberían tener) un sitio físico asignado. Van como
+        enlaces a las secciones que ya existen en Inventario, no como
+        casillas seleccionables: no son destino de ninguna reubicación.
+      */}
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Link
+          href="/panel/inventario#por-ubicar"
+          className="flex items-center gap-3 rounded border-2 border-dashed border-unal-yellow bg-(--surface) p-4 hover:border-unal-orange"
+        >
+          <PackageSearch size={24} className="shrink-0 text-unal-orange" aria-hidden="true" />
+          <div className="flex-1">
+            <p className="font-bold">Por Ubicar</p>
+            <p className="text-xs text-(--muted)">Aptos para entregar, sin ubicación final todavía</p>
+          </div>
+          <ArrowRight size={18} className="shrink-0 text-(--muted)" aria-hidden="true" />
+        </Link>
+
+        <Link
+          href="/panel/inventario#en-revision"
+          className="flex items-center gap-3 rounded border-2 border-dashed border-unal-red bg-(--surface) p-4 hover:border-unal-red"
+        >
+          <ShieldAlert size={24} className="shrink-0 text-unal-red" aria-hidden="true" />
+          <div className="flex-1">
+            <p className="font-bold">En Revisión</p>
+            <p className="text-xs text-(--muted)">Retenidos hasta que se decida si pasan a disponible o se rechazan</p>
+          </div>
+          <ArrowRight size={18} className="shrink-0 text-(--muted)" aria-hidden="true" />
+        </Link>
+      </div>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {data.locations.map((location) => (

@@ -278,7 +278,7 @@ export default function PanelPage() {
               segments={[
                 { label: "Disponible", value: dashboard.distribution.available, color: "var(--viz-available)" },
                 { label: "Reservado", value: dashboard.distribution.reserved, color: "var(--viz-reserved)" },
-                { label: "Cuarentena", value: dashboard.distribution.quarantine, color: "var(--viz-quarantine)" },
+                { label: "En Revisión", value: dashboard.distribution.quarantine, color: "var(--viz-quarantine)" },
               ]}
             />
           </div>

@@ -263,7 +263,7 @@ export default function NuevaDonacionPage() {
                     {line.quantity} {unitLabel(catalog, line.product.default_unit_id)}
                     {line.expiry ? ` · vence ${line.expiry}` : ""}
                     {line.batch ? ` · lote ${line.batch}` : ""}
-                    {line.status === "quarantine" ? " · cuarentena" : ""}
+                    {line.status === "quarantine" ? " · en revisión" : ""}
                     {line.status === "pending" ? " · por clasificar" : ""}
                   </p>
                 </div>
@@ -446,7 +446,7 @@ function LineEditor({
           <div className="flex gap-2">
             {[
               { value: "available", label: "Apto" },
-              { value: "quarantine", label: "Cuarentena" },
+              { value: "quarantine", label: "En Revisión" },
               { value: "pending", label: "Sin clasificar" },
             ].map((option) => (
               <button
