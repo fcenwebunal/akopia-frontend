@@ -103,7 +103,7 @@ export default function UsuariosPage() {
           onClick={() => setShowCreate((v) => !v)}
           className="rounded bg-unal-green-dark px-4 py-2.5 font-bold text-white hover:bg-unal-green"
         >
-          Crear cuenta
+          Vincular correo
         </button>
       </div>
 
@@ -114,7 +114,7 @@ export default function UsuariosPage() {
       ) : null}
 
       {showCreate ? (
-        <CreateUserForm
+        <LinkEmailForm
           onCreated={() => {
             setShowCreate(false);
             setVersion((v) => v + 1);
@@ -196,7 +196,23 @@ export default function UsuariosPage() {
   );
 }
 
-function CreateUserForm({
+/*
+ * "Vincular correo" reserva el nombre y el rol de alguien que todavía no
+ * ha entrado nunca — sin pedirle una contraseña, porque esa cuenta nunca
+ * va a usar una: la contraseña real la pone la persona misma al entrar
+ * por primera vez con Google o el enlace de Firebase a ese correo.
+ *
+ * El registro se crea aquí con una contraseña aleatoria que nadie
+ * conoce ni necesita (existe solo porque el esquema de PocketBase la
+ * exige en una colección de auth) — el mismo truco que ya usa
+ * `/api/auth/firebase/route.ts` para las cuentas que se crean solas. El
+ * puente de Firebase enlaza por correo la primera vez que esa persona
+ * entra: encuentra este registro, le asigna su `firebase_uid` y
+ * conserva el nombre, el rol y `active` tal como quedaron aquí — nunca
+ * los pisa. `active: true` de una vez: elegir el rol ya es la
+ * aprobación, no hace falta un segundo paso.
+ */
+function LinkEmailForm({
   onCreated,
   onError,
 }: {
@@ -205,13 +221,12 @@ function CreateUserForm({
 }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole>("operator");
   const [saving, setSaving] = useState(false);
 
   async function create() {
-    if (!fullName.trim() || !email.trim() || password.length < 8) {
-      onError("Nombre, correo y una contraseña de al menos 8 caracteres.");
+    if (!fullName.trim() || !email.trim()) {
+      onError("Escribe el nombre y el correo de la persona.");
       return;
     }
 
@@ -219,6 +234,7 @@ function CreateUserForm({
     onError("");
 
     try {
+      const password = crypto.randomUUID();
       await pb.collection("users").create({
         full_name: fullName,
         email,
@@ -229,10 +245,17 @@ function CreateUserForm({
       });
       setFullName("");
       setEmail("");
-      setPassword("");
       onCreated();
     } catch (err) {
-      onError(errorMessage(err));
+      const data = (err as { response?: { data?: Record<string, { code?: string }> } })
+        ?.response?.data;
+      if (data?.email?.code === "validation_not_unique") {
+        onError(
+          "Ya existe una cuenta con ese correo — probablemente ya se registró. Actívala o cámbiale el rol en la lista de abajo."
+        );
+      } else {
+        onError(errorMessage(err));
+      }
     } finally {
       setSaving(false);
     }
@@ -240,9 +263,12 @@ function CreateUserForm({
 
   return (
     <div className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
-      <h2 className="mb-3 text-sm font-bold">
-        Crear cuenta directamente (sin Firebase)
-      </h2>
+      <h2 className="mb-1 text-sm font-bold">Vincular correo</h2>
+      <p className="mb-3 text-xs text-(--muted)">
+        La persona entra con este correo (Google o Firebase) y pone su propia
+        contraseña ahí — aquí solo se reserva su nombre y su rol para cuando
+        llegue.
+      </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label htmlFor="cu-nombre" className="mb-1 block text-sm font-bold">
@@ -268,18 +294,6 @@ function CreateUserForm({
           />
         </div>
         <div>
-          <label htmlFor="cu-clave" className="mb-1 block text-sm font-bold">
-            Contraseña
-          </label>
-          <input
-            id="cu-clave"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
-          />
-        </div>
-        <div>
           <label htmlFor="cu-rol" className="mb-1 block text-sm font-bold">
             Rol
           </label>
@@ -301,7 +315,7 @@ function CreateUserForm({
         className="mt-4 flex items-center gap-2 rounded bg-unal-green-dark px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
       >
         {saving ? <Spinner /> : null}
-        {saving ? "Creando…" : "Crear cuenta activa"}
+        {saving ? "Vinculando…" : "Vincular correo"}
       </button>
     </div>
   );

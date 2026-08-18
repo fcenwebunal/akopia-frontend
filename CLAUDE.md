@@ -438,6 +438,18 @@ Pedido explícito para el diálogo de reubicar: cambiar el `<select>` de texto d
 
 Verificado con Playwright contra datos reales: buscar por un término que solo aparece en la descripción ("blanco") filtra correctamente a una sola ubicación aunque no coincida con su zona/estante/posición; buscar por zona ("Latas") hace lo mismo; seleccionar una casilla marca el anillo verde y el check, y el traslado se completa con la ubicación elegida en la grilla.
 
+### 2026-08-18 (noche) — "Vincular correo" reemplaza la creación de cuenta con contraseña
+
+Pedido explícito: en `/panel/usuarios`, el admin ya no debe poner la contraseña de nadie — solo reserva correo, nombre y rol; la contraseña real la pone la persona misma al entrar por primera vez.
+
+**El mecanismo para que esto funcione ya existía**, sin que nadie lo hubiera aprovechado desde esta pantalla: `/api/auth/firebase/route.ts` (documentado el 18 de agosto) ya busca primero por `firebase_uid` y si no encuentra nada, cae a buscar por **correo** — y si encuentra un registro sin `firebase_uid` todavía, lo enlaza sin tocar `role`, `full_name` ni `active`. Es exactamente lo que hace posible que `admin@akopia.org` se registrara en Firebase sin perder su rol. "Vincular correo" es la misma idea, ahora disponible para cualquier persona, no solo la cuenta de arranque.
+
+- **`LinkEmailForm`** (antes `CreateUserForm`) — perdió el campo de contraseña. Crea el registro con una contraseña aleatoria de un solo UUID (`crypto.randomUUID()`, ya usado en el cliente en otras pantallas) que nadie conoce ni necesita — el mismo truco que ya usaba el puente de Firebase para sus altas automáticas, solo que ahora también aquí. `active: true` de una vez: elegir el rol ya es la aprobación, no hace falta un segundo paso de "activar" para algo que un admin acaba de decidir a propósito.
+- **Error específico si el correo ya existe** (alguien que ya se había registrado solo, por ejemplo) — en vez de un mensaje genérico, indica ir a activar o editar esa cuenta en la lista de abajo en vez de intentar duplicarla.
+- El botón que abre el formulario pasó de "Crear cuenta" a "Vincular correo", con una nota corta explicando que la contraseña la pone la persona, no el admin.
+
+**Verificado de punta a punta, no solo la interfaz:** creada una cuenta admin por este formulario contra el servidor real (sin campo de contraseña en pantalla, confirmado con Playwright); confirmado en la base que quedó `active: true`, con el rol elegido y sin `firebase_uid`; y **simulado el paso que hace el puente en el primer login real** — buscar por correo, asignar `firebase_uid` — confirmando que `role`, `full_name` y `active` salen exactamente iguales después, tal como los dejó el admin al vincular.
+
 ### 2026-08-18 (noche) — Las listas priorizan el nombre sobre el código
 
 Pedido explícito, con capturas: en Donaciones, Solicitudes y Despachos, el código (`DON-000005`, `SOL-000003`, `DES-000002`) se veía primero y en negrita — antes que el donante, el solicitante o el destino, que es lo que de verdad identifica un registro de un vistazo. Se invirtió la jerarquía en las tres listas:
