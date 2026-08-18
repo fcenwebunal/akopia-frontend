@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, MapPin } from "lucide-react";
+import { ArrowRight, MapPin, Warehouse } from "lucide-react";
 import { callRoute, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, normalize } from "@/lib/catalog";
 import { loadLocations, locationLabel, type Location } from "@/lib/locations";
@@ -131,7 +131,7 @@ export default function InventarioPage() {
           href="/panel/ubicaciones"
           className="flex shrink-0 items-center gap-1.5 rounded border border-(--rule) px-4 py-2.5 font-bold hover:bg-(--surface-2)"
         >
-          <MapPin size={16} strokeWidth={2.5} aria-hidden="true" />
+          <Warehouse size={16} strokeWidth={2.5} aria-hidden="true" />
           Ubicaciones
         </Link>
       </div>
