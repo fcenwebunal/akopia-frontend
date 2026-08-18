@@ -5,8 +5,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "AKOPIA — Centro de acopio · UNAL Manizales",
-    template: "%s · AKOPIA",
+    default: "Akopia",
+    template: "%s",
   },
   description:
     "Sistema de gestión del centro de acopio de la Universidad Nacional de Colombia, sede Manizales. Recibe, clasifica, almacena y entrega donaciones con trazabilidad.",

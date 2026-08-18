@@ -7,6 +7,8 @@ import { loadCatalog } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
 import { StatTile, DistributionBar, HorizontalBarChart, DailyBarChart } from "@/components/panel/charts";
+import { fetchMissingProducts, type MissingProduct } from "@/lib/missing-products";
+import { MissingProductsList } from "@/components/inventory/missing-products-list";
 
 interface InventoryRow {
   product_id: string;
@@ -20,7 +22,7 @@ interface Dashboard {
   requestsPending: number;
   requestsUrgent: number;
   dispatchesAwaitingConfirmation: number;
-  belowMinimum: { name: string; available: number; min: number }[];
+  missingProducts: MissingProduct[];
   distribution: { available: number; reserved: number; quarantine: number };
   byGroup: { label: string; value: number }[];
   donationsByDay: { key: string; label: string; value: number; isToday: boolean }[];
@@ -60,6 +62,7 @@ export default function PanelPage() {
       requestsPending,
       requestsUrgent,
       dispatchesAwaitingConfirmation,
+      missingProducts,
     ] = await Promise.all([
       loadCatalog(),
       pb.collection("inventory").getFullList<InventoryRow>({
@@ -73,6 +76,7 @@ export default function PanelPage() {
       count("requests", 'status = "pendiente"'),
       count("requests", 'status = "pendiente" && (priority = "alta" || priority = "critica")'),
       count("dispatches", 'request_id.status = "despachada"'),
+      fetchMissingProducts(),
     ]);
 
     const productById = new Map(catalog.products.map((p) => [p.id, p]));
@@ -82,9 +86,6 @@ export default function PanelPage() {
     // Distribución de las tres cubetas, tal como las define el backend.
     const distribution = { available: 0, reserved: 0, quarantine: 0 };
 
-    // Saldo por producto (una fila de inventory por producto+ubicación,
-    // varias ubicaciones pueden sumar el mismo producto).
-    const availableByProduct = new Map<string, number>();
     // Cuántos productos con saldo disponible tiene cada grupo — no la
     // cantidad sumada, que mezclaría kilos con litros con unidades.
     const productsByGroup = new Map<string, Set<string>>();
@@ -93,11 +94,6 @@ export default function PanelPage() {
       distribution.available += row.available_qty || 0;
       distribution.reserved += row.reserved_qty || 0;
       distribution.quarantine += row.quarantine_qty || 0;
-
-      availableByProduct.set(
-        row.product_id,
-        (availableByProduct.get(row.product_id) ?? 0) + (row.available_qty || 0)
-      );
 
       if (row.available_qty > 0) {
         const product = productById.get(row.product_id);
@@ -117,17 +113,6 @@ export default function PanelPage() {
     const byGroupTop = byGroup.slice(0, 7);
     const otherCount = byGroup.slice(7).reduce((sum, g) => sum + g.value, 0);
     if (otherCount > 0) byGroupTop.push({ label: "Otros grupos", value: otherCount });
-
-    const belowMinimum = catalog.products
-      .filter((p) => (p.min_stock_alert ?? 0) > 0)
-      .map((p) => ({
-        name: p.name,
-        available: availableByProduct.get(p.id) ?? 0,
-        min: p.min_stock_alert ?? 0,
-      }))
-      .filter((p) => p.available < p.min)
-      .sort((a, b) => a.available - b.available)
-      .slice(0, 6);
 
     const dayBuckets = new Map<string, number>();
     for (const donation of donations) {
@@ -154,7 +139,7 @@ export default function PanelPage() {
       requestsPending,
       requestsUrgent,
       dispatchesAwaitingConfirmation,
-      belowMinimum,
+      missingProducts,
       distribution,
       byGroup: byGroupTop,
       donationsByDay,
@@ -242,27 +227,30 @@ export default function PanelPage() {
           href="/panel/despachos"
         />
         <StatTile
-          label="Productos bajo el mínimo"
-          value={dashboard.belowMinimum.length}
-          hint={dashboard.belowMinimum.length === 0 ? "Todo en orden" : undefined}
-          tone={dashboard.belowMinimum.length > 0 ? "critical" : "good"}
-          href="/panel/inventario"
+          label="Productos solicitados faltantes"
+          value={dashboard.missingProducts.length}
+          hint={dashboard.missingProducts.length === 0 ? "Todo cubierto" : undefined}
+          tone={dashboard.missingProducts.length > 0 ? "critical" : "good"}
+          href="/panel/solicitudes/faltantes"
         />
       </div>
 
-      {dashboard.belowMinimum.length > 0 ? (
+      {dashboard.missingProducts.length > 0 ? (
         <section className="mt-4 rounded border border-unal-red bg-(--surface) p-4">
-          <h2 className="text-sm font-bold text-unal-red">Bajo el mínimo definido</h2>
-          <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
-            {dashboard.belowMinimum.map((p) => (
-              <li key={p.name} className="flex justify-between gap-2">
-                <span>{p.name}</span>
-                <span className="tabular-nums text-(--muted)">
-                  {p.available} / {p.min}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-sm font-bold text-unal-red">
+              Solicitado sin stock suficiente
+            </h2>
+            <Link
+              href="/panel/solicitudes/faltantes"
+              className="text-xs font-bold text-unal-green-dark hover:underline"
+            >
+              Ver todo
+            </Link>
+          </div>
+          <div className="mt-3">
+            <MissingProductsList items={dashboard.missingProducts.slice(0, 3)} title="" />
+          </div>
         </section>
       ) : null}
 

@@ -68,12 +68,20 @@ export default function SolicitudesPage() {
             Ayuda pedida por la comunidad, en el orden en que llegó.
           </p>
         </div>
-        <Link
-          href="/panel/solicitudes/nueva"
-          className="rounded bg-unal-green-dark px-4 py-2.5 font-bold text-white hover:bg-unal-green"
-        >
-          Registrar solicitud
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/panel/solicitudes/faltantes"
+            className="rounded border border-(--rule) px-4 py-2.5 font-bold hover:bg-(--surface-2)"
+          >
+            Productos faltantes
+          </Link>
+          <Link
+            href="/panel/solicitudes/nueva"
+            className="rounded bg-unal-green-dark px-4 py-2.5 font-bold text-white hover:bg-unal-green"
+          >
+            Registrar solicitud
+          </Link>
+        </div>
       </div>
 
       {error ? (
