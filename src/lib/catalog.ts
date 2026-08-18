@@ -17,17 +17,20 @@ export interface Product {
   requires_batch: boolean;
   requires_quarantine: boolean;
   active: boolean;
+  photo_url?: string;
 }
 
 export interface Category {
   id: string;
   name: string;
   group_id: string;
+  photo_url?: string;
 }
 
 export interface Group {
   id: string;
   name: string;
+  photo_url?: string;
 }
 
 export interface Catalog {

@@ -15,6 +15,15 @@ const nextConfig: NextConfig = {
    * aquí, no rangos.
    */
   allowedDevOrigins: ["192.168.0.100"],
+
+  // Fotos de categorías y productos, subidas a Cloudinary. next/image
+  // exige autorizar el dominio explícitamente para optimizar imágenes
+  // externas.
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "res.cloudinary.com" },
+    ],
+  },
 };
 
 export default nextConfig;

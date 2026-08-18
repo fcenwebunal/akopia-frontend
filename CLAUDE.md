@@ -240,3 +240,25 @@ Causa confirmada con el propio log: `⚠ Blocked cross-origin request ... from "
 - Mismo botón (`GoogleButton`, compartido) en `/login` y `/registro` — Google no distingue "cuenta nueva" de "cuenta existente", y el puente tampoco: `/api/auth/firebase` crea o enlaza según corresponda, sin cambios en esa ruta.
 - **Lo que sí se verificó:** el puente que consume el token de Google es el mismo que ya se probó contra Firebase real con correo y contraseña — no es código nuevo. Lo que **no se pudo verificar desde aquí** es el propio botón: `signInWithPopup` abre una ventana interactiva de Google que exige un navegador real, y no hay forma de simularlo por terminal.
 - **Advertencia real, no verificada, que puede repetir el mismo problema de origen:** Firebase Authentication solo permite el flujo de Google desde dominios en su lista de *Authorized domains* (consola de Firebase → Authentication → Settings). Por defecto trae `localhost` y los dominios de Firebase Hosting, pero **no** una IP de red como `192.168.0.100`. Si se prueba Google desde el celular por esa IP, es esperable un error `auth/unauthorized-domain` — un problema de Firebase, no de Next.js, y sin relación con el `allowedDevOrigins` de arriba aunque el síntoma inicial se parezca. Si aparece, hay que agregar esa IP (o el dominio real, en producción) a la lista de dominios autorizados desde la consola de Firebase.
+
+### 2026-08-18 (noche) — Ajustes de diseño y Cloudinary
+
+Cuatro pedidos puntuales de diseño, más una integración nueva.
+
+- **Botón «Volver»** del explorador: era texto plano (`← Volver`); pasó a un botón cuadrado con el ícono `ArrowLeft` de `lucide-react`.
+- **Escudo UNAL** en el header público: se veía pequeño junto al nombre de la app. `h-12 sm:h-14` → `h-16 sm:h-20`.
+- **Íconos en el menú superior de la app** (`AppShell`): agregado uno por sección con `lucide-react` (`Home`, `Download`, `ClipboardList`, `Truck`, `Package`, `Users`, `History`). **No se copiaron los SVG del mockup** — no hay forma confiable de extraer assets de otro sitio, y da igual: son íconos equivalentes de una librería estándar, con el mismo significado semántico que los del mockup.
+
+**Explorador estilo menú de restaurante**, con fotos:
+
+- Migración `031` del backend: `photo_url` en `groups`, `categories`, `products`.
+- **`PhotoTile`** — la casilla: foto o inicial de color (determinística por nombre, para que no "parpadee" entre recargas mientras no hay foto), nombre debajo, y si quien mira es admin, un distintivo de cámara para cambiar la foto.
+- **Bug real, encontrado antes de probar en el navegador — no en producción:** la primera versión envolvía `PhotoTile` (que ya trae su propio `<button>` de cámara) dentro de OTRO `<button>` para manejar la selección. Un botón dentro de otro botón no es HTML válido: el navegador saca el interior fuera del exterior al parsear, y el clic deja de ir donde se espera. Se corrigió antes de la primera prueba: `PhotoTile` es ahora `role="button"` con manejo de teclado propio, y el botón de cámara para el clic con `stopPropagation()`.
+- `isAdmin` se pasa a `ProductPicker` desde `donaciones/nueva` y `solicitudes/nueva` (`operator?.role === "admin"`) — el resto de usuarios ve las mismas casillas, sin el distintivo de cámara.
+
+**Cloudinary**, cuenta real conectada (`upvgrfwr`):
+
+- **El API Secret nunca sale del servidor.** `src/app/api/uploads/sign/route.ts` firma la subida (`cloudinary.utils.api_sign_request`) después de validar que quien pide sea un admin activo — con `pb-server.ts` → `requireAdmin()`, que usa `authRefresh()` contra PocketBase en vez de confiar en un rol que mande el cliente. El navegador sube el archivo **directo a Cloudinary** con esa firma; el archivo nunca pasa por nuestro servidor.
+- Carpetas separadas por tipo (`akopia/categories`, `akopia/products`, `akopia/groups`), fijadas en la propia firma — el cliente no puede pedir subir a cualquier carpeta.
+- **Verificado de punta a punta contra la cuenta real, no simulado:** pedir firma sin sesión → 403; como operador (no admin) → 403; como admin → firma válida, subida real a Cloudinary, `photo_url` guardado en una categoría y releído correctamente.
+- Nuevas variables en `.env.local` (nunca se commitean): `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` (no es secreto) y `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` (sí lo son, solo en el servidor).

@@ -1,8 +1,11 @@
 "use client";
 
+import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
-import type { Catalog, Product } from "@/lib/catalog";
+import type { Catalog, Category, Group, Product } from "@/lib/catalog";
 import { searchProducts, unitLabel } from "@/lib/catalog";
+import { pb } from "@/lib/pb";
+import { PhotoTile } from "./photo-tile";
 
 /*
  * Tres caminos hacia el mismo sitio, por orden de velocidad:
@@ -15,19 +18,29 @@ import { searchProducts, unitLabel } from "@/lib/catalog";
  *
  * Con 123 productos la jerarquía es el camino lento (tres niveles para
  * elegir entre tres opciones), por eso no es el que se ve primero.
+ *
+ * El explorador se ve como un menú de restaurante: foto y nombre, no
+ * solo texto. `isAdmin` decide si aparece el distintivo de cámara para
+ * poner o cambiar esa foto — el resto solo la ve.
  */
 export function ProductPicker({
   catalog,
   recent,
   onSelect,
+  isAdmin = false,
 }: {
   catalog: Catalog;
   recent: Product[];
   onSelect: (product: Product) => void;
+  isAdmin?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [groupId, setGroupId] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
+
+  // Sobreescribe photo_url localmente al subir una foto, para que la
+  // casilla cambie al instante sin recargar todo el catálogo.
+  const [photoOverrides, setPhotoOverrides] = useState<Record<string, string>>({});
 
   const results = useMemo(
     () => searchProducts(catalog, query),
@@ -47,6 +60,22 @@ export function ProductPicker({
     [catalog.products, categoryId]
   );
 
+  async function savePhoto(
+    collection: "groups" | "categories" | "products",
+    id: string,
+    url: string
+  ) {
+    setPhotoOverrides((current) => ({ ...current, [id]: url }));
+    try {
+      await pb.collection(collection).update(id, { photo_url: url });
+    } catch {
+      // La casilla ya muestra la foto nueva; si el guardado falló, la
+      // próxima carga del catálogo la revierte sola. No vale la pena
+      // bloquear la captura por esto — es una foto, no un movimiento
+      // de inventario.
+    }
+  }
+
   return (
     <div>
       <label htmlFor="buscar" className="sr-only">
@@ -63,9 +92,12 @@ export function ProductPicker({
       />
 
       {searching ? (
-        <ResultList
+        <ProductGrid
           catalog={catalog}
           products={results}
+          photoOverrides={photoOverrides}
+          isAdmin={isAdmin}
+          onUpload={(id, url) => savePhoto("products", id, url)}
           empty="Ningún producto coincide."
           onSelect={(product) => {
             onSelect(product);
@@ -79,19 +111,18 @@ export function ProductPicker({
           <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-(--muted)">
             Recientes
           </h3>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
             {recent.map((product) => (
-              <button
+              <PhotoTile
                 key={product.id}
-                type="button"
-                onClick={() => onSelect(product)}
-                className="rounded border border-(--rule) bg-(--surface) px-3 py-2 text-left text-sm font-bold hover:border-unal-green"
-              >
-                {product.name}
-                <span className="ml-2 font-normal text-(--muted)">
-                  {unitLabel(catalog, product.default_unit_id)}
-                </span>
-              </button>
+                label={product.name}
+                sublabel={unitLabel(catalog, product.default_unit_id)}
+                photoUrl={photoOverrides[product.id] ?? product.photo_url}
+                recordId={product.id}
+                kind="products"
+                onSelect={() => onSelect(product)}
+                onUpload={isAdmin ? (id, url) => savePhoto("products", id, url) : undefined}
+              />
             ))}
           </div>
         </section>
@@ -104,30 +135,23 @@ export function ProductPicker({
               <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-(--muted)">
                 Explorar por categoría
               </h3>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {catalog.groups.map((group) => {
+              <TileGrid<Group>
+                items={catalog.groups}
+                photoOverrides={photoOverrides}
+                isAdmin={isAdmin}
+                kind="groups"
+                onUpload={(id, url) => savePhoto("groups", id, url)}
+                disabledIf={(group) =>
+                  catalog.categories.every((category) => category.group_id !== group.id)
+                }
+                sublabelFor={(group) => {
                   const count = catalog.categories.filter(
                     (category) => category.group_id === group.id
                   ).length;
-
-                  return (
-                    <button
-                      key={group.id}
-                      type="button"
-                      disabled={count === 0}
-                      onClick={() => setGroupId(group.id)}
-                      className="rounded border border-(--rule) bg-(--surface) px-3 py-3 text-left text-sm font-bold hover:border-unal-green disabled:opacity-40"
-                    >
-                      {group.name}
-                      {count === 0 ? (
-                        <span className="ml-2 font-normal text-(--muted)">
-                          (vacío)
-                        </span>
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
+                  return count === 0 ? "Vacío" : `${count} categorías`;
+                }}
+                onSelect={(group) => setGroupId(group.id)}
+              />
             </>
           ) : (
             <>
@@ -140,28 +164,28 @@ export function ProductPicker({
                     setGroupId(null);
                   }
                 }}
-                className="mb-3 text-sm font-bold text-unal-green-dark"
+                aria-label="Volver"
+                className="mb-3 flex h-9 w-9 items-center justify-center rounded border border-(--rule) bg-(--surface) text-unal-green-dark hover:border-unal-green hover:bg-unal-green-soft"
               >
-                ← Volver
+                <ArrowLeft size={18} strokeWidth={2.5} />
               </button>
 
               {!categoryId ? (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {categories.map((category) => (
-                    <button
-                      key={category.id}
-                      type="button"
-                      onClick={() => setCategoryId(category.id)}
-                      className="rounded border border-(--rule) bg-(--surface) px-3 py-3 text-left text-sm font-bold hover:border-unal-green"
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
+                <TileGrid<Category>
+                  items={categories}
+                  photoOverrides={photoOverrides}
+                  isAdmin={isAdmin}
+                  kind="categories"
+                  onUpload={(id, url) => savePhoto("categories", id, url)}
+                  onSelect={(category) => setCategoryId(category.id)}
+                />
               ) : (
-                <ResultList
+                <ProductGrid
                   catalog={catalog}
                   products={products}
+                  photoOverrides={photoOverrides}
+                  isAdmin={isAdmin}
+                  onUpload={(id, url) => savePhoto("products", id, url)}
                   empty="Esta categoría no tiene productos."
                   onSelect={onSelect}
                 />
@@ -174,14 +198,62 @@ export function ProductPicker({
   );
 }
 
-function ResultList({
+function TileGrid<T extends { id: string; name: string; photo_url?: string }>({
+  items,
+  photoOverrides,
+  isAdmin,
+  kind,
+  onUpload,
+  onSelect,
+  disabledIf,
+  sublabelFor,
+}: {
+  items: T[];
+  photoOverrides: Record<string, string>;
+  isAdmin: boolean;
+  kind: "groups" | "categories";
+  onUpload: (id: string, url: string) => void;
+  onSelect: (item: T) => void;
+  disabledIf?: (item: T) => boolean;
+  sublabelFor?: (item: T) => string;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+      {items.map((item) => {
+        const disabled = disabledIf?.(item) ?? false;
+
+        return (
+          <PhotoTile
+            key={item.id}
+            label={item.name}
+            sublabel={sublabelFor?.(item)}
+            photoUrl={photoOverrides[item.id] ?? item.photo_url}
+            recordId={item.id}
+            kind={kind}
+            disabled={disabled}
+            onSelect={() => onSelect(item)}
+            onUpload={isAdmin ? onUpload : undefined}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function ProductGrid({
   catalog,
   products,
+  photoOverrides,
+  isAdmin,
+  onUpload,
   empty,
   onSelect,
 }: {
   catalog: Catalog;
   products: Product[];
+  photoOverrides: Record<string, string>;
+  isAdmin: boolean;
+  onUpload: (id: string, url: string) => void;
   empty: string;
   onSelect: (product: Product) => void;
 }) {
@@ -190,21 +262,19 @@ function ResultList({
   }
 
   return (
-    <ul className="mt-3 divide-y divide-(--rule) overflow-hidden rounded border border-(--rule) bg-(--surface)">
+    <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
       {products.map((product) => (
-        <li key={product.id}>
-          <button
-            type="button"
-            onClick={() => onSelect(product)}
-            className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-(--surface-2)"
-          >
-            <span className="font-medium">{product.name}</span>
-            <span className="text-sm text-(--muted)">
-              {unitLabel(catalog, product.default_unit_id)}
-            </span>
-          </button>
-        </li>
+        <PhotoTile
+          key={product.id}
+          label={product.name}
+          sublabel={unitLabel(catalog, product.default_unit_id)}
+          photoUrl={photoOverrides[product.id] ?? product.photo_url}
+          recordId={product.id}
+          kind="products"
+          onSelect={() => onSelect(product)}
+          onUpload={isAdmin ? onUpload : undefined}
+        />
       ))}
-    </ul>
+    </div>
   );
 }

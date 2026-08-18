@@ -236,7 +236,7 @@ export default function NuevaDonacionPage() {
 
       <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
         <h2 className="mb-3 text-sm font-bold">Qué llegó</h2>
-        <ProductPicker catalog={catalog} recent={recent} onSelect={addProduct} />
+        <ProductPicker catalog={catalog} recent={recent} onSelect={addProduct} isAdmin={operator?.role === "admin"} />
       </section>
 
       {lines.length > 0 ? (

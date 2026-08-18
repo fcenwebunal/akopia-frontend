@@ -1,21 +1,31 @@
 "use client";
 
+import {
+  Download,
+  History,
+  Home,
+  ClipboardList,
+  Package,
+  Truck,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { pb, type AkopiaUser } from "@/lib/pb";
 
-const NAV = [
-  { href: "/panel", label: "Panel" },
-  { href: "/panel/donaciones", label: "Donaciones" },
-  { href: "/panel/solicitudes", label: "Solicitudes" },
-  { href: "/panel/despachos", label: "Despachos" },
-  { href: "/panel/inventario", label: "Inventario" },
+const NAV: { href: string; label: string; icon: LucideIcon }[] = [
+  { href: "/panel", label: "Panel", icon: Home },
+  { href: "/panel/donaciones", label: "Donaciones", icon: Download },
+  { href: "/panel/solicitudes", label: "Solicitudes", icon: ClipboardList },
+  { href: "/panel/despachos", label: "Despachos", icon: Truck },
+  { href: "/panel/inventario", label: "Inventario", icon: Package },
 ];
 
-const ADMIN_NAV = [
-  { href: "/panel/usuarios", label: "Usuarios" },
-  { href: "/panel/historial", label: "Historial" },
+const ADMIN_NAV: { href: string; label: string; icon: LucideIcon }[] = [
+  { href: "/panel/usuarios", label: "Usuarios", icon: Users },
+  { href: "/panel/historial", label: "Historial", icon: History },
 ];
 
 /*
@@ -94,6 +104,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
               item.href === "/panel"
                 ? pathname === "/panel"
                 : pathname.startsWith(item.href);
+            const Icon = item.icon;
 
             return (
               <Link
@@ -102,10 +113,11 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
                 aria-current={active ? "page" : undefined}
                 className={
                   active
-                    ? "whitespace-nowrap rounded bg-unal-green-soft px-3 py-1.5 text-sm font-bold text-unal-green-dark"
-                    : "whitespace-nowrap rounded px-3 py-1.5 text-sm font-bold text-(--ink-2) hover:bg-(--surface-2)"
+                    ? "flex items-center gap-1.5 whitespace-nowrap rounded bg-unal-green-soft px-3 py-1.5 text-sm font-bold text-unal-green-dark"
+                    : "flex items-center gap-1.5 whitespace-nowrap rounded px-3 py-1.5 text-sm font-bold text-(--ink-2) hover:bg-(--surface-2)"
                 }
               >
+                <Icon size={16} strokeWidth={2.25} aria-hidden="true" />
                 {item.label}
               </Link>
             );

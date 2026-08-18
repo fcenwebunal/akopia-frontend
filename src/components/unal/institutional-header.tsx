@@ -18,14 +18,14 @@ export function InstitutionalHeader() {
           <Image
             src="/unal/escudo-unal.svg"
             alt="Escudo de la Universidad Nacional de Colombia"
-            width={190}
-            height={100}
+            width={280}
+            height={147}
             priority
-            className="h-12 w-auto sm:h-14"
+            className="h-16 w-auto sm:h-20"
           />
         </a>
 
-        <div className="min-w-0 flex-1 border-l border-(--rule) pl-6">
+        <div className="min-w-0 flex-1 self-stretch border-l border-(--rule) py-1 pl-6">
           <Link href="/" className="inline-block">
             <span className="block text-xl font-black tracking-tight text-unal-green-dark sm:text-2xl">
               AKOPIA
