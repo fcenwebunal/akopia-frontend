@@ -2,6 +2,7 @@
 
 import { Minus, Plus } from "lucide-react";
 import { useCallback, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { currentUser, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
@@ -171,7 +172,11 @@ export default function NuevaDonacionPage() {
 
   return (
     <div className="pb-28">
-      <h1 className="text-2xl font-black tracking-tight">Registrar donación</h1>
+      <Link href="/panel/donaciones" className="text-sm font-bold text-unal-green-dark">
+        ← Donaciones
+      </Link>
+
+      <h1 className="mt-2 text-2xl font-black tracking-tight">Registrar donación</h1>
 
       <section className="mt-5 rounded border border-(--rule) bg-(--surface) p-4">
         <h2 className="mb-3 text-sm font-bold">Quién dona</h2>

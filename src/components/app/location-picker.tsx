@@ -44,7 +44,7 @@ export function LocationPicker({
   }, [locations, query]);
 
   const showUnlocated =
-    allowUnlocated && (!query.trim() || normalize("mesa de pendientes sin ubicar").includes(normalize(query.trim())));
+    allowUnlocated && (!query.trim() || normalize("por ubicar sin ubicacion asignada").includes(normalize(query.trim())));
 
   return (
     <div>
@@ -122,8 +122,8 @@ function UnlocatedTile({
       >
         <MapPin size={22} aria-hidden="true" />
       </div>
-      <p className="mt-1.5 text-sm font-bold leading-tight">Mesa de pendientes</p>
-      <p className="text-xs leading-tight text-(--muted)">Sin ubicar</p>
+      <p className="mt-1.5 text-sm font-bold leading-tight">Por Ubicar</p>
+      <p className="text-xs leading-tight text-(--muted)">Sin ubicación asignada</p>
     </div>
   );
 }

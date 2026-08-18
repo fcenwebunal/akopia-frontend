@@ -22,9 +22,9 @@ export async function loadLocations(): Promise<Location[]> {
 // Igual que en el catálogo: no hay código armado, se compone de zona,
 // estante y posición, como en el catálogo maestro (A-01-03).
 export function locationLabel(location?: Pick<Location, "zone" | "shelf" | "position">): string {
-  if (!location) return "Sin ubicar";
+  if (!location) return "Por Ubicar";
   const parts = [location.zone, location.shelf, location.position].filter(
     (part): part is string => Boolean(part)
   );
-  return parts.length > 0 ? parts.join("-") : "Sin ubicar";
+  return parts.length > 0 ? parts.join("-") : "Por Ubicar";
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { currentUser, errorMessage, pb } from "@/lib/pb";
@@ -117,7 +118,11 @@ export default function NuevoDespachoPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight">Registrar despacho</h1>
+      <Link href="/panel/despachos" className="text-sm font-bold text-unal-green-dark">
+        ← Despachos
+      </Link>
+
+      <h1 className="mt-2 text-2xl font-black tracking-tight">Registrar despacho</h1>
 
       {requests.length === 0 ? (
         <div className="mt-5 rounded border border-(--rule) bg-(--surface) p-6">

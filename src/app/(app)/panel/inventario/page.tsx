@@ -48,7 +48,7 @@ export default function InventarioPage() {
       loadLocations(),
       // Sin filtrar: si algo quedó guardado en una ubicación que después
       // se desactivó, su saldo debe poder seguir viéndose con su
-      // nombre real, no confundirse con "sin ubicar" (que es otra cosa:
+      // nombre real, no confundirse con "Por Ubicar" (que es otra cosa:
       // nunca tuvo ubicación).
       pb.collection("locations").getFullList<Location>({ sort: "zone" }),
       pb.collection("inventory").getFullList<InventoryRow>({
@@ -194,7 +194,7 @@ export default function InventarioPage() {
           {staging.length > 0 ? (
             <section className="mt-6 rounded border border-unal-yellow bg-(--surface) p-4">
               <h2 className="text-sm font-bold text-unal-orange">
-                Mesa de pendientes — {staging.length} sin ubicación final
+                Por Ubicar — {staging.length} sin ubicación final
               </h2>
               <p className="mt-0.5 text-xs text-(--muted)">
                 Ya son aptos para entregar, solo falta decidir dónde se guardan.
@@ -378,7 +378,7 @@ function RelocateDialog({
       <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-lg bg-(--surface) p-5 sm:max-w-md sm:rounded-lg">
         <h2 className="text-lg font-bold">Reubicar {row.expand?.product_id?.name}</h2>
         <p className="text-sm text-(--muted)">
-          Actualmente en {row.location_id ? "una ubicación" : "la mesa de pendientes"} · {row.available_qty} disponible
+          Actualmente en {row.location_id ? "una ubicación" : "Por Ubicar"} · {row.available_qty} disponible
         </p>
 
         <div className="mt-4">

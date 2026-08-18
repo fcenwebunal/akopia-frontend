@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
 import { Plus } from "lucide-react";
 import { currentUser, pb } from "@/lib/pb";
 import { loadLocations, locationLabel, type Location } from "@/lib/locations";
@@ -55,7 +56,11 @@ export default function UbicacionesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight">Ubicaciones</h1>
+      <Link href="/panel/inventario" className="text-sm font-bold text-unal-green-dark">
+        ← Inventario
+      </Link>
+
+      <h1 className="mt-2 text-2xl font-black tracking-tight">Ubicaciones</h1>
       <p className="mt-1 text-(--muted)">
         Dónde vive cada cosa en la bodega — zona, estante y posición.
       </p>
