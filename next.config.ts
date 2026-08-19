@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Evita divulgar la versión del framework en la cabecera X-Powered-By.
+  poweredByHeader: false,
+
   /*
    * AKOPIA es móvil primero, así que probarlo desde el celular por la IP
    * de la red local durante el desarrollo es el caso normal, no la
