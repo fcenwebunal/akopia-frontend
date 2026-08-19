@@ -110,6 +110,21 @@ export function AccessibilityPanel({
             background-repeat: no-repeat;
             background-position: center;
             background-size: 28px 28px;
+            /*
+              Bug real, no cosmético: el texto "Panel de Accesibilidad"
+              sigue ahí (solo color:transparent, no display:none — el
+              lector de pantalla lo necesita), pero en una caja de 54px
+              de ancho se envuelve en varias líneas. Con overflow
+              visible (el valor por defecto), ese texto invisible se
+              desbordaba varios px por debajo de la caja — invisible a
+              la vista pero seguía interceptando el clic de lo que
+              hubiera justo ahí debajo, que resultó ser "Cerrar sesión".
+              overflow:hidden lo recorta exactamente a los 54×54 del
+              botón, sin afectar el texto que sí necesita el lector de
+              pantalla (sigue en el DOM, solo ya no se pinta ni se
+              puede clicar fuera de la caja).
+            */
+            overflow: hidden;
           }
           .unal-chrome #pestania-accesibilidad:not(.akopia-content, .akopia-content *)::before {
             content: none;
