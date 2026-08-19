@@ -225,8 +225,15 @@ export function UnalHeader({
             z-index:10 de arriba en #navbar_content nunca alcanza a
             .tx-unal-accesibilidad porque no sale del techo que le pone
             su propio padre #unalTop — hay que subir el de #unalTop.
+
+            ".collapsing" además de ".show": Bootstrap solo agrega
+            "show" cuando termina la transición (~350ms) — mientras
+            anima agrega "collapsing" y todavía no "show", así que sin
+            esto la franja de cuenta volvía a ganar el empate de
+            z-index durante toda la animación y se veía tapar el menú
+            un instante antes de que este terminara de desplegarse.
           */
-          .unal-chrome:has(#navbar_content.show) #unalTop:not(.akopia-content, .akopia-content *) {
+          .unal-chrome:has(#navbar_content.show, #navbar_content.collapsing) #unalTop:not(.akopia-content, .akopia-content *) {
             z-index: 4;
           }
         }
