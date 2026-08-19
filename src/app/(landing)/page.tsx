@@ -4,7 +4,7 @@ import { MissingWanted } from "@/components/landing/missing-wanted";
 import { fetchPublicMissingProducts } from "@/lib/public-missing-products";
 
 export const metadata: Metadata = {
-  title: "Centro de Acopio · Unidos por Manizales",
+  title: "Unidos por Manizales · Centro de Acopio",
 };
 
 const RECEIVING = [
@@ -77,15 +77,27 @@ export default async function HomePage() {
           <img src="/landing/hands.svg" alt="" className="h-auto w-full" />
         </div>
 
+        {/*
+          "Unidos por Manizales" pasa a ser el titular grande — es el
+          nombre real de la campaña (así la llama la propia noticia de
+          la Universidad sobre el sismo del 10 de agosto), no un
+          subtítulo. "Centro de Acopio" baja a una línea de contexto
+          arriba, junto con "Comunidad académica UNAL" — sigue
+          diciendo qué es esta página, solo que ya no es lo primero
+          que grita. Pedido explícito del 19 de agosto.
+        */}
         <div className="relative z-[2] mx-auto max-w-4xl px-6 pt-20 sm:pt-[120px]">
           <p className="text-center text-xs font-bold uppercase tracking-[0.14em] text-[#3f7a3e]">
             Comunidad académica UNAL · Sede Manizales
           </p>
+          <p className="mt-2 text-center font-serif text-lg font-bold italic text-[#1f4d2c] sm:text-xl">
+            Centro de Acopio
+          </p>
           <h1
-            className="mt-3 text-center font-serif font-bold italic leading-[1.08] text-[#1f4d2c]"
+            className="mt-2 text-center font-serif font-bold italic leading-[1.08] text-[#1f4d2c]"
             style={{ fontSize: "clamp(2.4rem,6vw,4.2rem)" }}
           >
-            Centro de
+            Unidos por
             <span
               className="block text-[#8fc93a]"
               style={{
@@ -94,11 +106,11 @@ export default async function HomePage() {
                 textShadow: "2px 2px 0 rgba(31,77,44,.15)",
               }}
             >
-              Acopio
+              Manizales
             </span>
           </h1>
           <p className="mx-auto mt-3 max-w-[600px] text-center text-[1.05rem] font-bold text-[#1f4d2c]">
-            Unidos por Manizales — Solidaridad que mueve, comunidad que transforma
+            Solidaridad que mueve, comunidad que transforma
           </p>
           {/*
             La franja sale del borde izquierdo de la pantalla (sin
@@ -282,6 +294,18 @@ export default async function HomePage() {
             <div className="mt-1.5 opacity-90">
               Universidad Nacional de Colombia · Sede Manizales
             </div>
+            <a
+              href="https://maps.app.goo.gl/1MUqEY62myCBgut4A"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative z-1 mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-white ring-1 ring-white/40 backdrop-blur-[2px] transition-colors hover:bg-white/25"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              Cómo llegar
+            </a>
             <svg
               className="pointer-events-none absolute -bottom-8 -right-7 h-[190px] w-[190px] opacity-[.16]"
               viewBox="0 0 100 100"
