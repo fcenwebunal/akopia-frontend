@@ -1,3 +1,4 @@
+import { HomeNavItem } from "./home-nav-item";
 import type { AppMenuItem } from "./menu-config";
 
 // La clase `cls` (item_Aspirantes, item_Estudiantes, ...) no es
@@ -463,6 +464,8 @@ export function UnalHeader({
             {menuItems.map((item) => (
               <MainMenuGroup key={item.label} item={item} />
             ))}
+
+            <HomeNavItem />
 
             <div className="btn-group menu_sedes">
               <div className="btn btn-default dropdown-toggle" data-toggle="dropdown">

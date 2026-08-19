@@ -171,9 +171,22 @@ export function AccessibilityPanel({
           una vez. El resultado visual es la franja flotando encima
           del contenido, sin fondo propio, exactamente lo pedido.
 
-          z-index: la imagen de portada no trae z-index propio (queda
-          en el nivel base), así que con esto alcanza para quedar
-          encima sin tener que tocar nada del lado del contenido.
+          z-index: 3, atrapado entre dos cosas reales. Tiene que ganarle
+          al contenido de la propia portada — sus secciones usan
+          z-[1]/z-[2] para las capas decorativas de fondo (ver
+          (landing)/page.tsx), así que con 2 (el primer valor que se
+          probó) un botón como "Iniciar sesión" quedaba por DEBAJO de
+          esas capas y ya no se podía tocar. Pero tampoco puede
+          ganarle al z-index:4 que unal-header.tsx le pone a #unalTop
+          mientras el menú móvil está abierto — con el 5 que tenía al
+          principio, la franja de cuenta le ganaba al menú expandido y
+          aparecía encima de él en vez de tapada, con su texto cruzado
+          sobre las opciones del menú. 3 es el único número que
+          resuelve ambos casos a la vez. Los tres bugs (5, luego 2, ya
+          corregidos) se encontraron probando de verdad cada
+          combinación con Playwright — sesión activa + menú abierto,
+          sesión inactiva + clic en "Iniciar sesión" — no calculando
+          los números de antemano.
 
           Sin position:absolute a propósito: #pestania-accesibilidad
           en móvil ya depende de que su ancestro posicionado más
@@ -188,7 +201,7 @@ export function AccessibilityPanel({
           padding-top: 0;
           padding-bottom: 0;
           overflow: visible;
-          z-index: 5;
+          z-index: 3;
         }
       `}</style>
       <div

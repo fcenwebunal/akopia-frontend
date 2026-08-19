@@ -7,13 +7,14 @@ import { UnalShell } from "@/components/unal-template/unal-shell";
  * del sitio) y `boxed` por defecto (son páginas de texto, no una
  * campaña de ancho completo como la portada).
  *
- * `menuItems` lleva solo "Inicio": quien llega aquí desde el pie de
- * página o un enlace externo no tiene otra forma de volver al sitio.
- * Pedido explícito del 19 de agosto — "en todos los sitios que no sean
- * la página de inicio o la app".
+ * La forma de volver ("Inicio" o "Volver al panel", según haya sesión)
+ * la resuelve <HomeNavItem> dentro de <UnalHeader> — ver el comentario
+ * ahí. Un `menuItems` estático con "Inicio" no bastaba: alguien con
+ * sesión activa que cae en estas páginas (por ejemplo desde el pie de
+ * página) necesita volver al panel, no al inicio público.
  */
 export default function InfoLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return <UnalShell menuItems={[{ label: "Inicio", href: "/" }]}>{children}</UnalShell>;
+  return <UnalShell>{children}</UnalShell>;
 }

@@ -16,7 +16,10 @@ export default function PendientePage() {
 
   function signOut() {
     pb.authStore.clear();
-    router.replace("/login");
+    // A la portada, no a /login — mismo criterio que <AccountBar>
+    // (decisión del 19 de agosto): cerrar sesión saca de la app, no
+    // manda a un formulario que no se necesita.
+    router.replace("/");
   }
 
   return (
@@ -38,7 +41,7 @@ export default function PendientePage() {
         onClick={signOut}
         className="mt-6 rounded border border-(--rule) px-4 py-2.5 font-bold"
       >
-        Salir
+        Cerrar sesión
       </button>
     </div>
   );

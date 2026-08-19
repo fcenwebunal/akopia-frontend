@@ -6,16 +6,14 @@ import { UnalShell } from "@/components/unal-template/unal-shell";
  * arriba, el formulario debajo— pero es la consistencia que Juan Manuel
  * pidió explícitamente: la misma franja en las tres superficies.
  *
- * `menuItems` con "Inicio": esta superficie no es la portada ni la app
- * (que ya tiene "Panel" como su propio hogar) — sin un enlace de vuelta
- * al sitio, quien entra aquí desde un enlace externo (o el pie de
- * página) no tiene cómo volver. No contradice la directriz de no
- * incluir "Inicio" en el menú de la app (menu-config.ts): esa regla es
- * sobre el menú DENTRO de la app, no sobre cómo volver a ella desde
- * afuera. Pedido explícito del 19 de agosto.
+ * La forma de volver ("Inicio" o "Volver al panel", según haya sesión)
+ * la resuelve <HomeNavItem> dentro de <UnalHeader> — se ajusta sola
+ * según el estado real de la sesión, cosa que un `menuItems` estático
+ * no podía (alguien con sesión activa que cae aquí necesita volver al
+ * panel, no al inicio).
  */
 export default function AuthLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return <UnalShell menuItems={[{ label: "Inicio", href: "/" }]}>{children}</UnalShell>;
+  return <UnalShell>{children}</UnalShell>;
 }

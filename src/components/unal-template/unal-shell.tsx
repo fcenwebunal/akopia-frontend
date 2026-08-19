@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { AccessibilityPanel } from "./accessibility-panel";
 import type { AppMenuItem } from "./menu-config";
@@ -33,6 +34,32 @@ export function UnalShell({
   boxed?: boolean;
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+
+  // unal.js clona el contenido del menú de escritorio hacia el menú
+  // móvil UNA SOLA VEZ, en su propio `jQuery(document).ready` — pensado
+  // para un sitio de páginas tradicionales, donde cada URL es una carga
+  // de página nueva. AKOPIA navega del lado del cliente (sin recarga),
+  // así que ese `document.ready` nunca vuelve a disparar: el menú móvil
+  // quedaba congelado con el contenido de la PRIMERA página cargada en
+  // la sesión — si esa página era la portada o /login (sin menú de
+  // app), seguía mostrando solo eso para siempre, aunque el usuario
+  // iniciara sesión y navegara a /panel después. El menú de escritorio
+  // no tenía este problema porque lee el DOM real, no una copia.
+  //
+  // Se vuelve a invocar la misma función global tras cada navegación
+  // (cambio de `pathname`). El `setTimeout` empuja la llamada a la
+  // siguiente vuelta del bucle de eventos, después de que <HomeNavItem>
+  // (un hijo, con su propio useEffect asíncrono para leer la sesión)
+  // ya haya terminado de decidir qué mostrar — sin esto, a veces se
+  // clonaba el estado "todavía no sé si hay sesión" en vez del real.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      window.prepare_content_menu?.();
+    }, 0);
+    return () => clearTimeout(id);
+  }, [pathname, menuItems]);
+
   useEffect(() => {
     const header = document.getElementById("unalTop");
     // "#contenido" (<main>) empieza justo después de todo lo que va
