@@ -162,14 +162,26 @@ export function UnalHeader({
         (el menú más cargado) sin recorte ni superposición. Ver
         `<style>` más abajo.
 
-        background-color: #unalTop en sí no trae fondo propio en el CSS
-        de la plantilla (cada fila pinta el suyo). Con el min-height, el
-        sobrante que no llega a pintar ninguna fila se rellena con el
-        mismo tono que ya usa `.firstMenu`, para que se vea como parte
-        del cabezote y no como un hueco.
+        background: #unalTop en sí no trae fondo propio en el CSS de la
+        plantilla (cada fila pinta el suyo). Con el min-height, el
+        sobrante que no llega a pintar ninguna fila se rellena — pero
+        cuánto sobra varía por página: en el panel (4 grupos de menú +
+        Sedes) el contenido real casi llena los 100px; en la portada
+        (`menuItems` vacío, solo Sedes) el contenido real mide ~69px,
+        dejando un sobrante bastante más ancho. Un solo color plano no
+        podía quedar bien en los dos casos: contra el fondo real de
+        #bs-navbar (`navigationBack.png`, un gris oscuro semitranspa-
+        rente) un plano #666 se veía como un tercer tono metido en
+        medio — no se notaba en modo claro (el sobrante es casi blanco
+        de cualquier forma) pero saltaba a la vista en oscuro, que es
+        justo cuando Juan Manuel lo reportó. Se usa la misma imagen que
+        ya pinta #bs-navbar en vez de adivinar un color: así el
+        sobrante, sea del tamaño que sea, continúa la misma textura de
+        la fila de arriba en lugar de cortar en un tono distinto.
       */}
       <style>{`
         .unal-chrome #unalTop {
+          background-image: url(/unal-template/images/navigationBack.png);
           background-color: rgb(102, 102, 102);
           min-height: 54px;
         }

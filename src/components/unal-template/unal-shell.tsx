@@ -77,7 +77,7 @@ export function UnalShell({
     // franjas grises sueltas de distintos tonos.
     <div className="unal-chrome flex min-h-screen flex-col bg-(--surface)">
       <UnalHeader menuItems={menuItems} />
-      <AccessibilityPanel />
+      <AccessibilityPanel overlay={!boxed} />
       {/*
         La clase `detalle` se mantiene siempre presente: accesibilidad.js
         busca `document.getElementsByClassName("detalle")[0]` al abrir

@@ -36,7 +36,22 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "dark", label: "Oscuro" },
 ];
 
-export function AccessibilityPanel() {
+export function AccessibilityPanel({
+  overlay = false,
+}: Readonly<{
+  /*
+   * Solo la portada (`boxed=false` en <UnalShell>) la pide: en vez de
+   * su propia fila con el fondo de --surface asomando por detrás
+   * (blanco en claro, casi invisible; casi negro en oscuro — la
+   * "franja negra" que Juan Manuel reportó), la franja de cuenta
+   * flota transparente sobre la imagen de portada, como cualquier
+   * barra de acciones superpuesta a un hero. /login y /panel no lo
+   * piden — ahí no hay imagen de fondo con la que se vea bien
+   * superpuesto, y el contenido real (formularios, tarjetas) necesita
+   * su propio espacio, no una franja flotando encima.
+   */
+  overlay?: boolean;
+}>) {
   const [theme, setTheme] = useState<Theme | null>(null);
 
   useEffect(() => {
@@ -56,7 +71,7 @@ export function AccessibilityPanel() {
 
   return (
     <div
-      className="tx-unal-accesibilidad"
+      className={overlay ? "tx-unal-accesibilidad tx-unal-accesibilidad--overlay" : "tx-unal-accesibilidad"}
       style={{ top: "var(--akopia-header-height, 103px)" }}
     >
       {/*
@@ -125,6 +140,40 @@ export function AccessibilityPanel() {
           .unal-chrome .tx-unal-accesibilidad:not(.akopia-content, .akopia-content *) {
             padding-bottom: 1.5rem;
           }
+        }
+        /*
+          overlay (solo portada): en vez de ocupar su propia fila —con
+          el fondo de --surface asomando por detrás de la transparencia
+          de .tx-unal-accesibilidad, la "franja negra" reportada— este
+          contenedor pasa a altura 0. Sin clearfix, un contenedor con
+          hijos flotados y sin más contenido colapsa a 0 de alto de
+          por sí; aquí se declara a propósito, no es un bug. Los hijos
+          (la pestaña de accesibilidad, la franja de cuenta, ambos
+          float:right) se siguen pintando en el mismo lugar de
+          siempre, ya que "overflow" por defecto es visible — pero
+          <main> ya no reserva espacio para ellos y arranca justo
+          después del cabezote, con la imagen de portada empezando de
+          una vez. El resultado visual es la franja flotando encima
+          del contenido, sin fondo propio, exactamente lo pedido.
+
+          z-index: la imagen de portada no trae z-index propio (queda
+          en el nivel base), así que con esto alcanza para quedar
+          encima sin tener que tocar nada del lado del contenido.
+
+          Sin position:absolute a propósito: #pestania-accesibilidad
+          en móvil ya depende de que su ancestro posicionado más
+          cercano sea .unal-chrome (o <body>) para calcular su
+          right:54px — si este contenedor pasara a position:absolute,
+          se volvería ESE el ancestro, y la pestaña se recalcularía
+          contra un top que ya no es el de la página sino el del
+          cabezote, perdiendo el ajuste junto al botón de hamburguesa.
+        */
+        .unal-chrome .tx-unal-accesibilidad--overlay:not(.akopia-content, .akopia-content *) {
+          height: 0;
+          padding-top: 0;
+          padding-bottom: 0;
+          overflow: visible;
+          z-index: 5;
         }
       `}</style>
       <div
