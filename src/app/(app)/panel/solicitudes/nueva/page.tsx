@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import { callRoute, currentUser, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
@@ -11,15 +10,8 @@ import { ProductPicker } from "@/components/app/product-picker";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
-import { MANIZALES_CENTER, formatCoordinates } from "@/lib/coordinates";
+import { AddressMapField, EMPTY_ADDRESS_VALUE, type AddressValue } from "@/components/app/address-map-field";
 import { ClipboardList, Minus, Plus } from "lucide-react";
-
-// Leaflet toca `window` al cargarse: sin `ssr: false` el render en
-// servidor de esta página truena.
-const MapPicker = dynamic(
-  () => import("@/components/app/map-picker").then((m) => m.MapPicker),
-  { ssr: false, loading: () => <div className="h-64 w-full rounded border border-(--rule) bg-(--surface-2)" /> }
-);
 
 interface InventorySummaryRow {
   product_id: string;
@@ -70,12 +62,10 @@ export default function NuevaSolicitudPage() {
   const [requesterName, setRequesterName] = useState("");
   const [requesterPhone, setRequesterPhone] = useState("");
   const [requesterInstitution, setRequesterInstitution] = useState("");
-  const [destination, setDestination] = useState("");
+  const [address, setAddress] = useState<AddressValue>(EMPTY_ADDRESS_VALUE);
   const [beneficiaryCount, setBeneficiaryCount] = useState("");
   const [priority, setPriority] = useState("media");
   const [notes, setNotes] = useState("");
-  const [lat, setLat] = useState(MANIZALES_CENTER[0]);
-  const [lng, setLng] = useState(MANIZALES_CENTER[1]);
 
   const [onlyAvailable, setOnlyAvailable] = useState(true);
   const [lines, setLines] = useState<DraftLine[]>([]);
@@ -159,7 +149,7 @@ export default function NuevaSolicitudPage() {
       setError("Tu sesión expiró. Vuelve a entrar.");
       return;
     }
-    if (!requesterName.trim() || !destination.trim()) {
+    if (!requesterName.trim() || !address.destination.trim()) {
       setError("Nombre del solicitante y destino son obligatorios.");
       return;
     }
@@ -176,9 +166,13 @@ export default function NuevaSolicitudPage() {
         requester_name: requesterName,
         requester_phone: requesterPhone,
         requester_institution: requesterInstitution,
-        destination,
-        destination_lat: lat,
-        destination_lng: lng,
+        destination: address.destination,
+        destination_lat: address.lat,
+        destination_lng: address.lng,
+        street_type: address.streetType || null,
+        street_number: address.streetNumber,
+        street_plate: address.streetPlate,
+        address_complement: address.complement,
         beneficiary_count: beneficiaryCount ? Number(beneficiaryCount) : null,
         priority,
         status: "pendiente",
@@ -281,29 +275,15 @@ export default function NuevaSolicitudPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="destino" className="mb-1 block text-sm font-bold">
-              Destino <span className="text-unal-red">*</span>
-            </label>
-            <input
-              id="destino"
-              value={destination}
-              onChange={(event) => setDestination(event.target.value)}
-              placeholder="Barrio, vereda o dirección"
-              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
-            />
-          </div>
-
           <div className="sm:col-span-2">
-            <span className="mb-1 block text-sm font-bold">Ubicación en el mapa</span>
+            <span className="mb-1 block text-sm font-bold">
+              Destino <span className="text-unal-red">*</span>
+            </span>
             <p className="mb-2 text-xs text-(--muted)">
-              Arrastra el punto verde (o toca el mapa) hasta la dirección exacta. El
+              Busca la dirección, o completa los campos y ajusta el punto en el mapa. El
               despacho parte de aquí — se puede ajustar después si hace falta.
             </p>
-            <MapPicker lat={lat} lng={lng} onChange={(newLat, newLng) => { setLat(newLat); setLng(newLng); }} />
-            <p className="mt-1.5 font-mono text-xs text-(--muted)">
-              {formatCoordinates(lat, lng)}
-            </p>
+            <AddressMapField value={address} onChange={setAddress} />
           </div>
 
           <div>

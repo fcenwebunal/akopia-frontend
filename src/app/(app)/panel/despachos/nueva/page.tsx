@@ -3,20 +3,13 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import { Truck } from "lucide-react";
 import { currentUser, errorMessage, pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
-import { MANIZALES_CENTER, formatCoordinates } from "@/lib/coordinates";
-
-// Leaflet toca `window` al cargarse: sin `ssr: false` el render en
-// servidor de esta página truena.
-const MapPicker = dynamic(
-  () => import("@/components/app/map-picker").then((m) => m.MapPicker),
-  { ssr: false, loading: () => <div className="h-64 w-full rounded border border-(--rule) bg-(--surface-2)" /> }
-);
+import { AddressMapField, EMPTY_ADDRESS_VALUE, type AddressValue } from "@/components/app/address-map-field";
+import { MANIZALES_CENTER } from "@/lib/coordinates";
 
 interface ApprovedRequest {
   id: string;
@@ -26,6 +19,10 @@ interface ApprovedRequest {
   destination: string;
   destination_lat: number;
   destination_lng: number;
+  street_type: string;
+  street_number: string;
+  street_plate: string;
+  address_complement: string;
 }
 
 /*
@@ -54,10 +51,8 @@ export default function NuevoDespachoPage() {
   const [driverPhone, setDriverPhone] = useState("");
   const [vehiclePlate, setVehiclePlate] = useState("");
   const [brigade, setBrigade] = useState("");
-  const [destination, setDestination] = useState("");
+  const [address, setAddress] = useState<AddressValue>(EMPTY_ADDRESS_VALUE);
   const [notes, setNotes] = useState("");
-  const [lat, setLat] = useState(MANIZALES_CENTER[0]);
-  const [lng, setLng] = useState(MANIZALES_CENTER[1]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,16 +63,21 @@ export default function NuevoDespachoPage() {
     const request = requests?.find((item) => item.id === id);
     if (!request) return;
 
-    setDestination(request.destination);
-
     // Hereda el punto exacto de la solicitud si ya lo tiene — sigue
     // siendo editable aquí, por si el vehículo termina yendo a un punto
     // distinto del que se marcó al pedir. Las solicitudes de antes de
     // esta función nunca tuvieron coordenadas (quedan en 0/0): en ese
     // caso se arranca del centro de Manizales, como siempre.
     const hasCoords = request.destination_lat !== 0 || request.destination_lng !== 0;
-    setLat(hasCoords ? request.destination_lat : MANIZALES_CENTER[0]);
-    setLng(hasCoords ? request.destination_lng : MANIZALES_CENTER[1]);
+    setAddress({
+      destination: request.destination,
+      lat: hasCoords ? request.destination_lat : MANIZALES_CENTER[0],
+      lng: hasCoords ? request.destination_lng : MANIZALES_CENTER[1],
+      streetType: request.street_type ?? "",
+      streetNumber: request.street_number ?? "",
+      streetPlate: request.street_plate ?? "",
+      complement: request.address_complement ?? "",
+    });
   }
 
   async function save() {
@@ -85,7 +85,7 @@ export default function NuevoDespachoPage() {
       setError("Tu sesión expiró. Vuelve a entrar.");
       return;
     }
-    if (!requestId || !driverName.trim() || !destination.trim()) {
+    if (!requestId || !driverName.trim() || !address.destination.trim()) {
       setError("Solicitud, conductor y destino son obligatorios.");
       return;
     }
@@ -100,9 +100,13 @@ export default function NuevoDespachoPage() {
         driver_phone: driverPhone,
         vehicle_plate: vehiclePlate,
         brigade,
-        destination,
-        destination_lat: lat,
-        destination_lng: lng,
+        destination: address.destination,
+        destination_lat: address.lat,
+        destination_lng: address.lng,
+        street_type: address.streetType || null,
+        street_number: address.streetNumber,
+        street_plate: address.streetPlate,
+        address_complement: address.complement,
         dispatch_date: new Date().toISOString().replace("T", " "),
         operator_id: operator.id,
         notes,
@@ -169,26 +173,13 @@ export default function NuevoDespachoPage() {
           {selected ? (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label htmlFor="destino" className="mb-1 block text-sm font-bold">
+                <span className="mb-1 block text-sm font-bold">
                   Destino <span className="text-unal-red">*</span>
-                </label>
-                <input
-                  id="destino"
-                  value={destination}
-                  onChange={(event) => setDestination(event.target.value)}
-                  className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <span className="mb-1 block text-sm font-bold">Ubicación en el mapa</span>
+                </span>
                 <p className="mb-2 text-xs text-(--muted)">
-                  Arrastra el punto verde (o toca el mapa) hasta la dirección exacta.
+                  Heredado de la solicitud — ajústalo si el vehículo termina yendo a un punto distinto.
                 </p>
-                <MapPicker lat={lat} lng={lng} onChange={(newLat, newLng) => { setLat(newLat); setLng(newLng); }} />
-                <p className="mt-1.5 font-mono text-xs text-(--muted)">
-                  {formatCoordinates(lat, lng)}
-                </p>
+                <AddressMapField value={address} onChange={setAddress} />
               </div>
 
               <div>

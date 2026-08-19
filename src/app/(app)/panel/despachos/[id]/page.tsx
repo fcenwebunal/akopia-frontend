@@ -2,19 +2,14 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { CheckCircle } from "lucide-react";
 import { callRoute, errorMessage, pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
-import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { LoadingLine } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { CoordinatesDisplay } from "@/components/app/coordinates-display";
+import { AddressMapField, EMPTY_ADDRESS_VALUE, type AddressValue } from "@/components/app/address-map-field";
 import { MANIZALES_CENTER } from "@/lib/coordinates";
-
-const MapPicker = dynamic(
-  () => import("@/components/app/map-picker").then((m) => m.MapPicker),
-  { ssr: false, loading: () => <div className="h-64 w-full rounded border border-(--rule) bg-(--surface-2)" /> }
-);
 
 interface Dispatch {
   id: string;
@@ -22,6 +17,10 @@ interface Dispatch {
   destination: string;
   destination_lat: number;
   destination_lng: number;
+  street_type: string;
+  street_number: string;
+  street_plate: string;
+  address_complement: string;
   driver_name: string;
   driver_phone: string;
   vehicle_plate: string;
@@ -91,8 +90,7 @@ export default function DespachoDetallePage({
   const [notes, setNotes] = useState("");
 
   const [editingLocation, setEditingLocation] = useState(false);
-  const [editLat, setEditLat] = useState(MANIZALES_CENTER[0]);
-  const [editLng, setEditLng] = useState(MANIZALES_CENTER[1]);
+  const [editAddress, setEditAddress] = useState<AddressValue>(EMPTY_ADDRESS_VALUE);
   const [savingLocation, setSavingLocation] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -130,8 +128,15 @@ export default function DespachoDetallePage({
 
   function startEditingLocation(dispatch: Dispatch) {
     const hasCoords = dispatch.destination_lat !== 0 || dispatch.destination_lng !== 0;
-    setEditLat(hasCoords ? dispatch.destination_lat : MANIZALES_CENTER[0]);
-    setEditLng(hasCoords ? dispatch.destination_lng : MANIZALES_CENTER[1]);
+    setEditAddress({
+      destination: dispatch.destination,
+      lat: hasCoords ? dispatch.destination_lat : MANIZALES_CENTER[0],
+      lng: hasCoords ? dispatch.destination_lng : MANIZALES_CENTER[1],
+      streetType: dispatch.street_type ?? "",
+      streetNumber: dispatch.street_number ?? "",
+      streetPlate: dispatch.street_plate ?? "",
+      complement: dispatch.address_complement ?? "",
+    });
     setEditingLocation(true);
   }
 
@@ -140,8 +145,13 @@ export default function DespachoDetallePage({
     setError(null);
     try {
       await pb.collection("dispatches").update(id, {
-        destination_lat: editLat,
-        destination_lng: editLng,
+        destination: editAddress.destination,
+        destination_lat: editAddress.lat,
+        destination_lng: editAddress.lng,
+        street_type: editAddress.streetType || null,
+        street_number: editAddress.streetNumber,
+        street_plate: editAddress.streetPlate,
+        address_complement: editAddress.complement,
       });
       setEditingLocation(false);
       setVersion((v) => v + 1);
@@ -245,30 +255,14 @@ export default function DespachoDetallePage({
 
         {editingLocation ? (
           <div className="mt-3">
-            <p className="mb-2 text-xs text-(--muted)">
-              Arrastra el punto verde (o toca el mapa) hasta la dirección exacta.
-            </p>
-            <MapPicker lat={editLat} lng={editLng} onChange={(newLat, newLng) => { setEditLat(newLat); setEditLng(newLng); }} />
-            <p className="mt-1.5 font-mono text-xs text-(--muted)">
-              {editLat.toFixed(6)}, {editLng.toFixed(6)}
-            </p>
+            <AddressMapField value={editAddress} onChange={setEditAddress} />
             <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setEditingLocation(false)}
-                className="rounded border border-(--rule) px-3 py-2 text-sm font-bold"
-              >
+              <Button variant="outline" size="sm" onClick={() => setEditingLocation(false)}>
                 Cancelar
-              </button>
-              <button
-                type="button"
-                disabled={savingLocation}
-                onClick={saveLocation}
-                className="flex items-center gap-2 rounded bg-unal-green-dark px-3 py-2 text-sm font-bold text-white disabled:opacity-50"
-              >
-                {savingLocation ? <Spinner /> : null}
+              </Button>
+              <Button size="sm" disabled={savingLocation} loading={savingLocation} onClick={saveLocation} icon={CheckCircle}>
                 Guardar ubicación
-              </button>
+              </Button>
             </div>
           </div>
         ) : dispatch.destination_lat || dispatch.destination_lng ? (
