@@ -94,7 +94,6 @@ Antes de darle a Deploy (o después, en **Settings → Environment Variables** �
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`        | igual que en tu `.env.local`                                       |
 | `CLOUDINARY_API_KEY`                       | igual que en tu `.env.local`                                       |
 | `CLOUDINARY_API_SECRET`                    | igual que en tu `.env.local`                                       |
-| `NEXT_PUBLIC_MAPBOX_TOKEN`                 | igual que en tu `.env.local` — opcional: sin ella, el formulario de dirección sigue funcionando pero sin buscador, mapa ni geocoding automático |
 
 Todos los valores ya los tienes en tu `.env.local` (nunca se commitea, pero está en tu máquina) — es copiar y pegar cada uno.
 

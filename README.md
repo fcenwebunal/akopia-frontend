@@ -62,9 +62,8 @@ Se separan con [grupos de rutas](https://nextjs.org/docs/app/building-your-appli
 | Estilos | **Tailwind v4** | Los colores institucionales se declaran una vez como tokens en `globals.css` y se usan como `bg-unal-green-dark` |
 | Tipografía | **Ancízar**, auto-hospedada con `next/font/local` | Es la tipografía institucional. Ningún CDN la distribuye, y la red de la Universidad no siempre deja salir a uno |
 | Backend | **SDK oficial de PocketBase** | Autenticación, CRUD y tiempo real por SSE, sin capa intermedia |
-| Mapas de solo lectura/arrastrar-pin sin dirección | **Leaflet + react-leaflet**, teselas CARTO | Sin llave ni facturación — ver `map-picker.tsx` y `help-map.tsx` |
-| Formulario de dirección con mapa | **Mapbox** (geocoding + `mapbox-gl`) | Autocompletado y geocoding inverso reales para nomenclatura colombiana, algo que Nominatim/OSM da con menos precisión. Pide llave (`NEXT_PUBLIC_MAPBOX_TOKEN`, no secreta) — sin ella, `AddressMapField` sigue mostrando los campos pero sin buscador ni mapa. Ver `src/lib/mapbox.ts` |
-| Formularios estructurados | **react-hook-form + zod** | Solo donde el formulario tiene reglas propias que vale la pena tipar (hoy: `AddressMapField`) — el resto de la app sigue con `useState` simple, no se migra por consistencia |
+| Mapas y geocoding | **Leaflet + react-leaflet**, teselas CARTO; geocoding directo/inverso con **Nominatim (OpenStreetMap)** | Todo sin llave ni tarjeta. Se probó Mapbox para el geocoding, pero pedía tarjeta para crear la cuenta (el mismo tropiezo que ya alejó a AKOPIA de Fly.io) — se descartó. Ver `map-picker.tsx` y `src/lib/geocoding.ts` |
+| Formularios estructurados | **react-hook-form + zod** | Solo donde el formulario tiene reglas propias que vale la pena tipar (hoy: `AddressMapField`, el módulo de dirección) — el resto de la app sigue con `useState` simple, no se migra por consistencia |
 
 > **No agregues dependencias sin discutirlo.** Nada de librerías de componentes de UI ni clientes HTTP. Gestores de estado y librerías de formularios se evalúan caso por caso — las de la tabla de arriba se agregaron con acuerdo explícito. Si algo parece requerir una pieza nueva, abre un issue antes.
 

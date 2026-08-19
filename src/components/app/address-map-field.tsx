@@ -13,12 +13,12 @@ import {
   EMPTY_STRUCTURED_ADDRESS,
   type StructuredAddress,
 } from "@/lib/address";
-import { forwardGeocode, reverseGeocode, MAPBOX_ENABLED, type GeocodeSuggestion } from "@/lib/mapbox";
+import { forwardGeocode, reverseGeocode, type GeocodeSuggestion } from "@/lib/geocoding";
 import { MANIZALES_CENTER, formatCoordinates } from "@/lib/coordinates";
 
-// mapbox-gl toca `window` al cargarse — mismo motivo que ya obligaba a
-// cargar MapPicker (Leaflet) así, ver ese archivo.
-const MapboxPicker = dynamic(() => import("./mapbox-picker").then((m) => m.MapboxPicker), {
+// Leaflet toca `window` al cargarse — nunca se importa directo desde una
+// página, ver map-picker.tsx.
+const MapPicker = dynamic(() => import("./map-picker").then((m) => m.MapPicker), {
   ssr: false,
   loading: () => <div className="h-64 w-full rounded border border-(--rule) bg-(--surface-2)" />,
 });
@@ -53,8 +53,8 @@ const GEOCODE_QUERY_SUFFIX = ", Manizales, Caldas, Colombia";
 /*
  * Combina, para una sola dirección: los cuatro campos de nomenclatura
  * colombiana (react-hook-form + zod), un buscador con autocompletado de
- * Mapbox restringido a Colombia/Manizales, y el mapa con pin arrastrable
- * (geocoding inverso al soltarlo). Las tres vías escriben el mismo
+ * Nominatim/OSM restringido a Colombia/Manizales, y el mapa con pin
+ * arrastrable (geocoding inverso al soltarlo). Las tres vías escriben el mismo
  * `AddressValue` hacia el padre — nunca hay dos fuentes de verdad a la
  * vez.
  *
@@ -154,7 +154,7 @@ export function AddressMapField({
 
     setDestination(nextDestination);
 
-    if (!MAPBOX_ENABLED || !fields.streetType || !fields.streetNumber.trim()) {
+    if (!fields.streetType || !fields.streetNumber.trim()) {
       emit({ ...fields, destination: nextDestination, lat, lng });
       return;
     }
@@ -186,7 +186,7 @@ export function AddressMapField({
 
   // Autocompletado libre — camino rápido alterno a los cuatro campos.
   useEffect(() => {
-    if (!MAPBOX_ENABLED || query.trim().length < 3) {
+    if (query.trim().length < 3) {
       setSuggestions([]);
       return;
     }
@@ -229,7 +229,6 @@ export function AddressMapField({
       setLng(newLng);
       emit({ ...fields, destination: destinationRef.current, lat: newLat, lng: newLng });
 
-      if (!MAPBOX_ENABLED) return;
       reverseGeocode(newLat, newLng)
         .then((placeName) => {
           if (!placeName) return;
@@ -256,50 +255,48 @@ export function AddressMapField({
 
   return (
     <div>
-      {MAPBOX_ENABLED ? (
+      <div className="relative">
+        <label htmlFor="direccion-buscar" className="mb-1 block text-sm font-bold">
+          Buscar dirección
+        </label>
         <div className="relative">
-          <label htmlFor="direccion-buscar" className="mb-1 block text-sm font-bold">
-            Buscar dirección
-          </label>
-          <div className="relative">
-            <Search
+          <Search
+            size={16}
+            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-(--muted)"
+            aria-hidden="true"
+          />
+          <input
+            id="direccion-buscar"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Ej.: Cra 23 # 45-67, Manizales"
+            autoComplete="off"
+            className="w-full rounded border border-(--rule) bg-(--surface) py-2.5 pr-3 pl-9"
+          />
+          {searching ? (
+            <Loader2
               size={16}
-              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-(--muted)"
+              className="absolute top-1/2 right-3 -translate-y-1/2 animate-spin text-(--muted)"
               aria-hidden="true"
             />
-            <input
-              id="direccion-buscar"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Ej.: Cra 23 # 45-67, Manizales"
-              autoComplete="off"
-              className="w-full rounded border border-(--rule) bg-(--surface) py-2.5 pr-3 pl-9"
-            />
-            {searching ? (
-              <Loader2
-                size={16}
-                className="absolute top-1/2 right-3 -translate-y-1/2 animate-spin text-(--muted)"
-                aria-hidden="true"
-              />
-            ) : null}
-          </div>
-          {suggestions.length > 0 ? (
-            <ul className="absolute z-10 mt-1 w-full rounded border border-(--rule) bg-(--surface) shadow-lg">
-              {suggestions.map((suggestion) => (
-                <li key={suggestion.id}>
-                  <button
-                    type="button"
-                    onClick={() => selectSuggestion(suggestion)}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-(--surface-2)"
-                  >
-                    {suggestion.placeName}
-                  </button>
-                </li>
-              ))}
-            </ul>
           ) : null}
         </div>
-      ) : null}
+        {suggestions.length > 0 ? (
+          <ul className="absolute z-10 mt-1 w-full rounded border border-(--rule) bg-(--surface) shadow-lg">
+            {suggestions.map((suggestion) => (
+              <li key={suggestion.id}>
+                <button
+                  type="button"
+                  onClick={() => selectSuggestion(suggestion)}
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-(--surface-2)"
+                >
+                  {suggestion.placeName}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <div>
@@ -367,7 +364,7 @@ export function AddressMapField({
         <p className="mb-2 text-xs text-(--muted)">
           Arrastra el punto verde (o toca el mapa) hasta la dirección exacta.
         </p>
-        <MapboxPicker lat={lat} lng={lng} onChange={handleMapChange} heightClassName={heightClassName} />
+        <MapPicker lat={lat} lng={lng} onChange={handleMapChange} heightClassName={heightClassName} />
         <p className="mt-1.5 font-mono text-xs text-(--muted)">{formatCoordinates(lat, lng)}</p>
       </div>
     </div>
