@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const GOBIERNO_LINEA_1 = [
   { label: "Régimen Legal", href: "https://legal.unal.edu.co" },
   { label: "Talento humano", href: "https://personal.unal.edu.co" },
@@ -13,16 +15,20 @@ const GOBIERNO_LINEA_1 = [
 
 const GOBIERNO_LINEA_2 = [
   { label: "Correo institucional", href: "https://smartkey.xertica.com/cloudkey/a/unal.edu.co/user/login" },
-  { label: "Mapa del sitio", href: "#" },
+  { label: "Mapa del sitio", href: "/mapa-del-sitio" },
   { label: "Redes Sociales", href: "https://redessociales.unal.edu.co" },
-  { label: "FAQ", href: "#" },
+  { label: "FAQ", href: "/faq" },
   { label: "Quejas y reclamos", href: "https://quejasyreclamos.unal.edu.co/" },
   { label: "Atención en línea", href: "https://unal.edu.co/atencion-en-linea/" },
   { label: "Encuesta", href: "https://unal.edu.co/encuesta/" },
   { label: "Contáctenos", href: "https://unal.edu.co/contactenos" },
   { label: "Estadísticas", href: "https://estadisticas.unal.edu.co/" },
-  { label: "Glosario", href: "#" },
+  { label: "Glosario", href: "/glosario" },
 ];
+
+function isInternal(href: string) {
+  return href.startsWith("/");
+}
 
 function updateDate() {
   const now = new Date();
@@ -34,9 +40,13 @@ function updateDate() {
 
 /*
  * Pie de página fijo de la plantilla (directriz B3): enlaces de Gobierno
- * en Línea completos, sello de Colombia, logos institucionales y
- * copyright — nada de esto se modifica. Lo único propio de AKOPIA es el
- * párrafo de contacto, con la dirección real del centro de acopio.
+ * en Línea, sello de Colombia, logos institucionales y copyright — los
+ * términos identificadores no se tocan (la directriz lo prohíbe), solo
+ * el contenido: "Mapa del sitio", "FAQ", "Glosario" y "Acerca de este
+ * sitio web" ahora enlazan a páginas reales de AKOPIA (antes eran "#"),
+ * y el párrafo de contacto/derechos lleva los datos reales del centro
+ * de acopio en vez de los genéricos de sede Bogotá que traía la
+ * plantilla.
  */
 export function UnalFooter() {
   return (
@@ -50,22 +60,30 @@ export function UnalFooter() {
           ))}
         </nav>
         <nav className="col-lg-3 col-md-3 col-sm-4 col-6 gobiernoLinea">
-          {GOBIERNO_LINEA_2.map((link) => (
-            <a key={link.label} href={link.href} target="_top">
-              {link.label}
-            </a>
-          ))}
+          {GOBIERNO_LINEA_2.map((link) =>
+            isInternal(link.href) ? (
+              <Link key={link.label} href={link.href}>
+                {link.label}
+              </Link>
+            ) : (
+              <a key={link.label} href={link.href} target="_top">
+                {link.label}
+              </a>
+            )
+          )}
         </nav>
         <div className="col-lg-4 col-md-4 col-sm-4 col-12 footer-info">
           <div className="row footer-info-spacing">
             <p className="col-lg-6 col-md-12 col-sm-12 col-6 contacto">
               <b>Contacto página web:</b>
               <br />
-              Campus La Nubia
+              Carrera 27 # 64-60
               <br />
-              Universidad Nacional de Colombia, sede Manizales
+              01 8000 916956
               <br />
-              Manizales, Caldas, Colombia
+              Manizales, Caldas - Colombia
+              <br />
+              (57+6) 8879300 Ext. 50423
             </p>
             <p className="col-lg-6 col-md-12 col-sm-12 col-6 derechos">
               <a href="https://unal.edu.co/archivos/user_upload/docs/legal.pdf" target="_blank" rel="noreferrer">
@@ -74,9 +92,15 @@ export function UnalFooter() {
               <br />
               Algunos derechos reservados.
               <br />
-              <a title="Comuníquese con el administrador de este sitio web" href="mailto:correo@unal.edu.co">
-                correo@unal.edu.co
+              <a href="https://fcen.unal.edu.co" target="_blank" rel="noreferrer">
+                fcen.unal.edu.co
               </a>
+              <br />
+              <a title="Comuníquese con el administrador de este sitio web" href="mailto:sfcen_man@unal.edu.co">
+                sfcen_man@unal.edu.co
+              </a>
+              <br />
+              <Link href="/acerca-de-este-sitio">Acerca de este sitio web</Link>
               <br />
               Actualización: {updateDate()}
             </p>
