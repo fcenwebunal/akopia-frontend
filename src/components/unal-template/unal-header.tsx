@@ -1,5 +1,16 @@
 import type { AppMenuItem } from "./menu-config";
 
+// La clase `cls` (item_Aspirantes, item_Estudiantes, ...) no es
+// decorativa: unal.css trae reglas de :hover/.active específicas para
+// cada una (color de subrayado propio por perfil).
+const PERFILES = [
+  { label: "Aspirantes", href: "https://aspirantes.unal.edu.co", cls: "item_Aspirantes" },
+  { label: "Estudiantes", href: "https://estudiantes.unal.edu.co", cls: "item_Estudiantes" },
+  { label: "Egresados", href: "https://egresados.unal.edu.co", cls: "item_Egresados" },
+  { label: "Docentes", href: "https://docentes.unal.edu.co", cls: "item_Docentes" },
+  { label: "Administrativos", href: "https://administrativos.unal.edu.co", cls: "item_Administrativos" },
+];
+
 const SEDES = [
   { label: "Amazonia", href: "https://amazonia.unal.edu.co" },
   { label: "Bogotá", href: "https://bogota.unal.edu.co" },
@@ -278,14 +289,32 @@ export function UnalHeader({
           <div className="content-fluid">
             <nav className="navbar navbar-expand-md nav navbar-dark">
               {/*
-                "ml-auto" (margin-left:auto de Bootstrap 4): sin la fila
-                de "Perfiles" (eliminada, decisión del 2026-08-18), este
-                era el primer hijo del <nav> flex y ya no hay nada a su
-                izquierda que lo empuje hacia la derecha — sin esto,
-                las redes quedan pegadas al borde izquierdo, debajo del
-                escudo.
+                Fila de Perfiles, restaurada (decisión del 2026-08-18
+                de quitarla, revertida el 19 de agosto — "fue una mala
+                decisión en su momento"). `#navbarSupportedContent` es
+                el mismo id que unal.css fuerza a
+                `display:inline-block!important` en escritorio; sin él
+                la fila no se mostraría aunque el contenido esté ahí.
+                `target="_blank"`: igual que Sedes y las redes sociales
+                — son subportales externos de la Universidad, no parte
+                de AKOPIA, así que abren aparte en vez de sacar al
+                usuario de la sesión actual.
               */}
-              <ul className="socialLinks d-none d-md-block ml-auto">
+              <div className="collapse navbar-collapse navbar-default" id="navbarSupportedContent">
+                <nav id="profiles">
+                  <ul className="mr-auto nav justify-content-end">
+                    {PERFILES.map((p) => (
+                      <li key={p.href} className={`nav-item ${p.cls}`}>
+                        <a href={p.href} target="_blank" rel="noreferrer">
+                          {p.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              </div>
+
+              <ul className="socialLinks d-none d-md-block">
                 <li>
                   <a
                     href="https://www.facebook.com/UNALOficial"
