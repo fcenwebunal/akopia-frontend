@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { HomeNavButton } from "@/components/unal-template/home-nav-button";
 
 export const metadata: Metadata = {
   title: "Glosario",
@@ -95,6 +96,7 @@ const TERMS: Term[] = [
 export default function GlosarioPage() {
   return (
     <div className="mx-auto max-w-3xl px-5 py-16">
+      <HomeNavButton />
       <p className="text-sm font-bold text-unal-green-dark">Ayuda</p>
       <h1 className="mt-1 text-3xl font-black tracking-tight">Glosario</h1>
       <p className="mt-4 text-(--ink-2)">
