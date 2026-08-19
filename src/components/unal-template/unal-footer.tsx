@@ -51,6 +51,22 @@ function updateDate() {
 export function UnalFooter() {
   return (
     <footer className="clear container-fluid">
+      {/*
+        padding-bottom:0 — el CSS de la plantilla trae `padding:15px 0
+        25px 0` (y lo repite igual en su propio media query de móvil,
+        `body footer{padding:15px 0 25px}`, sin ámbito a propósito por
+        empezar con "body"). Esos 25px de aire debajo del último
+        contenido dejaban una franja vacía notoria al final de la
+        página — pedido explícito de quitarla. El `:not(...)` iguala
+        la especificidad de la regla original para ganar por orden de
+        aparición, ya que este `<style>` se imprime después de las
+        hojas de la plantilla en el documento.
+      */}
+      <style>{`
+        .unal-chrome footer:not(.akopia-content, .akopia-content *) {
+          padding-bottom: 0;
+        }
+      `}</style>
       <div className="row">
         <nav className="col-lg-3 col-md-3 col-sm-4 col-6 gobiernoLinea">
           {GOBIERNO_LINEA_1.map((link) => (

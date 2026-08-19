@@ -182,7 +182,9 @@ function varload(){
 }
 
 
-window.onload = function(){
-  document.getElementById("pestania-accesibilidad").addEventListener( 'click', accesstab);
-}
-  
+// window.onload que enganchaba el clic de #pestania-accesibilidad se
+// quitó a propósito en scripts/scope-unal-template-css.mjs: React ya
+// invoca accesstab() desde su propio onClick, y dejar los dos causaba
+// un doble llamado (abre y cierra en el mismo toque) cuando
+// window.onload disparaba después de que este script ya hubiera
+// corrido.

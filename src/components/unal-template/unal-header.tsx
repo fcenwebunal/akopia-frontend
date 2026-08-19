@@ -55,6 +55,11 @@ const SERVICIOS = [
 // El despliegue de hoy vive en otra URL provisional; este es el destino.
 const SITE_URL = "acopio.manizales.unal.edu.co";
 
+// A dónde apunta el enlace del subdominio MIENTRAS el subdominio real
+// no exista (sin DNS ni TLS todavía) — el despliegue provisional en
+// Vercel. Cambiar aquí cuando el subdominio institucional quede listo.
+const PROVISIONAL_SITE_URL = "https://akopia.vercel.app/";
+
 function MainMenuGroup({ item }: Readonly<{ item: AppMenuItem }>) {
   if (!item.children) {
     return (
@@ -385,17 +390,19 @@ export function UnalHeader({
 
         <div id="bs-navbar" className="navigation d-none d-md-block">
           {/*
-            Sin <a>: el subdominio (§ CLAUDE.md) todavía no es real —
-            el sitio vive hoy en Vercel/Railway, no en
-            acopio.manizales.unal.edu.co, y ese dominio ni siquiera
-            tiene certificado TLS emitido todavía. Deshabilitado a
-            propósito hasta que exista de verdad, para no ofrecer un
-            enlace que no lleva a ningún lado. El menú móvil clona este
-            mismo HTML (ver unal.js prepare_content_menu), así que
-            queda desactivado ahí también sin tocar nada más.
+            El subdominio real (§ CLAUDE.md) todavía no existe —
+            acopio.manizales.unal.edu.co no tiene DNS ni certificado
+            TLS emitido — así que el enlace apunta al despliegue
+            provisional en Vercel mientras tanto (pedido explícito del
+            19 de agosto: "más adelante lo cambiaremos al
+            correspondiente"). Sin target="_blank": es la portada del
+            sitio en el que ya se está, misma pestaña como cualquier
+            enlace interno. El menú móvil clona este mismo HTML (ver
+            unal.js prepare_content_menu), así que el enlace queda
+            activo ahí también sin tocar nada más.
           */}
           <div className="site-url" id="subdominio">
-            <span>{SITE_URL}</span>
+            <a href={PROVISIONAL_SITE_URL}>{SITE_URL}</a>
           </div>
 
           {/*

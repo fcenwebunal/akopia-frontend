@@ -157,6 +157,52 @@ async function patchUnalJs() {
   console.log("patched unal.js (buscador de Google removido)");
 }
 
+// accesibilidad.js termina con `window.onload = function(){
+// document.getElementById("pestania-accesibilidad").addEventListener(
+// 'click', accesstab); }` — pensado para colgar el clic ANTES de que
+// React monte nada. `<AccessibilityPanel>` ya invoca accesstab() desde
+// su propio onClick (ver el comentario ahí: en Next.js, con
+// strategy="afterInteractive", se asumió que window.onload ya había
+// disparado para cuando este script carga, así que el listener nunca
+// llegaría a engancharse). Esa asunción resultó falsa en la práctica:
+// window.onload solo dispara cuando TERMINAN de cargar todos los
+// recursos de la página (fuentes, imágenes del cabezote/pie), y eso a
+// veces sí ocurre después de que el script ya corrió — cuando pasa,
+// el listener legado SÍ se engancha, y un solo toque termina llamando
+// accesstab() dos veces (la de React + la legada), que se cancelan
+// entre sí — el panel "no abre" (en realidad abre y se vuelve a
+// cerrar en el mismo instante). Confirmado en producción
+// instrumentando accesstab(): la llamada de React siempre se cuenta
+// una vez, pero el resultado final alternaba entre abierto y cerrado
+// — solo se explica si un segundo llamado, no instrumentado, corría
+// también. Se quita el bloque completo: React ya cubre exactamente lo
+// mismo, de forma determinística.
+async function patchAccesibilidadJs() {
+  const src = path.join(TEMPLATE_DIR, "js", "accesibilidad.js");
+  const original = await readFile(src, "utf8");
+
+  const marker = 'window.onload = function(){';
+  const idx = original.indexOf(marker);
+  if (idx === -1) {
+    throw new Error(
+      "accesibilidad.js cambió de forma inesperada: no se encontró el " +
+        "window.onload que engancha #pestania-accesibilidad."
+    );
+  }
+
+  const patched =
+    original.slice(0, idx) +
+    "// window.onload que enganchaba el clic de #pestania-accesibilidad se\n" +
+    "// quitó a propósito en scripts/scope-unal-template-css.mjs: React ya\n" +
+    "// invoca accesstab() desde su propio onClick, y dejar los dos causaba\n" +
+    "// un doble llamado (abre y cierra en el mismo toque) cuando\n" +
+    "// window.onload disparaba después de que este script ya hubiera\n" +
+    "// corrido.\n";
+
+  await writeFile(path.join(OUT_DIR, "js", "accesibilidad.js"), patched, "utf8");
+  console.log("patched accesibilidad.js (listener legado de #pestania-accesibilidad removido)");
+}
+
 async function copyDir(relDir) {
   const src = path.join(TEMPLATE_DIR, relDir);
   const dest = path.join(OUT_DIR, relDir);
@@ -200,6 +246,10 @@ async function main() {
   ]) {
     if (file === "unal.js") {
       await patchUnalJs();
+      continue;
+    }
+    if (file === "accesibilidad.js") {
+      await patchAccesibilidadJs();
       continue;
     }
     await copyFile(
