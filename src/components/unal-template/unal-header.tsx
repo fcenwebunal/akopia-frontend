@@ -131,12 +131,24 @@ export function UnalHeader({
         no siempre llegan; sin reservar el espacio, el escudo se
         desborda sobre la fila de Accesibilidad/Cuenta.
 
-        Un solo valor fijo (145px) para todos los anchos era el bug: en
+        Un solo valor fijo para todos los anchos era el primer bug: en
         escritorio el escudo lo necesita, pero en móvil el propio CSS de
         la plantilla ya reduce el escudo a 54px de alto (ver
-        `@media(max-width:767px) .logo`) — reservar 145px igual dejaba
-        hasta ~90px de una franja gris vacía debajo del botón de
-        hamburguesa, sin ningún contenido real que la llenara. Ver
+        `@media(max-width:767px) .logo`) — reservar el valor de
+        escritorio igual dejaba hasta ~90px de una franja gris vacía
+        debajo del botón de hamburguesa, sin ningún contenido real que
+        la llenara.
+
+        El valor de escritorio (100px) es el segundo ajuste: 145px era
+        un margen de seguridad calculado a ojo para el escudo (135px),
+        pero el contenido real (firstMenu + bs-navbar) mide ~103px, así
+        que sobraba una franja gris visible de todos modos. 100px queda
+        por debajo de esa altura real — el escudo sí se desborda por
+        fuera del borde inferior de #unalTop en la práctica, pero ese
+        sobrante es solo el margen transparente del propio archivo de
+        imagen, invisible a simple vista. Verificado con Playwright en
+        `/panel`, `/panel/donaciones/nueva` y `/panel/inventario`
+        (el menú más cargado) sin recorte ni superposición. Ver
         `<style>` más abajo.
 
         background-color: #unalTop en sí no trae fondo propio en el CSS
