@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { pb, type AkopiaUser } from "@/lib/pb";
 
@@ -17,6 +17,7 @@ import { pb, type AkopiaUser } from "@/lib/pb";
  */
 export function AccountBar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<AkopiaUser | null>(null);
   const [checked, setChecked] = useState(false);
 
@@ -32,6 +33,12 @@ export function AccountBar() {
     sync();
     return pb.authStore.onChange(sync);
   }, []);
+
+  // En /login, "Iniciar sesión"/"Registrarse" aquí arriba quedan
+  // redundantes con el propio formulario de la página — pedido
+  // explícito del 19 de agosto. La pestaña de accesibilidad sigue
+  // presente; solo se oculta esta franja.
+  const hideGuestLinks = pathname === "/login";
 
   function signOut() {
     pb.authStore.clear();
@@ -78,7 +85,7 @@ export function AccountBar() {
             Cerrar sesión
           </button>
         </>
-      ) : (
+      ) : hideGuestLinks ? null : (
         <>
           <Link
             href="/login"
