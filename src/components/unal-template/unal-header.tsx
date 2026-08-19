@@ -151,7 +151,7 @@ export function UnalHeader({
           min-height: 54px;
         }
         @media (min-width: 768px) {
-          .unal-chrome #unalTop { min-height: 145px; }
+          .unal-chrome #unalTop { min-height: 100px; }
         }
         /*
           Tailwind trae una utilidad ".collapse{visibility:collapse}"
