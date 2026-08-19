@@ -167,6 +167,22 @@ export function UnalHeader({
         .unal-chrome .collapse:not(.akopia-content, .akopia-content *) {
           visibility: visible;
         }
+        /*
+          .main_menu{height:54px} en el CSS de la plantilla es fijo:
+          pensado para cuando el menú móvil está cerrado. Al abrirlo,
+          #navbar_content crece a su alto real (puede pasar de 200px)
+          pero, al vivir dentro de un contenedor de altura fija, se
+          desborda visualmente por fuera de esa caja en vez de
+          empujarla — nada de lo que viene después en el documento (la
+          franja de cuenta, el contenido) se entera de que creció, así
+          que el menú abierto termina tapándolos en vez de quedar
+          arriba y empujarlos hacia abajo.
+        */
+        @media (max-width: 767px) {
+          .unal-chrome .main_menu:has(#navbar_content.show) {
+            height: auto;
+          }
+        }
       `}</style>
       <header id="unalTop">
         <div className="logo">
