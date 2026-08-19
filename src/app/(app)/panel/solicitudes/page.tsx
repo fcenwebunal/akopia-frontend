@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useCallback } from "react";
+import { PackageSearch, ClipboardList } from "lucide-react";
 import { pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
+import { LinkButton } from "@/components/ui/button";
 
 interface Request {
   id: string;
@@ -69,18 +71,12 @@ export default function SolicitudesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link
-            href="/panel/solicitudes/faltantes"
-            className="rounded border border-(--rule) px-4 py-2.5 font-bold hover:bg-(--surface-2)"
-          >
+          <LinkButton href="/panel/solicitudes/faltantes" variant="outline" icon={PackageSearch}>
             Productos faltantes
-          </Link>
-          <Link
-            href="/panel/solicitudes/nueva"
-            className="rounded bg-unal-green-dark px-4 py-2.5 font-bold text-white hover:bg-unal-green"
-          >
+          </LinkButton>
+          <LinkButton href="/panel/solicitudes/nueva" icon={ClipboardList}>
             Registrar solicitud
-          </Link>
+          </LinkButton>
         </div>
       </div>
 

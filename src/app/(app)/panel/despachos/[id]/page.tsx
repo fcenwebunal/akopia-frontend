@@ -3,9 +3,11 @@
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { CheckCircle } from "lucide-react";
 import { callRoute, errorMessage, pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 import { CoordinatesDisplay } from "@/components/app/coordinates-display";
 import { MANIZALES_CENTER } from "@/lib/coordinates";
 
@@ -408,21 +410,9 @@ export default function DespachoDetallePage({
             </div>
           </div>
 
-          <button
-            type="button"
-            disabled={saving}
-            onClick={confirmDelivery}
-            className="mt-4 rounded bg-unal-green-dark px-6 py-3 font-bold text-white disabled:opacity-50"
-          >
-            {saving ? (
-              <>
-                <Spinner className="mr-2" />
-                Guardando…
-              </>
-            ) : (
-              "Confirmar entrega"
-            )}
-          </button>
+          <Button disabled={saving} loading={saving} onClick={confirmDelivery} icon={CheckCircle} className="mt-4">
+            {saving ? "Guardando…" : "Confirmar entrega"}
+          </Button>
         </section>
       )}
     </div>

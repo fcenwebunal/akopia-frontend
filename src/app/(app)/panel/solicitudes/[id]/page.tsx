@@ -2,9 +2,11 @@
 
 import { use, useCallback, useState } from "react";
 import Link from "next/link";
+import { Check, PackageSearch, X, XCircle } from "lucide-react";
 import { callRoute, currentUser, errorMessage, pb, RouteError } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
-import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { LoadingLine } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 import { CoordinatesDisplay } from "@/components/app/coordinates-display";
 
 interface RequestItem {
@@ -265,50 +267,47 @@ export default function SolicitudDetallePage({
 
       <div className="mt-5 flex flex-wrap gap-3">
         {canDecide ? (
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
             disabled={busy}
+            loading={busyAction === "availability"}
             onClick={checkAvailability}
-            className="flex items-center gap-2 rounded border border-(--rule) px-4 py-2.5 text-sm font-bold disabled:opacity-50"
+            icon={PackageSearch}
           >
-            {busyAction === "availability" ? <Spinner /> : null}
             Comprobar disponibilidad
-          </button>
+          </Button>
         ) : null}
 
         {canDecide && isAdmin ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={approve}
-            className="flex items-center gap-2 rounded bg-unal-green-dark px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
-          >
-            {busyAction === "approve" ? <Spinner /> : null}
+          <Button size="sm" disabled={busy} loading={busyAction === "approve"} onClick={approve} icon={Check}>
             Aprobar
-          </button>
+          </Button>
         ) : null}
 
         {canDecide && isAdmin ? (
-          <button
-            type="button"
+          <Button
+            variant="danger"
+            size="sm"
             disabled={busy}
             onClick={() => setShowReject((v) => !v)}
-            className="rounded border border-unal-red px-4 py-2.5 text-sm font-bold text-unal-red disabled:opacity-50"
+            icon={X}
           >
             Rechazar
-          </button>
+          </Button>
         ) : null}
 
         {canCancel && !canDecide ? (
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
             disabled={busy}
+            loading={busyAction === "cancel"}
             onClick={cancel}
-            className="flex items-center gap-2 rounded border border-(--rule) px-4 py-2.5 text-sm font-bold disabled:opacity-50"
+            icon={XCircle}
           >
-            {busyAction === "cancel" ? <Spinner /> : null}
             Cancelar solicitud
-          </button>
+          </Button>
         ) : null}
 
         {canDecide && !isAdmin ? (
@@ -329,15 +328,17 @@ export default function SolicitudDetallePage({
             onChange={(event) => setRejectReason(event.target.value)}
             className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
           />
-          <button
-            type="button"
+          <Button
+            variant="danger-solid"
+            size="sm"
             disabled={busy}
+            loading={busyAction === "reject"}
             onClick={reject}
-            className="mt-3 flex items-center gap-2 rounded bg-unal-red px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+            icon={X}
+            className="mt-3"
           >
-            {busyAction === "reject" ? <Spinner /> : null}
             Confirmar rechazo
-          </button>
+          </Button>
         </div>
       ) : null}
     </div>

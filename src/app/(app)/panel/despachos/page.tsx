@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useCallback } from "react";
+import { Truck } from "lucide-react";
 import { pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
+import { LinkButton } from "@/components/ui/button";
 
 interface Dispatch {
   id: string;
@@ -49,12 +51,9 @@ export default function DespachosPage() {
             Salidas registradas y su estado de entrega.
           </p>
         </div>
-        <Link
-          href="/panel/despachos/nueva"
-          className="rounded bg-unal-green-dark px-4 py-2.5 font-bold text-white hover:bg-unal-green"
-        >
+        <LinkButton href="/panel/despachos/nueva" icon={Truck}>
           Registrar despacho
-        </Link>
+        </LinkButton>
       </div>
 
       {error ? (

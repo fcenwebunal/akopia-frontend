@@ -1,5 +1,8 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
+import { CutIcon } from "@/components/ui/cut-icon";
+
 /*
  * Gráficos hechos a mano en SVG plano, sin librería: son tres formas
  * simples (barra horizontal, barra segmentada, barras por día) y traer
@@ -15,12 +18,14 @@ export function StatTile({
   hint,
   tone = "neutral",
   href,
+  icon,
 }: {
   label: string;
   value: string | number;
   hint?: string;
   tone?: "neutral" | "good" | "warning" | "critical";
   href?: string;
+  icon?: LucideIcon;
 }) {
   const toneClass =
     tone === "good"
@@ -31,11 +36,27 @@ export function StatTile({
           ? "border-unal-red"
           : "border-(--rule)";
 
+  const iconToneClass =
+    tone === "good"
+      ? "text-unal-green"
+      : tone === "warning"
+        ? "text-unal-yellow"
+        : tone === "critical"
+          ? "text-unal-red"
+          : "text-(--muted)";
+
   const content = (
-    <div className={`rounded border border-(--rule) border-l-4 ${toneClass} bg-(--surface) p-4`}>
-      <p className="text-3xl font-black tabular-nums">{value}</p>
-      <p className="mt-1 text-sm text-(--muted)">{label}</p>
-      {hint ? <p className="mt-1.5 text-xs font-bold text-(--ink-2)">{hint}</p> : null}
+    <div
+      className={`relative isolate overflow-hidden rounded border border-(--rule) border-l-4 ${toneClass} bg-(--surface) p-4`}
+    >
+      {icon ? (
+        <CutIcon icon={icon} sizeClass="h-16 w-16" className={`opacity-[0.12] ${iconToneClass}`} />
+      ) : null}
+      <div className="relative z-1">
+        <p className="text-3xl font-black tabular-nums">{value}</p>
+        <p className="mt-1 text-sm text-(--muted)">{label}</p>
+        {hint ? <p className="mt-1.5 text-xs font-bold text-(--ink-2)">{hint}</p> : null}
+      </div>
     </div>
   );
 

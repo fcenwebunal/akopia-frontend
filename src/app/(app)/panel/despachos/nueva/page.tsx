@@ -4,9 +4,11 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { Truck } from "lucide-react";
 import { currentUser, errorMessage, pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
-import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { LoadingLine } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 import { MANIZALES_CENTER, formatCoordinates } from "@/lib/coordinates";
 
 // Leaflet toca `window` al cargarse: sin `ssr: false` el render en
@@ -262,28 +264,18 @@ export default function NuevoDespachoPage() {
       ) : null}
 
       <div className="mt-5 flex gap-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="rounded border border-(--rule) px-4 py-3 font-bold"
-        >
+        <Button variant="outline" onClick={() => router.back()} className="justify-center">
           Cancelar
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
           onClick={save}
           disabled={saving || !selected}
-          className="flex-1 rounded bg-unal-green-dark px-6 py-3 font-bold text-white disabled:opacity-50"
+          loading={saving}
+          icon={Truck}
+          className="flex-1 justify-center"
         >
-          {saving ? (
-            <>
-              <Spinner className="mr-2" />
-              Guardando…
-            </>
-          ) : (
-            "Guardar despacho"
-          )}
-        </button>
+          {saving ? "Guardando…" : "Guardar despacho"}
+        </Button>
       </div>
     </div>
   );

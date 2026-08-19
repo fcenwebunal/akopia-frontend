@@ -3,7 +3,8 @@
 import { useCallback, useState } from "react";
 import { callRoute, currentUser, errorMessage, pb, RouteError } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
-import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { LoadingLine } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 import { DatabaseBackup, Download, Lock, X } from "lucide-react";
 
 interface Backup {
@@ -148,14 +149,9 @@ export default function RespaldosPage() {
             todavía no hay respaldos programados.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="flex shrink-0 items-center gap-1.5 rounded bg-unal-green-dark px-4 py-2.5 font-bold text-white hover:opacity-90"
-        >
-          <DatabaseBackup size={16} strokeWidth={2.5} aria-hidden="true" />
+        <Button onClick={openCreate} icon={DatabaseBackup} className="shrink-0">
           Crear respaldo
-        </button>
+        </Button>
       </div>
 
       <p className="mt-4 rounded border-l-4 border-unal-yellow bg-(--surface) px-4 py-3 text-sm text-(--ink-2)">
@@ -190,14 +186,9 @@ export default function RespaldosPage() {
                     : ""}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => openDownload(backup.key)}
-                className="flex items-center gap-1.5 rounded border border-(--rule) px-3 py-2 text-sm font-bold hover:bg-(--surface-2)"
-              >
-                <Download size={14} strokeWidth={2.5} aria-hidden="true" />
+              <Button onClick={() => openDownload(backup.key)} variant="outline" size="sm" icon={Download}>
                 Descargar
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
@@ -262,14 +253,9 @@ export default function RespaldosPage() {
               >
                 Cancelar
               </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={confirm}
-                className="flex-1 rounded bg-unal-green-dark px-4 py-2.5 font-bold text-white disabled:opacity-50"
-              >
-                {busy ? <Spinner /> : "Confirmar"}
-              </button>
+              <Button disabled={busy} loading={busy} onClick={confirm} icon={Lock} className="flex-1 justify-center">
+                Confirmar
+              </Button>
             </div>
           </div>
         </div>

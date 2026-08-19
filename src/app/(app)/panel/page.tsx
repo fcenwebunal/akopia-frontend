@@ -3,7 +3,9 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
+import { Gift, ClipboardList, Package, Truck, type LucideIcon } from "lucide-react";
 import { pb } from "@/lib/pb";
+import { CutIcon } from "@/components/ui/cut-icon";
 import { loadCatalog } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
@@ -225,6 +227,7 @@ export default function PanelPage() {
           value={dashboard.itemsPending}
           tone={dashboard.itemsPending > 0 ? "warning" : "good"}
           href="/panel/donaciones"
+          icon={Gift}
         />
         <StatTile
           label="Solicitudes pendientes"
@@ -232,12 +235,14 @@ export default function PanelPage() {
           hint={dashboard.requestsUrgent > 0 ? `${dashboard.requestsUrgent} de prioridad alta o crítica` : undefined}
           tone={dashboard.requestsUrgent > 0 ? "warning" : "neutral"}
           href="/panel/solicitudes"
+          icon={ClipboardList}
         />
         <StatTile
           label="Despachos por confirmar"
           value={dashboard.dispatchesAwaitingConfirmation}
           tone={dashboard.dispatchesAwaitingConfirmation > 0 ? "warning" : "good"}
           href="/panel/despachos"
+          icon={Truck}
         />
         <StatTile
           label="Productos solicitados faltantes"
@@ -245,6 +250,7 @@ export default function PanelPage() {
           hint={dashboard.missingProducts.length === 0 ? "Todo cubierto" : undefined}
           tone={dashboard.missingProducts.length > 0 ? "critical" : "good"}
           href="/panel/solicitudes/faltantes"
+          icon={Package}
         />
       </div>
 
@@ -329,23 +335,31 @@ export default function PanelPage() {
 
       <h2 className="mt-8 text-lg font-bold">Acciones</h2>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Action href="/panel/donaciones/nueva" title="Registrar donación" body="Lo que acaba de llegar." />
-        <Action href="/panel/solicitudes/nueva" title="Nueva solicitud" body="Un pedido para alguien." />
-        <Action href="/panel/inventario" title="Consultar inventario" body="Qué hay, qué está reservado, qué está retenido." />
-        <Action href="/panel/despachos" title="Ver despachos" body="Lo que va saliendo hacia su destino." />
+        <Action href="/panel/donaciones/nueva" title="Registrar donación" body="Lo que acaba de llegar." icon={Gift} />
+        <Action href="/panel/solicitudes/nueva" title="Nueva solicitud" body="Un pedido para alguien." icon={ClipboardList} />
+        <Action
+          href="/panel/inventario"
+          title="Consultar inventario"
+          body="Qué hay, qué está reservado, qué está retenido."
+          icon={Package}
+        />
+        <Action href="/panel/despachos" title="Ver despachos" body="Lo que va saliendo hacia su destino." icon={Truck} />
       </div>
     </div>
   );
 }
 
-function Action({ href, title, body }: { href: string; title: string; body: string }) {
+function Action({ href, title, body, icon }: { href: string; title: string; body: string; icon: LucideIcon }) {
   return (
     <Link
       href={href}
-      className="rounded border border-(--rule) bg-(--surface) p-4 hover:border-unal-green"
+      className="relative isolate block overflow-hidden rounded border border-(--rule) bg-(--surface) p-4 hover:border-unal-green"
     >
-      <p className="font-bold text-unal-green-dark">{title}</p>
-      <p className="mt-1 text-sm text-(--ink-2)">{body}</p>
+      <CutIcon icon={icon} sizeClass="h-14 w-14" className="text-unal-green opacity-[0.12]" />
+      <div className="relative z-1">
+        <p className="font-bold text-unal-green-dark">{title}</p>
+        <p className="mt-1 text-sm text-(--ink-2)">{body}</p>
+      </div>
     </Link>
   );
 }

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useCallback } from "react";
+import { Gift } from "lucide-react";
 import { pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
+import { LinkButton } from "@/components/ui/button";
 
 interface Donation {
   id: string;
@@ -42,12 +44,9 @@ export default function DonacionesPage() {
             Las últimas donaciones registradas. El código lo asigna el servidor.
           </p>
         </div>
-        <Link
-          href="/panel/donaciones/nueva"
-          className="rounded bg-unal-green-dark px-4 py-2.5 font-bold text-white hover:bg-unal-green"
-        >
+        <LinkButton href="/panel/donaciones/nueva" icon={Gift}>
           Registrar donación
-        </Link>
+        </LinkButton>
       </div>
 
       {error ? (

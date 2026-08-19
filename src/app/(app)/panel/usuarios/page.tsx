@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { UserPlus } from "lucide-react";
 import { currentUser, errorMessage, pb, type UserRole } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 
 interface ManagedUser {
   id: string;
@@ -98,13 +100,9 @@ export default function UsuariosPage() {
             Quién puede operar AKOPIA, y con qué rol.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowCreate((v) => !v)}
-          className="rounded bg-unal-green-dark px-4 py-2.5 font-bold text-white hover:bg-unal-green"
-        >
+        <Button onClick={() => setShowCreate((v) => !v)} icon={UserPlus}>
           Vincular correo
-        </button>
+        </Button>
       </div>
 
       {error ? (

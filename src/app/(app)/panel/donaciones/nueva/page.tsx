@@ -1,6 +1,6 @@
 "use client";
 
-import { Minus, Plus } from "lucide-react";
+import { Gift, Minus, Plus } from "lucide-react";
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,8 @@ import { currentUser, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
 import { ProductPicker } from "@/components/app/product-picker";
-import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { LoadingLine } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 
 const DONOR_TYPES = [
   { value: "individual", label: "Persona" },
@@ -307,28 +308,18 @@ export default function NuevaDonacionPage() {
 
       <div className="fixed inset-x-0 bottom-0 border-t border-(--rule) bg-(--surface) p-4">
         <div className="mx-auto flex max-w-5xl gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="rounded border border-(--rule) px-4 py-3 font-bold"
-          >
+          <Button variant="outline" onClick={() => router.back()} className="justify-center">
             Cancelar
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={save}
             disabled={saving || lines.length === 0}
-            className="flex-1 rounded bg-unal-green-dark px-6 py-3 font-bold text-white disabled:opacity-50"
+            loading={saving}
+            icon={Gift}
+            className="flex-1 justify-center"
           >
-            {saving ? (
-              <>
-                <Spinner className="mr-2" />
-                Guardando…
-              </>
-            ) : (
-              `Guardar remesa (${lines.length})`
-            )}
-          </button>
+            {saving ? "Guardando…" : `Guardar remesa (${lines.length})`}
+          </Button>
         </div>
       </div>
 

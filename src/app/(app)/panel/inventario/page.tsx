@@ -3,12 +3,13 @@
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Ban, MapPin, Warehouse } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, CheckCircle, MapPin, Warehouse } from "lucide-react";
 import { callRoute, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, normalize } from "@/lib/catalog";
 import { loadLocations, locationLabel, type Location } from "@/lib/locations";
 import { useAsyncData } from "@/lib/use-async-data";
-import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { LoadingLine } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 import { LocationPicker } from "@/components/app/location-picker";
 
 interface InventoryRow {
@@ -320,23 +321,18 @@ export default function InventarioPage() {
                         {locationLabel(locationById.get(row.location_id))}
                       </span>
                     </button>
-                    <button
-                      type="button"
+                    <Button
+                      size="sm"
                       disabled={releasingId === row.id}
+                      loading={releasingId === row.id}
                       onClick={() => releaseRow(row)}
-                      className="flex items-center gap-1.5 rounded bg-unal-green-dark px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+                      icon={CheckCircle}
                     >
-                      {releasingId === row.id ? <Spinner /> : null}
                       Liberar a disponible
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRejecting(row)}
-                      className="flex items-center gap-1.5 rounded border border-unal-red px-3 py-1.5 text-xs font-bold text-unal-red hover:bg-(--surface-2)"
-                    >
-                      <Ban size={13} strokeWidth={2.5} aria-hidden="true" />
+                    </Button>
+                    <Button variant="danger" size="sm" onClick={() => setRejecting(row)} icon={Ban}>
                       Rechazar
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -498,13 +494,9 @@ function ProductRow({
       ) : null}
 
       {row.available_qty > 0 ? (
-        <button
-          type="button"
-          onClick={onRelocate}
-          className="rounded border border-(--rule) px-2.5 py-1 text-xs font-bold hover:bg-(--surface-2)"
-        >
+        <Button variant="outline" size="sm" onClick={onRelocate} icon={MapPin}>
           Reubicar
-        </button>
+        </Button>
       ) : null}
     </li>
   );
@@ -591,18 +583,18 @@ function RelocateDialog({
         ) : null}
 
         <div className="mt-5 flex gap-3">
-          <button type="button" onClick={onCancel} className="rounded border border-(--rule) px-4 py-3 font-bold">
+          <Button variant="outline" onClick={onCancel} className="justify-center">
             Cancelar
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             disabled={saving}
+            loading={saving}
             onClick={relocate}
-            className="flex flex-1 items-center justify-center gap-2 rounded bg-unal-green-dark px-4 py-3 font-bold text-white disabled:opacity-50"
+            icon={MapPin}
+            className="flex-1 justify-center"
           >
-            {saving ? <Spinner /> : null}
             {saving ? "Moviendo…" : "Reubicar"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -695,18 +687,19 @@ function RejectDialog({
         ) : null}
 
         <div className="mt-5 flex gap-3">
-          <button type="button" onClick={onCancel} className="rounded border border-(--rule) px-4 py-3 font-bold">
+          <Button variant="outline" onClick={onCancel} className="justify-center">
             Cancelar
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="danger-solid"
             disabled={saving}
+            loading={saving}
             onClick={reject}
-            className="flex flex-1 items-center justify-center gap-2 rounded bg-unal-red px-4 py-3 font-bold text-white disabled:opacity-50"
+            icon={Ban}
+            className="flex-1 justify-center"
           >
-            {saving ? <Spinner /> : null}
             {saving ? "Rechazando…" : "Confirmar rechazo"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -847,19 +840,17 @@ function ProductLocationDetail({
                   </p>
                 ) : null}
 
-                <button
-                  type="button"
+                <Button
+                  size="sm"
+                  variant={item.classification_status === "quarantine" ? "primary" : "outline"}
                   disabled={busy === item.id}
+                  loading={busy === item.id}
                   onClick={() => toggle(item)}
-                  className={
-                    item.classification_status === "quarantine"
-                      ? "mt-2 flex items-center gap-2 rounded bg-unal-green-dark px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
-                      : "mt-2 flex items-center gap-2 rounded border border-unal-orange px-3 py-1.5 text-xs font-bold text-unal-orange disabled:opacity-50"
-                  }
+                  icon={item.classification_status === "quarantine" ? CheckCircle : AlertTriangle}
+                  className="mt-2"
                 >
-                  {busy === item.id ? <Spinner /> : null}
                   {item.classification_status === "quarantine" ? "Liberar a disponible" : "Enviar a revisión"}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

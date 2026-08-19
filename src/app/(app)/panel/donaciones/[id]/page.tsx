@@ -2,9 +2,11 @@
 
 import { use, useCallback, useState } from "react";
 import Link from "next/link";
+import { AlertTriangle, Ban, CheckCircle } from "lucide-react";
 import { errorMessage, pb } from "@/lib/pb";
 import { useAsyncData } from "@/lib/use-async-data";
-import { LoadingLine, Spinner } from "@/components/ui/spinner";
+import { LoadingLine } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 
 interface Item {
   id: string;
@@ -175,59 +177,41 @@ export default function DonacionDetallePage({
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {status !== "available" ? (
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
                     disabled={busy === item.id}
+                    loading={busy === item.id && busyStatus === "available"}
                     onClick={() => classify(item, "available")}
-                    className="rounded bg-unal-green-dark px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+                    icon={CheckCircle}
                   >
-                    {busy === item.id && busyStatus === "available" ? (
-                      <>
-                        <Spinner className="mr-2" />
-                        Guardando…
-                      </>
-                    ) : status === "quarantine" ? (
-                      "Liberar a disponible"
-                    ) : (
-                      "Marcar apto"
-                    )}
-                  </button>
+                    {status === "quarantine" ? "Liberar a disponible" : "Marcar apto"}
+                  </Button>
                 ) : null}
 
                 {status !== "quarantine" ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     disabled={busy === item.id}
+                    loading={busy === item.id && busyStatus === "quarantine"}
                     onClick={() => classify(item, "quarantine")}
-                    className="rounded border border-unal-orange px-4 py-2 text-sm font-bold text-unal-orange disabled:opacity-50"
+                    icon={AlertTriangle}
                   >
-                    {busy === item.id && busyStatus === "quarantine" ? (
-                      <>
-                        <Spinner className="mr-2" />
-                        Guardando…
-                      </>
-                    ) : (
-                      "A revisión"
-                    )}
-                  </button>
+                    A revisión
+                  </Button>
                 ) : null}
 
                 {!locked && status !== "rejected" ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="danger"
+                    size="sm"
                     disabled={busy === item.id}
+                    loading={busy === item.id && busyStatus === "rejected"}
                     onClick={() => classify(item, "rejected")}
-                    className="rounded border border-(--rule) px-4 py-2 text-sm font-bold text-unal-red disabled:opacity-50"
+                    icon={Ban}
                   >
-                    {busy === item.id && busyStatus === "rejected" ? (
-                      <>
-                        <Spinner className="mr-2" />
-                        Guardando…
-                      </>
-                    ) : (
-                      "Rechazar"
-                    )}
-                  </button>
+                    Rechazar
+                  </Button>
                 ) : null}
               </div>
 
