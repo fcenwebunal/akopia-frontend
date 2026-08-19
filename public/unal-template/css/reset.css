@@ -197,7 +197,7 @@ html {
 }
 
 
-.unal-chrome button::-moz-focus-inner:not(.akopia-content, .akopia-content *), .unal-chrome input::-moz-focus-inner:not(.akopia-content, .akopia-content *) {
+.unal-chrome button:not(.akopia-content, .akopia-content *)::-moz-focus-inner, .unal-chrome input:not(.akopia-content, .akopia-content *)::-moz-focus-inner {
   border: 0;
   padding: 0;
 }
@@ -209,7 +209,7 @@ html {
 }
 
 
-.unal-chrome input[type="number"]::-webkit-inner-spin-button:not(.akopia-content, .akopia-content *), .unal-chrome input[type="number"]::-webkit-outer-spin-button:not(.akopia-content, .akopia-content *) {
+.unal-chrome input[type="number"]:not(.akopia-content, .akopia-content *)::-webkit-inner-spin-button, .unal-chrome input[type="number"]:not(.akopia-content, .akopia-content *)::-webkit-outer-spin-button {
   height: auto;
 }
 
@@ -222,7 +222,7 @@ html {
 }
 
 
-.unal-chrome input[type="search"]::-webkit-search-cancel-button:not(.akopia-content, .akopia-content *), .unal-chrome input[type="search"]::-webkit-search-decoration:not(.akopia-content, .akopia-content *) {
+.unal-chrome input[type="search"]:not(.akopia-content, .akopia-content *)::-webkit-search-cancel-button, .unal-chrome input[type="search"]:not(.akopia-content, .akopia-content *)::-webkit-search-decoration {
   -webkit-appearance: none;
 }
 

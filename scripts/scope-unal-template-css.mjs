@@ -56,10 +56,26 @@ function shouldSkip(selector) {
 // carries that class, so its own styling is completely unaffected.
 const EXCLUDE = ":not(.akopia-content, .akopia-content *)";
 
+// A pseudo-element (::before, ::after, ::placeholder, ...) has to be the
+// last component of a compound selector — CSS syntax forbids anything
+// after it, including :not(). Appending EXCLUDE unconditionally at the
+// end turned "#pestania-accesibilidad::before" into
+// "#pestania-accesibilidad::before:not(...)", which is invalid and gets
+// the whole rule silently dropped by the browser (no warning anywhere,
+// it just never matches). Insert EXCLUDE *before* a trailing
+// pseudo-element instead of after it.
+const TRAILING_PSEUDO_ELEMENT = /(::[a-zA-Z-]+)$/;
+
 function excludeAppContent(selector) {
   return selector
     .split(",")
-    .map((part) => `${part.trim()}${EXCLUDE}`)
+    .map((part) => {
+      const trimmed = part.trim();
+      const match = trimmed.match(TRAILING_PSEUDO_ELEMENT);
+      if (!match) return `${trimmed}${EXCLUDE}`;
+      const base = trimmed.slice(0, -match[0].length);
+      return `${base}${EXCLUDE}${match[0]}`;
+    })
     .join(", ");
 }
 

@@ -11,7 +11,7 @@
     position: relative
 }
 
-.unal-chrome #pestania-accesibilidad::before:not(.akopia-content, .akopia-content *) {
+.unal-chrome #pestania-accesibilidad:not(.akopia-content, .akopia-content *)::before {
     position: absolute;
     left: -35px;
     top: 0;
@@ -553,7 +553,7 @@ body.tamanio-letra-200 main.accesibility-on {
     }
 
 
-    .unal-chrome #pestania-accesibilidad::before:not(.akopia-content, .akopia-content *) {
+    .unal-chrome #pestania-accesibilidad:not(.akopia-content, .akopia-content *)::before {
         position: absolute;
         left: -35px;
         top: 0;

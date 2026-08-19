@@ -471,8 +471,8 @@ body>footer:after {clear: both; }
 	background: none !important; text-indent: 0 !important; color: #ddd; display: inline; font-size: 1.2em; width: 150px!important;
 }
 
-.unal-chrome .main_menu .buscador .gsc-control-searchbox-only .gsc-input input::placeholder:not(.akopia-content, .akopia-content *),
-.unal-chrome #unalTop .navigation .buscador .gsc-control-searchbox-only .gsc-input input::placeholder:not(.akopia-content, .akopia-content *) {
+.unal-chrome .main_menu .buscador .gsc-control-searchbox-only .gsc-input input:not(.akopia-content, .akopia-content *)::placeholder,
+.unal-chrome #unalTop .navigation .buscador .gsc-control-searchbox-only .gsc-input input:not(.akopia-content, .akopia-content *)::placeholder {
 	color: #ddd;
 }
 

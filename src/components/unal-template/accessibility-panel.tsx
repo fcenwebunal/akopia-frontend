@@ -59,6 +59,48 @@ export function AccessibilityPanel() {
       className="tx-unal-accesibilidad"
       style={{ top: "var(--akopia-header-height, 103px)" }}
     >
+      {/*
+        La plantilla posiciona #pestania-accesibilidad en móvil con
+        `right:43px` sobre un `::before` desplazado -35px — números
+        calculados para el cabezote de ejemplo de Unimedios. En AKOPIA
+        el contenedor real (`.tx-unal-accesibilidad`, position:static)
+        no es el ancestro posicionado más cercano — es <body> — así que
+        ese `right:43px` termina resolviéndose contra un ancho que no
+        es el del viewport de forma predecible, y la pestaña quedaba
+        lejos del botón de hamburguesa (#btn_hamburguer, 54×54, pegado
+        al borde derecho) en vez de junto a él.
+
+        Se reemplaza por un botón cuadrado del mismo tamaño (54×54),
+        pegado justo a la izquierda del hamburguesa (`right:54px`), con
+        el ícono como fondo propio en vez del truco del `::before`
+        desplazado — más simple y ya no depende de ese cálculo frágil.
+      */}
+      <style>{`
+        @media (max-width: 767px) {
+          .unal-chrome #pestania-accesibilidad:not(.akopia-content, .akopia-content *) {
+            top: 0;
+            right: 54px;
+            left: auto;
+            width: 54px;
+            height: 54px;
+            /*
+              margin-right:40px viene de la regla base (desktop) de la
+              plantilla y no está condicionada a ningún ancho — sin
+              este reset se sumaba al right:54px de arriba y volvía
+              a alejar el botón del hamburguesa.
+            */
+            margin-right: 0;
+            background-color: transparent;
+            background-image: url(/unal-template/images/access-icon.png);
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 28px 28px;
+          }
+          .unal-chrome #pestania-accesibilidad:not(.akopia-content, .akopia-content *)::before {
+            content: none;
+          }
+        }
+      `}</style>
       <div
         id="panel-accesibilidad"
         style={{ display: "none" }}
