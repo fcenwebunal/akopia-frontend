@@ -343,8 +343,18 @@ export function UnalHeader({
         </div>
 
         <div id="bs-navbar" className="navigation d-none d-md-block">
+          {/*
+            Sin <a>: el subdominio (§ CLAUDE.md) todavía no es real —
+            el sitio vive hoy en Vercel/Railway, no en
+            acopio.manizales.unal.edu.co, y ese dominio ni siquiera
+            tiene certificado TLS emitido todavía. Deshabilitado a
+            propósito hasta que exista de verdad, para no ofrecer un
+            enlace que no lleva a ningún lado. El menú móvil clona este
+            mismo HTML (ver unal.js prepare_content_menu), así que
+            queda desactivado ahí también sin tocar nada más.
+          */}
           <div className="site-url" id="subdominio">
-            <a href={`https://${SITE_URL}/`}>{SITE_URL}</a>
+            <span>{SITE_URL}</span>
           </div>
 
           {/*
@@ -440,7 +450,15 @@ export function UnalHeader({
 
           <div className="collapse navbar-collapse" id="navbar_content">
             <div className="site-url" id="container_subdominio_mobil"></div>
-            <div className="buscador" id="container_buscador_mobil"></div>
+            {/*
+              Sin #container_buscador_mobil: el buscador es decorativo
+              (nunca funcionó, ver el comentario en #buscador arriba) y
+              en el menú móvil, ya apretado, no aporta — pedido
+              explícito de Juan Manuel. unal.js sigue intentando
+              clonarlo ahí (`$("#container_buscador_mobil").html(...)`)
+              pero un selector jQuery vacío no hace nada, así que basta
+              con no tener el contenedor.
+            */}
             <div id="container_mainmenu_mobil"></div>
 
             <div className="btn-group d-block d-md-none hidden-print">
