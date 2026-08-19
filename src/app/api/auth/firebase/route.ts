@@ -4,8 +4,9 @@ import { FirebaseTokenError, verifyFirebaseToken } from "@/lib/firebase-server";
 
 export const runtime = "nodejs";
 
-const POCKETBASE_URL =
-  process.env.NEXT_PUBLIC_PB_URL ?? "http://127.0.0.1:8090";
+// Servidor a servidor: siempre local, nunca la URL pública que ve el
+// navegador (ver src/lib/pb.ts sobre por qué esa se deja vacía/relativa).
+const POCKETBASE_URL = process.env.PB_INTERNAL_URL ?? "http://127.0.0.1:8090";
 
 /*
  * Puente entre Firebase Authentication y la sesión real de AKOPIA.

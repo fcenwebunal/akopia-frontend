@@ -13,7 +13,9 @@ import type { MissingProduct } from "./missing-products";
  * ahora" — no hace falta pegarle a PocketBase en cada visita.
  */
 export async function fetchPublicMissingProducts(): Promise<MissingProduct[]> {
-  const base = process.env.NEXT_PUBLIC_PB_URL ?? "http://127.0.0.1:8090";
+  // Servidor a servidor: siempre local, nunca la URL pública que ve el
+  // navegador (ver src/lib/pb.ts sobre por qué esa se deja vacía/relativa).
+  const base = process.env.PB_INTERNAL_URL ?? "http://127.0.0.1:8090";
 
   try {
     const response = await fetch(`${base}/api/requests/missing-products`, {

@@ -1,13 +1,23 @@
 import PocketBase from "pocketbase";
 
 /*
- * Cliente único de PocketBase.
+ * Cliente único de PocketBase, para el navegador.
  *
  * La URL nunca se escribe en el código: el mismo build tiene que servir
  * en local, en el Ubuntu de pruebas y en la infraestructura de la UNAL.
+ *
+ * En producción, `NEXT_PUBLIC_PB_URL` se deja vacío a propósito: con
+ * base URL vacía, el SDK de PocketBase resuelve contra
+ * `location.origin` — el mismo host y protocolo desde el que se cargó
+ * la página. Así funciona igual si alguien entra por la IP
+ * (`http://172.23.177.12`) o por el dominio
+ * (`https://acopio.manizales.unal.edu.co`), sin fijar de antemano cuál
+ * de los dos va a usar el navegador, y sin depender de que el dominio
+ * sea alcanzable desde donde sea que esté el usuario (ver DESPLIEGUE.md,
+ * el NAT pendiente con OTIC). Fijarlo a un host concreto rompía el
+ * login en cuanto se accedía por el otro — ver bitácora 19 ago 2026.
  */
-export const POCKETBASE_URL =
-  process.env.NEXT_PUBLIC_PB_URL ?? "http://127.0.0.1:8090";
+export const POCKETBASE_URL = process.env.NEXT_PUBLIC_PB_URL ?? "http://127.0.0.1:8090";
 
 export const pb = new PocketBase(POCKETBASE_URL);
 
