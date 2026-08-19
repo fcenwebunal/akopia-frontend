@@ -100,9 +100,45 @@ export default async function HomePage() {
           <p className="mx-auto mt-3 max-w-[600px] text-center text-[1.05rem] font-bold text-[#1f4d2c]">
             Unidos por Manizales — Solidaridad que mueve, comunidad que transforma
           </p>
-          <div className="mx-auto mt-8 max-w-[780px] rounded-full bg-gradient-to-r from-[#1f4d2c] to-[#3f7a3e] px-7 py-4 text-center font-serif text-[1.05rem] font-bold italic text-white shadow-[0_10px_24px_rgba(31,77,44,0.25)]">
-            El 10 de agosto, la tierra nos recordó lo frágiles que somos. También nos
-            mostró lo fuerte que es una comunidad cuando se une.
+          {/*
+            La franja sale del borde izquierdo de la pantalla (sin
+            esquina redondeada ahí) y solo redondea a la derecha —
+            pedido explícito, con el texto quedando exactamente donde
+            ya estaba. El contenedor relativo conserva el mismo
+            `mx-auto max-w-[780px]` que antes tenía el óvalo completo,
+            así que el texto (su único contenido en flujo normal) no
+            se mueve ni un píxel. El fondo es un hijo aparte,
+            absoluto, anclado por la derecha (`right-0`, mismo borde
+            que tenía el óvalo) y estirado muy ancho hacia la
+            izquierda — la `<section>` que lo envuelve ya tiene
+            `overflow-hidden` para el fondo decorativo de las manos,
+            así que ese sobrante se recorta solo en el borde real de
+            la pantalla, sin necesidad de calcular el ancho exacto del
+            viewport.
+
+            El degradado original iba de un extremo al otro del óvalo
+            (780px); estirar el mismo fondo a un ancho mucho mayor sin
+            ajustar nada diluiría esa transición hasta verse casi
+            plana. Los "stops" en `calc(100% - 780px)` mantienen el
+            degradado real confinado a esos mismos 780px del borde
+            derecho — todo lo que se extiende más allá hacia la
+            izquierda queda solo con el tono sólido de inicio, que ya
+            es el mismo color con el que arrancaba el degradado
+            original.
+          */}
+          <div className="relative mx-auto mt-8 max-w-[780px]">
+            <div
+              aria-hidden="true"
+              className="absolute inset-y-0 right-0 w-[200vw] rounded-r-full shadow-[0_10px_24px_rgba(31,77,44,0.25)]"
+              style={{
+                background:
+                  "linear-gradient(to right, #1f4d2c 0%, #1f4d2c calc(100% - 780px), #3f7a3e 100%)",
+              }}
+            />
+            <p className="relative px-7 py-4 text-center font-serif text-[1.05rem] font-bold italic text-white">
+              El 10 de agosto, la tierra nos recordó lo frágiles que somos. También nos
+              mostró lo fuerte que es una comunidad cuando se une.
+            </p>
           </div>
         </div>
       </section>
