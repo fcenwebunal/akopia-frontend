@@ -79,9 +79,42 @@ function excludeAppContent(selector) {
     .join(", ");
 }
 
+// reset.css trae "body, html { line-height: 1.125em; font-size: 14px; }"
+// sin ningún selector de clase — shouldSkip() lo deja sin prefijo a
+// propósito, porque el panel de accesibilidad necesita tocar el
+// html/body reales para el zoom de letra (ver el comentario grande al
+// inicio de este archivo). El problema: ese mismo `font-size:14px` en
+// <html> redefine el tamaño raíz para TODA la página, y Tailwind
+// calcula cada unidad `rem` contra ese tamaño raíz — así que cada
+// clase `text-*` de la app real (`.akopia-content`, fuera del alcance
+// de la plantilla en todo lo demás) terminaba un 12.5% más chica de
+// lo que Tailwind espera (12.25px en vez de 14px para `text-sm`, y
+// así con el resto de la escala). Nada de esto lo evita la exclusión
+// `:not(.akopia-content, .akopia-content *)`: un `rem` no es un
+// selector, es una medida que se resuelve contra la raíz sin importar
+// en qué rama del árbol esté el elemento.
+//
+// El zoom de letra no depende de este valor — sus clases
+// (`body.tamanio-letra-110`, etc., en accesibilidad.css) fijan
+// tamaños absolutos en px calculados aparte, no relativos a este
+// "font-size:14px" base. Se puede quitar sin tocar esa función.
+function patchResetCssRootFontSize(css) {
+  const original = "body, html {\n\tline-height: 1.125em;\n\tfont-size: 14px;\n}";
+  const originalTwoSpace = "body, html {\n  line-height: 1.125em;\n  font-size: 14px;\n}";
+  const replacement = "body, html {\n  line-height: 1.125em;\n}";
+
+  if (css.includes(original)) return css.replace(original, replacement);
+  if (css.includes(originalTwoSpace)) return css.replace(originalTwoSpace, replacement);
+  throw new Error(
+    "reset.css cambió de forma inesperada: no se encontró la regla " +
+      '"body, html { ... font-size: 14px }" que fija el tamaño raíz a 14px.'
+  );
+}
+
 async function scopeCss(fileName) {
   const src = path.join(TEMPLATE_DIR, "css", fileName);
-  const css = await readFile(src, "utf8");
+  let css = await readFile(src, "utf8");
+  if (fileName === "reset.css") css = patchResetCssRootFontSize(css);
 
   const result = await postcss([
     prefixSelector({
