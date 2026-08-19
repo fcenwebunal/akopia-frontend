@@ -49,13 +49,20 @@ export function AccountBar() {
     // le gana a cualquier clase de Tailwind) le borraban el fondo verde
     // y el texto blanco al botón "Registrarse".
     //
-    // md:mr-10: en escritorio, #pestania-accesibilidad (el botón azul
-    // "Panel de Accesibilidad") dibuja su ícono con un ::before movido
-    // 35px hacia su propia izquierda — como esto queda flotado justo a
-    // la izquierda de esa pestaña (ver el comentario más abajo), sin
-    // este margen el ícono se dibujaba encima de "Salir".
+    // md:mr-9.5 (38px): en escritorio, #pestania-accesibilidad (el
+    // botón azul "Panel de Accesibilidad") dibuja su ícono con un
+    // ::before movido 35px hacia su propia izquierda — como esto queda
+    // flotado justo a la izquierda de esa pestaña (ver el comentario
+    // más abajo), el margen no puede bajar de 35px sin que el ícono
+    // empiece a dibujarse encima de "Cerrar sesión". 38px deja apenas
+    // un poco de aire, pedido explícito de acercar el bloque al ícono
+    // (antes tenía 40px).
+    //
+    // md:mt-0.5: pequeño ajuste hacia abajo para que "Hola, ..." y
+    // "Cerrar sesión" se vean centrados con el ícono — pedido explícito
+    // tras comparar visualmente contra una captura.
     <div
-      className="akopia-content float-right flex items-center gap-3 pr-4 md:mr-10 font-sans text-sm text-(--ink)"
+      className="akopia-content float-right flex items-center gap-3 pr-4 md:mr-9.5 md:mt-0.5 font-sans text-sm text-(--ink)"
       style={{ height: 35 }}
     >
       {!checked ? null : user ? (
