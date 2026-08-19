@@ -168,19 +168,54 @@ export function UnalHeader({
           visibility: visible;
         }
         /*
-          .main_menu{height:54px} en el CSS de la plantilla es fijo:
-          pensado para cuando el menú móvil está cerrado. Al abrirlo,
-          #navbar_content crece a su alto real (puede pasar de 200px)
-          pero, al vivir dentro de un contenedor de altura fija, se
-          desborda visualmente por fuera de esa caja en vez de
-          empujarla — nada de lo que viene después en el documento (la
-          franja de cuenta, el contenido) se entera de que creció, así
-          que el menú abierto termina tapándolos en vez de quedar
-          arriba y empujarlos hacia abajo.
+          .main_menu{height:54px} en el CSS de la plantilla es fijo, y
+          #navbar_content vive dentro de ese contenedor en flujo normal
+          — al abrir el menú, su contenido real (puede pasar de 200px)
+          se desbordaba por fuera de esa caja de 54px sin que nada de
+          lo que viene después en el documento (la franja de cuenta, el
+          contenido) se enterara, así que el menú abierto quedaba por
+          DEBAJO de esa franja en el orden de apilado (misma altura de
+          z-index, pero ella va después en el HTML) — se veía cruzado
+          con el texto de la cuenta.
+
+          El comportamiento correcto de un menú desplegable móvil es al
+          revés: debe superponerse ÉL sobre el contenido, no empujarlo.
+          Se saca del flujo (position:absolute, ancla en #unalTop que
+          ya es position:relative) y se le sube el z-index por encima
+          de .tx-unal-accesibilidad (que trae 3 desde la plantilla)
+          para que la franja de cuenta y el contenido de abajo queden
+          tapados por el menú mientras está abierto, en vez de partidos
+          a la mitad con él.
         */
         @media (max-width: 767px) {
-          .unal-chrome .main_menu:has(#navbar_content.show) {
-            height: auto;
+          .unal-chrome #navbar_content.show:not(.akopia-content, .akopia-content *) {
+            position: absolute;
+            top: 54px;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+            /*
+              El fondo original es solo una imagen de textura
+              (navigationBack_small.png), no siempre opaca de punta a
+              punta — sin un color sólido detrás, la franja de cuenta
+              (que sigue en su sitio, solo tapada por z-index) se
+              alcanzaba a transparentar por los bordes.
+            */
+            background-color: #333;
+          }
+          /*
+            .unal-chrome es flex (flex-col): por una regla propia de
+            Flexbox, z-index se respeta en los hijos directos de un
+            contenedor flex aunque sean position:static — así que
+            .tx-unal-accesibilidad (z-index:3, de la plantilla) compite
+            de verdad con #unalTop (z-index:3 también) por ser hijos
+            directos, y al venir después en el HTML gana el empate. El
+            z-index:10 de arriba en #navbar_content nunca alcanza a
+            .tx-unal-accesibilidad porque no sale del techo que le pone
+            su propio padre #unalTop — hay que subir el de #unalTop.
+          */
+          .unal-chrome:has(#navbar_content.show) #unalTop:not(.akopia-content, .akopia-content *) {
+            z-index: 4;
           }
         }
       `}</style>
