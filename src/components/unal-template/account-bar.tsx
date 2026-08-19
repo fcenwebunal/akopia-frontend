@@ -7,7 +7,7 @@ import { pb, type AkopiaUser } from "@/lib/pb";
 
 /*
  * Franja de cuenta — "Iniciar sesión"/"Registrarse" sin sesión, o
- * "Hola, {nombre} · Salir" con sesión activa — junto a "Panel de
+ * "Hola, {nombre} · Cerrar sesión" con sesión activa — junto a "Panel de
  * Accesibilidad" (montada desde <AccessibilityPanel>, después de
  * #pestania-accesibilidad en el DOM). Ambos en `float:right`: la
  * pestaña llega primero al borde, esto se acomoda pegado a su
@@ -35,7 +35,10 @@ export function AccountBar() {
 
   function signOut() {
     pb.authStore.clear();
-    router.push("/login");
+    // A la portada, no a /login: cerrar sesión saca al usuario de la
+    // app, no lo manda de vuelta a un formulario que ya no necesita —
+    // pedido explícito del 19 de agosto.
+    router.push("/");
   }
 
   return (
@@ -65,7 +68,7 @@ export function AccountBar() {
             onClick={signOut}
             className="rounded border border-(--rule) px-3 py-1 font-bold hover:bg-(--surface-2)"
           >
-            Salir
+            Cerrar sesión
           </button>
         </>
       ) : (

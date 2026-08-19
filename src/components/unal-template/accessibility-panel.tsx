@@ -99,6 +99,32 @@ export function AccessibilityPanel() {
           .unal-chrome #pestania-accesibilidad:not(.akopia-content, .akopia-content *)::before {
             content: none;
           }
+          /*
+            padding-top, no margin-top: la franja mide exactamente lo
+            que mide <AccountBar> (35px por su propio style inline) —
+            sin esto, "Cerrar sesión" queda pegado contra el cabezote,
+            mientras que a la derecha ya tiene el aire de pr-4 (1rem)
+            propio de <AccountBar>. Este padding lo iguala arriba.
+            Nada de aire abajo a propósito: el contenido de cada
+            pantalla ya trae su propio título pegado a la izquierda,
+            sin nada que se sienta apretado contra la franja de cuenta.
+          */
+          .unal-chrome .tx-unal-accesibilidad:not(.akopia-content, .akopia-content *) {
+            padding-top: 1rem;
+          }
+        }
+        @media (min-width: 768px) {
+          /*
+            Mismo motivo que el padding-top de móvil pero al revés: en
+            escritorio la franja de cuenta también mide justo lo que
+            mide <AccountBar> (35px), así que el contenido real de la
+            pantalla (botones, tarjetas) queda pegado contra ella. Aquí
+            sí hace falta aire abajo — no hay un título a la izquierda
+            que ya separe visualmente, como pasa en móvil.
+          */
+          .unal-chrome .tx-unal-accesibilidad:not(.akopia-content, .akopia-content *) {
+            padding-bottom: 1.5rem;
+          }
         }
       `}</style>
       <div
