@@ -286,6 +286,22 @@ export default async function HomePage() {
           </div>
 
           <div className="relative overflow-hidden rounded-[22px] bg-gradient-to-br from-[#6a5aa8] to-[#453a7a] p-8 text-white">
+            <a
+              href="https://maps.app.goo.gl/1MUqEY62myCBgut4A"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Cómo llegar en Google Maps"
+              title="Cómo llegar en Google Maps"
+              className="absolute right-4 top-4 z-1 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/40 backdrop-blur-[2px] transition-colors hover:bg-white/25"
+            >
+              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                <path
+                  fill="#1a73e8"
+                  d="M24 4C15.6 4 9 10.8 9 19c0 10.8 15 25 15 25s15-14.2 15-25c0-8.2-6.6-15-15-15Z"
+                />
+                <circle cx="24" cy="19" r="6.5" fill="#fff" />
+              </svg>
+            </a>
             <div className="text-xs font-bold uppercase tracking-[0.12em] opacity-85">
               Punto de recepción
             </div>
@@ -294,18 +310,6 @@ export default async function HomePage() {
             <div className="mt-1.5 opacity-90">
               Universidad Nacional de Colombia · Sede Manizales
             </div>
-            <a
-              href="https://maps.app.goo.gl/1MUqEY62myCBgut4A"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="relative z-1 mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-white ring-1 ring-white/40 backdrop-blur-[2px] transition-colors hover:bg-white/25"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-              Cómo llegar
-            </a>
             <svg
               className="pointer-events-none absolute -bottom-8 -right-7 h-[190px] w-[190px] opacity-[.16]"
               viewBox="0 0 100 100"
