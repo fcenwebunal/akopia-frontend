@@ -84,8 +84,7 @@ function MainMenuGroup({ item }: Readonly<{ item: AppMenuItem }>) {
  */
 export function UnalHeader({
   menuItems = [],
-  servicesTop,
-}: Readonly<{ menuItems?: AppMenuItem[]; servicesTop?: number | null }>) {
+}: Readonly<{ menuItems?: AppMenuItem[] }>) {
   return (
     <>
       {/* Panel de servicios */}
@@ -95,13 +94,16 @@ export function UnalHeader({
           es, otra vez, un valor fijo pensado para la altura del
           cabezote de ejemplo — con el menú propio de AKOPIA la
           pestaña terminaba solapada sobre la franja de cuenta
-          ("Salir" quedaba tapado). <UnalShell> mide la altura real y
-          la pasa aquí (cabezote + la franja fija del panel de
-          accesibilidad, 35px).
+          ("Salir" quedaba tapado). <UnalShell> mide la altura real con
+          ResizeObserver y la escribe en `--akopia-content-top` (una
+          variable CSS en el DOM, no una prop de React): así el estilo
+          en línea de abajo es estático de un render a otro y nunca
+          fuerza una reconciliación de este árbol — ver el comentario
+          de <UnalShell> sobre por qué eso rompía el menú móvil.
         */}
         <div
           className="indicator d-none d-md-block"
-          style={servicesTop == null ? undefined : { top: servicesTop }}
+          style={{ top: "var(--akopia-content-top, 150px)" }}
         ></div>
         <ul className="dropdown-menu" id="servicios">
           {SERVICIOS.map((s) => (
@@ -121,25 +123,52 @@ export function UnalHeader({
       </div>
 
       {/*
-        min-height: el escudo es position:absolute (135px de alto) y no
-        empuja la altura de #unalTop por su cuenta — depende de que el
-        resto de filas (firstMenu + bs-navbar) sumen lo mismo por su
-        cuenta, y con el contenido real de AKOPIA (menos ítems que el
-        menú de ejemplo de la plantilla) no siempre llegan. Sin esto, el
-        escudo se desborda sobre la fila de Sedes/Accesibilidad.
+        min-height responsivo, no un valor fijo en JS: el escudo es
+        position:absolute (135px de alto) y no empuja la altura de
+        #unalTop por su cuenta — depende de que el resto de filas
+        (firstMenu + bs-navbar) sumen lo mismo, y con el contenido real
+        de AKOPIA (menos ítems que el menú de ejemplo de la plantilla)
+        no siempre llegan; sin reservar el espacio, el escudo se
+        desborda sobre la fila de Accesibilidad/Cuenta.
+
+        Un solo valor fijo (145px) para todos los anchos era el bug: en
+        escritorio el escudo lo necesita, pero en móvil el propio CSS de
+        la plantilla ya reduce el escudo a 54px de alto (ver
+        `@media(max-width:767px) .logo`) — reservar 145px igual dejaba
+        hasta ~90px de una franja gris vacía debajo del botón de
+        hamburguesa, sin ningún contenido real que la llenara. Ver
+        `<style>` más abajo.
 
         background-color: #unalTop en sí no trae fondo propio en el CSS
-        de la plantilla (cada fila pinta el suyo). Con el min-height de
-        arriba, cuando el contenido real no llega a 145px queda un
-        sobrante sin pintar por nadie — se veía como una franja gris
-        suelta entre el menú y el panel de accesibilidad. Se rellena con
-        el mismo tono que ya usa `.firstMenu`, para que se vea como
-        parte del cabezote y no como un hueco.
+        de la plantilla (cada fila pinta el suyo). Con el min-height, el
+        sobrante que no llega a pintar ninguna fila se rellena con el
+        mismo tono que ya usa `.firstMenu`, para que se vea como parte
+        del cabezote y no como un hueco.
       */}
-      <header
-        id="unalTop"
-        style={{ minHeight: 145, backgroundColor: "rgb(102, 102, 102)" }}
-      >
+      <style>{`
+        .unal-chrome #unalTop {
+          background-color: rgb(102, 102, 102);
+          min-height: 54px;
+        }
+        @media (min-width: 768px) {
+          .unal-chrome #unalTop { min-height: 145px; }
+        }
+        /*
+          Tailwind trae una utilidad ".collapse{visibility:collapse}"
+          (para filas de tabla) con el mismo nombre exacto que la clase
+          que exige el plugin de collapse de Bootstrap — no se puede
+          renombrar, el JS de la plantilla la busca literal. El menú
+          móvil sí abría (la clase "show" y el display quedaban
+          correctos) pero Tailwind lo dejaba con visibility:collapse,
+          invisible: parecía que "se cerraba solo". Como la utilidad de
+          Tailwind vive en @layer utilities y esta regla no está en
+          ninguna capa, gana siempre, sin necesitar !important.
+        */
+        .unal-chrome .collapse:not(.akopia-content, .akopia-content *) {
+          visibility: visible;
+        }
+      `}</style>
+      <header id="unalTop">
         <div className="logo">
           <a href="https://unal.edu.co">
             <svg width="93%" height="93%">

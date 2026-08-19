@@ -22,7 +22,13 @@ import { AccountBar } from "./account-bar";
  * #unalTop varía por página (vacío en portada/login, hasta 4 grupos +
  * Sedes en la app), así que ese valor fijo dejaba el panel flotando en
  * medio del propio cabezote. <UnalShell> mide la altura real con
- * ResizeObserver y la pasa aquí.
+ * ResizeObserver y la escribe en `--akopia-header-height` (variable
+ * CSS en el DOM, no una prop de React vía useState): si esto disparara
+ * un re-render de este componente, React reconciliaría el estilo en
+ * línea de `#panel-accesibilidad` (`display:none` en el JSX) contra su
+ * estado real manipulado por accesibilidad.js, cerrándolo de golpe
+ * cada vez que el header cambia de alto — el mismo bug que tenía el
+ * menú móvil.
  */
 const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "light", label: "Claro" },
@@ -30,7 +36,7 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "dark", label: "Oscuro" },
 ];
 
-export function AccessibilityPanel({ top }: Readonly<{ top?: number | null }>) {
+export function AccessibilityPanel() {
   const [theme, setTheme] = useState<Theme | null>(null);
 
   useEffect(() => {
@@ -51,7 +57,7 @@ export function AccessibilityPanel({ top }: Readonly<{ top?: number | null }>) {
   return (
     <div
       className="tx-unal-accesibilidad"
-      style={top == null ? undefined : { top }}
+      style={{ top: "var(--akopia-header-height, 103px)" }}
     >
       <div
         id="panel-accesibilidad"

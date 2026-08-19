@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AccessibilityPanel } from "./accessibility-panel";
 import type { AppMenuItem } from "./menu-config";
 import { UnalFooter } from "./unal-footer";
@@ -33,9 +33,6 @@ export function UnalShell({
   boxed?: boolean;
   children: React.ReactNode;
 }>) {
-  const [headerHeight, setHeaderHeight] = useState<number | null>(null);
-  const [contentTop, setContentTop] = useState<number | null>(null);
-
   useEffect(() => {
     const header = document.getElementById("unalTop");
     // "#contenido" (<main>) empieza justo después de todo lo que va
@@ -46,9 +43,22 @@ export function UnalShell({
     const content = document.getElementById("contenido");
     if (!header || !content) return;
 
+    // CSS custom properties escritas directo en el DOM, no un
+    // useState: el menú móvil vive dentro de #unalTop, así que abrirlo
+    // (Bootstrap le agrega "show" por fuera de React) cambia la altura
+    // del header y dispara este observer. Si esto pasara por setState,
+    // el re-render resultante reconciliaría <UnalHeader> contra su JSX
+    // (que nunca declaró "show") y React borraría esa clase al vuelo —
+    // el menú se veía abrir y cerrarse en el mismo clic.
     const update = () => {
-      setHeaderHeight(header.getBoundingClientRect().height);
-      setContentTop(content.getBoundingClientRect().top);
+      document.documentElement.style.setProperty(
+        "--akopia-header-height",
+        `${header.getBoundingClientRect().height}px`,
+      );
+      document.documentElement.style.setProperty(
+        "--akopia-content-top",
+        `${content.getBoundingClientRect().top}px`,
+      );
     };
     update();
 
@@ -66,8 +76,8 @@ export function UnalShell({
     // hubiera detrás del body en vez del blanco del contenido, dejando
     // franjas grises sueltas de distintos tonos.
     <div className="unal-chrome flex min-h-screen flex-col bg-(--surface)">
-      <UnalHeader menuItems={menuItems} servicesTop={contentTop} />
-      <AccessibilityPanel top={headerHeight} />
+      <UnalHeader menuItems={menuItems} />
+      <AccessibilityPanel />
       {/*
         La clase `detalle` se mantiene siempre presente: accesibilidad.js
         busca `document.getElementsByClassName("detalle")[0]` al abrir
