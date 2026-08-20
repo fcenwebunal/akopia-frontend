@@ -9,6 +9,7 @@ import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalo
 import { useAsyncData } from "@/lib/use-async-data";
 import { ProductPicker } from "@/components/app/product-picker";
 import { LoadingLine } from "@/components/ui/spinner";
+import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
 
 const DONOR_TYPES = [
@@ -43,6 +44,14 @@ export default function NuevaDonacionPage() {
   const [donorName, setDonorName] = useState("");
   const [donorPhone, setDonorPhone] = useState("");
   const [notes, setNotes] = useState("");
+
+  // Recepción rápida: se captura el peso y el transportista y se
+  // guarda la remesa sin artículos — quien la reciba no tiene que
+  // saber todavía qué hay adentro. "Registrar todo ahora" es el
+  // formulario de siempre, sin cambios. Ver PROPUESTA-RECEPCION-REMESAS.md.
+  const [quickMode, setQuickMode] = useState(false);
+  const [totalWeight, setTotalWeight] = useState("");
+  const [carrierName, setCarrierName] = useState("");
 
   const [lines, setLines] = useState<DraftLine[]>([]);
   const [editing, setEditing] = useState<DraftLine | null>(null);
@@ -106,8 +115,13 @@ export default function NuevaDonacionPage() {
       setError("Tu sesión expiró. Vuelve a entrar.");
       return;
     }
-    if (lines.length === 0) {
-      setError("Agrega al menos un artículo.");
+    if (quickMode) {
+      if (!totalWeight || Number(totalWeight) <= 0) {
+        setError("El peso total es obligatorio en la recepción rápida.");
+        return;
+      }
+    } else if (lines.length === 0) {
+      setError("Agrega al menos un artículo, o usa «Solo recepción rápida».");
       return;
     }
 
@@ -116,6 +130,15 @@ export default function NuevaDonacionPage() {
     setFailed([]);
 
     try {
+      // El estado nunca se infiere después con un proceso en segundo
+      // plano — se decide una sola vez, aquí, según cómo se guardó:
+      // si quedó algo sin clasificar (o directamente sin artículos),
+      // la remesa arranca en "recepción"; si todo lo capturado ya
+      // tiene un estado final, arranca "clasificada" de una vez, sin
+      // obligar a un clic extra para algo que ya se resolvió aquí mismo.
+      const hasPending = lines.some((line) => line.status === "pending");
+      const status = quickMode || lines.length === 0 || hasPending ? "recepcion" : "clasificada";
+
       const donation = await pb.collection("donations").create({
         donor_type: donorType,
         donor_name: donorName || "Donante anónimo",
@@ -123,6 +146,9 @@ export default function NuevaDonacionPage() {
         receipt_date: new Date().toISOString().replace("T", " "),
         operator_id: operator.id,
         notes,
+        status,
+        total_weight_kg: totalWeight ? Number(totalWeight) : null,
+        carrier_name: carrierName,
       });
 
       const rejected: string[] = [];
@@ -180,6 +206,20 @@ export default function NuevaDonacionPage() {
       <h1 className="mt-2 text-2xl font-black tracking-tight">Registrar donación</h1>
 
       <section className="mt-5 rounded border border-(--rule) bg-(--surface) p-4">
+        <Toggle
+          label="Solo recepción rápida — clasificar los artículos después"
+          checked={quickMode}
+          onChange={setQuickMode}
+        />
+        {quickMode ? (
+          <p className="mt-1.5 text-xs text-(--muted)">
+            Se guarda la remesa con donante y peso; los artículos se agregan más
+            adelante desde el detalle, al abrirla y clasificarla.
+          </p>
+        ) : null}
+      </section>
+
+      <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
         <h2 className="mb-3 text-sm font-bold">Quién dona</h2>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -229,6 +269,37 @@ export default function NuevaDonacionPage() {
           </div>
 
           <div>
+            <label htmlFor="peso" className="mb-1 block text-sm font-bold">
+              Peso total (kg){quickMode ? <span className="text-unal-red"> *</span> : null}{" "}
+              <span className="font-normal text-(--muted)">
+                {quickMode ? "" : "(opcional)"}
+              </span>
+            </label>
+            <input
+              id="peso"
+              type="number"
+              inputMode="decimal"
+              min={0.01}
+              step="any"
+              value={totalWeight}
+              onChange={(event) => setTotalWeight(event.target.value)}
+              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="transportista" className="mb-1 block text-sm font-bold">
+              Transportista <span className="font-normal text-(--muted)">(opcional)</span>
+            </label>
+            <input
+              id="transportista"
+              value={carrierName}
+              onChange={(event) => setCarrierName(event.target.value)}
+              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+            />
+          </div>
+
+          <div>
             <label htmlFor="notas" className="mb-1 block text-sm font-bold">
               Notas <span className="font-normal text-(--muted)">(opcional)</span>
             </label>
@@ -242,12 +313,14 @@ export default function NuevaDonacionPage() {
         </div>
       </section>
 
-      <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
-        <h2 className="mb-3 text-sm font-bold">Qué llegó</h2>
-        <ProductPicker catalog={catalog} recent={recent} onSelect={addProduct} />
-      </section>
+      {!quickMode ? (
+        <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
+          <h2 className="mb-3 text-sm font-bold">Qué llegó</h2>
+          <ProductPicker catalog={catalog} recent={recent} onSelect={addProduct} />
+        </section>
+      ) : null}
 
-      {lines.length > 0 ? (
+      {!quickMode && lines.length > 0 ? (
         <section className="mt-4">
           <h2 className="mb-2 text-sm font-bold">
             En esta remesa{" "}
@@ -313,12 +386,16 @@ export default function NuevaDonacionPage() {
           </Button>
           <Button
             onClick={save}
-            disabled={saving || lines.length === 0}
+            disabled={saving || (quickMode ? !totalWeight : lines.length === 0)}
             loading={saving}
             icon={Gift}
             className="flex-1 justify-center"
           >
-            {saving ? "Guardando…" : `Guardar remesa (${lines.length})`}
+            {saving
+              ? "Guardando…"
+              : quickMode
+                ? "Guardar recepción"
+                : `Guardar remesa (${lines.length})`}
           </Button>
         </div>
       </div>

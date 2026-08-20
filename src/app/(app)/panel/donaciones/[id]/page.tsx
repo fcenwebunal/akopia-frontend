@@ -2,14 +2,18 @@
 
 import { use, useCallback, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Ban, CheckCircle } from "lucide-react";
-import { errorMessage, pb } from "@/lib/pb";
+import { AlertTriangle, Ban, CheckCircle, Lock, Minus, Plus, RotateCcw } from "lucide-react";
+import { currentUser, errorMessage, pb } from "@/lib/pb";
+import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
+import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
-import { LoadingLine } from "@/components/ui/spinner";
+import { ProductPicker } from "@/components/app/product-picker";
+import { LoadingLine, Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 
 interface Item {
   id: string;
+  product_id: string;
   quantity: number;
   classification_status: "pending" | "available" | "quarantine" | "rejected";
   expiry_date: string;
@@ -28,6 +32,11 @@ interface Donation {
   donor_type: string;
   receipt_date: string;
   notes: string;
+  status: "recepcion" | "clasificada";
+  total_weight_kg: number;
+  classified_weight_kg: number;
+  carrier_name: string;
+  operator_id: string;
 }
 
 const STATUS_LABELS: Record<Item["classification_status"], string> = {
@@ -44,10 +53,17 @@ const STATUS_STYLES: Record<Item["classification_status"], string> = {
   rejected: "bg-(--surface-2) text-unal-red",
 };
 
+const CAN_ADD_ITEMS = ["admin", "voluntariado"] as const;
+
 /*
  * Clasificar es lo que mueve el inventario: al pasar un artículo a apto o
  * a revisión, los hooks del backend generan el movimiento y ajustan el
  * saldo. Desde aquí solo se cambia el estado — nunca se toca `inventory`.
+ *
+ * Desde la recepción rápida (ver PROPUESTA-RECEPCION-REMESAS.md), una
+ * remesa puede llegar aquí sin ningún artículo todavía — esta pantalla
+ * es donde se abre y se da de alta cada uno, no solo donde se cambia
+ * el estado de los que ya existen.
  */
 export default function DonacionDetallePage({
   params,
@@ -55,22 +71,30 @@ export default function DonacionDetallePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const operator = currentUser();
+  const canAddItems = hasAnyRole(operator?.role, CAN_ADD_ITEMS);
+
   const [busy, setBusy] = useState<string | null>(null);
   const [busyStatus, setBusyStatus] = useState<Item["classification_status"] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [version, setVersion] = useState(0);
+  const [adding, setAdding] = useState(false);
+  const [pendingProduct, setPendingProduct] = useState<Product | null>(null);
+  const [closing, setClosing] = useState(false);
 
   const fetchData = useCallback(async () => {
-    const donation = await pb.collection("donations").getOne<Donation>(id);
-    const items = await pb.collection("donation_items").getList<Item>(1, 200, {
-      filter: `donation_id = "${id}"`,
-      sort: "created",
-      expand: "product_id,unit_id",
-    });
-    return { donation, items: items.items, version };
-  }, [id, version]);
+    const [donation, items, catalog] = await Promise.all([
+      pb.collection("donations").getOne<Donation>(id),
+      pb.collection("donation_items").getList<Item>(1, 200, {
+        filter: `donation_id = "${id}"`,
+        sort: "created",
+        expand: "product_id,unit_id",
+      }),
+      loadCatalog(),
+    ]);
+    return { donation, items: items.items, catalog };
+  }, [id]);
 
-  const { data, error: loadError } = useAsyncData(fetchData);
+  const { data, error: loadError, reload } = useAsyncData(fetchData);
 
   async function classify(item: Item, status: Item["classification_status"]) {
     setBusy(item.id);
@@ -81,12 +105,87 @@ export default function DonacionDetallePage({
       await pb
         .collection("donation_items")
         .update(item.id, { classification_status: status });
-      setVersion((current) => current + 1);
+      reload();
     } catch (err) {
       setError(errorMessage(err));
     } finally {
       setBusy(null);
       setBusyStatus(null);
+    }
+  }
+
+  async function addItem(
+    product: Product,
+    values: { quantity: number; expiry: string; batch: string; status: Item["classification_status"] }
+  ) {
+    if (!data) return;
+    setBusy("new");
+    setError(null);
+    try {
+      await pb.collection("donation_items").create({
+        donation_id: data.donation.id,
+        product_id: product.id,
+        unit_id: product.default_unit_id,
+        quantity: values.quantity,
+        classification_status: values.status,
+        expiry_date: values.expiry || null,
+        batch_code: values.batch,
+      });
+      // Si la remesa ya se había dado por clasificada y se le agrega
+      // algo más, deja de estarlo — no tiene sentido que quede
+      // marcada "clasificada" con un artículo recién llegado sin
+      // resolver.
+      if (data.donation.status === "clasificada") {
+        await pb.collection("donations").update(data.donation.id, {
+          status: "recepcion",
+          classification_closed_at: null,
+          classification_closed_by: null,
+        });
+      }
+      setPendingProduct(null);
+      reload();
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function closeClassification(classifiedWeight: number) {
+    if (!data || !operator) return;
+    setBusy("close");
+    setError(null);
+    try {
+      await pb.collection("donations").update(data.donation.id, {
+        status: "clasificada",
+        classified_weight_kg: classifiedWeight,
+        classification_closed_at: new Date().toISOString(),
+        classification_closed_by: operator.id,
+      });
+      setClosing(false);
+      reload();
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function reopenClassification() {
+    if (!data) return;
+    setBusy("reopen");
+    setError(null);
+    try {
+      await pb.collection("donations").update(data.donation.id, {
+        status: "recepcion",
+        classification_closed_at: null,
+        classification_closed_by: null,
+      });
+      reload();
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -102,9 +201,13 @@ export default function DonacionDetallePage({
     return <LoadingLine />;
   }
 
-  const pending = data.items.filter(
-    (item) => item.classification_status === "pending"
-  ).length;
+  const { donation, items, catalog } = data;
+  const pending = items.filter((item) => item.classification_status === "pending").length;
+  const canManageHeader =
+    operator?.id === donation.operator_id || hasAnyRole(operator?.role, ["admin", "coordinacion"]);
+  const recent = items
+    .map((item) => catalog.products.find((p) => p.id === item.product_id))
+    .filter((p): p is Product => Boolean(p));
 
   return (
     <div>
@@ -112,25 +215,57 @@ export default function DonacionDetallePage({
         ← Donaciones
       </Link>
 
-      <h1 className="mt-2 font-mono text-2xl font-black tracking-tight text-unal-green-dark">
-        {data.donation.code}
-      </h1>
+      <div className="mt-2 flex flex-wrap items-baseline gap-3">
+        <h1 className="font-mono text-2xl font-black tracking-tight text-unal-green-dark">
+          {donation.code}
+        </h1>
+        <span
+          className={
+            donation.status === "clasificada"
+              ? "rounded bg-unal-green-soft px-2 py-0.5 text-xs font-bold text-unal-green-dark"
+              : "rounded bg-(--surface-2) px-2 py-0.5 text-xs font-bold text-unal-orange"
+          }
+        >
+          {donation.status === "clasificada" ? "Clasificada" : "En recepción"}
+        </span>
+      </div>
+
       <p className="mt-1 text-(--muted)">
-        {data.donation.donor_name} ·{" "}
-        {new Date(data.donation.receipt_date).toLocaleDateString("es-CO", {
+        {donation.donor_name} ·{" "}
+        {new Date(donation.receipt_date).toLocaleDateString("es-CO", {
           day: "numeric",
           month: "long",
           year: "numeric",
         })}
+        {donation.carrier_name ? ` · ${donation.carrier_name}` : ""}
       </p>
-      {data.donation.notes ? (
-        <p className="mt-2 text-sm text-(--ink-2)">{data.donation.notes}</p>
+
+      {donation.total_weight_kg ? (
+        <p className="mt-1 text-sm text-(--ink-2)">
+          Peso declarado: <strong>{donation.total_weight_kg} kg</strong>
+          {donation.status === "clasificada" && donation.classified_weight_kg ? (
+            <>
+              {" · "}
+              Peso clasificado: <strong>{donation.classified_weight_kg} kg</strong>
+              {donation.classified_weight_kg < donation.total_weight_kg ? (
+                <span className="text-(--muted)">
+                  {" "}
+                  (merma {(donation.total_weight_kg - donation.classified_weight_kg).toFixed(2)} kg)
+                </span>
+              ) : null}
+            </>
+          ) : null}
+        </p>
+      ) : null}
+
+      {donation.notes ? (
+        <p className="mt-2 text-sm text-(--ink-2)">{donation.notes}</p>
       ) : null}
 
       {pending > 0 ? (
         <p className="mt-4 rounded border-l-4 border-unal-yellow bg-(--surface) px-4 py-3 text-sm">
           <strong>{pending}</strong> artículo(s) sin clasificar. Hasta que no se
-          clasifiquen no entran al inventario.
+          clasifiquen no entran al inventario, ni se puede cerrar la clasificación.
         </p>
       ) : null}
 
@@ -140,90 +275,395 @@ export default function DonacionDetallePage({
         </p>
       ) : null}
 
-      <ul className="mt-5 space-y-3">
-        {data.items.map((item) => {
-          const status = item.classification_status;
-          const locked = status === "available" || status === "quarantine";
+      {items.length === 0 ? (
+        <p className="mt-5 rounded border border-(--rule) bg-(--surface) p-4 text-sm text-(--muted)">
+          Esta remesa se recibió sin artículos — agrégalos a medida que se abre y se
+          clasifica.
+        </p>
+      ) : (
+        <ul className="mt-5 space-y-3">
+          {items.map((item) => {
+            const status = item.classification_status;
+            const locked = status === "available" || status === "quarantine";
 
-          return (
-            <li
-              key={item.id}
-              className="rounded border border-(--rule) bg-(--surface) p-4"
+            return (
+              <li key={item.id} className="rounded border border-(--rule) bg-(--surface) p-4">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="font-bold">{item.expand?.product_id?.name ?? "—"}</span>
+                  <span className="text-(--muted)">
+                    {item.quantity} {item.expand?.unit_id?.code ?? item.expand?.unit_id?.name ?? ""}
+                  </span>
+                  <span className={`ml-auto rounded px-2 py-0.5 text-xs font-bold ${STATUS_STYLES[status]}`}>
+                    {STATUS_LABELS[status]}
+                  </span>
+                </div>
+
+                {item.expiry_date || item.batch_code ? (
+                  <p className="mt-1 text-sm text-(--muted)">
+                    {item.expiry_date
+                      ? `Vence ${new Date(item.expiry_date).toLocaleDateString("es-CO")}`
+                      : ""}
+                    {item.expiry_date && item.batch_code ? " · " : ""}
+                    {item.batch_code ? `Lote ${item.batch_code}` : ""}
+                  </p>
+                ) : null}
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {status !== "available" ? (
+                    <Button
+                      size="sm"
+                      disabled={busy === item.id}
+                      loading={busy === item.id && busyStatus === "available"}
+                      onClick={() => classify(item, "available")}
+                      icon={CheckCircle}
+                    >
+                      {status === "quarantine" ? "Liberar a disponible" : "Marcar apto"}
+                    </Button>
+                  ) : null}
+
+                  {status !== "quarantine" ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={busy === item.id}
+                      loading={busy === item.id && busyStatus === "quarantine"}
+                      onClick={() => classify(item, "quarantine")}
+                      icon={AlertTriangle}
+                    >
+                      A revisión
+                    </Button>
+                  ) : null}
+
+                  {!locked && status !== "rejected" ? (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      disabled={busy === item.id}
+                      loading={busy === item.id && busyStatus === "rejected"}
+                      onClick={() => classify(item, "rejected")}
+                      icon={Ban}
+                    >
+                      Rechazar
+                    </Button>
+                  ) : null}
+                </div>
+
+                {locked ? (
+                  <p className="mt-2 text-xs text-(--muted)">
+                    Ya afectó inventario: para rechazarlo hay que hacer un ajuste.
+                  </p>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {canAddItems ? (
+        <section className="mt-5 rounded border border-(--rule) bg-(--surface) p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-bold">Agregar artículo</h2>
+            <button
+              type="button"
+              onClick={() => setAdding((v) => !v)}
+              className="text-sm font-bold text-unal-green-dark"
             >
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="font-bold">
-                  {item.expand?.product_id?.name ?? "—"}
-                </span>
-                <span className="text-(--muted)">
-                  {item.quantity}{" "}
-                  {item.expand?.unit_id?.code ?? item.expand?.unit_id?.name ?? ""}
-                </span>
-                <span
-                  className={`ml-auto rounded px-2 py-0.5 text-xs font-bold ${STATUS_STYLES[status]}`}
-                >
-                  {STATUS_LABELS[status]}
-                </span>
-              </div>
+              {adding ? "Ocultar" : "Abrir"}
+            </button>
+          </div>
+          {adding ? (
+            <ProductPicker
+              catalog={catalog}
+              recent={recent}
+              onSelect={(product) => setPendingProduct(product)}
+            />
+          ) : null}
+        </section>
+      ) : null}
 
-              {item.expiry_date || item.batch_code ? (
-                <p className="mt-1 text-sm text-(--muted)">
-                  {item.expiry_date
-                    ? `Vence ${new Date(item.expiry_date).toLocaleDateString("es-CO")}`
-                    : ""}
-                  {item.expiry_date && item.batch_code ? " · " : ""}
-                  {item.batch_code ? `Lote ${item.batch_code}` : ""}
-                </p>
-              ) : null}
+      {donation.status === "recepcion" && canManageHeader ? (
+        <div className="mt-4">
+          <Button
+            disabled={pending > 0 || busy === "close"}
+            loading={busy === "close"}
+            onClick={() => setClosing(true)}
+            icon={Lock}
+          >
+            Cerrar clasificación
+          </Button>
+          {pending > 0 ? (
+            <p className="mt-1.5 text-xs text-(--muted)">
+              Clasifica lo que falta antes de cerrar.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
-              <div className="mt-3 flex flex-wrap gap-2">
-                {status !== "available" ? (
-                  <Button
-                    size="sm"
-                    disabled={busy === item.id}
-                    loading={busy === item.id && busyStatus === "available"}
-                    onClick={() => classify(item, "available")}
-                    icon={CheckCircle}
-                  >
-                    {status === "quarantine" ? "Liberar a disponible" : "Marcar apto"}
-                  </Button>
-                ) : null}
+      {donation.status === "clasificada" && canManageHeader ? (
+        <div className="mt-4">
+          <Button
+            variant="outline"
+            disabled={busy === "reopen"}
+            loading={busy === "reopen"}
+            onClick={reopenClassification}
+            icon={RotateCcw}
+          >
+            Reabrir clasificación
+          </Button>
+        </div>
+      ) : null}
 
-                {status !== "quarantine" ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={busy === item.id}
-                    loading={busy === item.id && busyStatus === "quarantine"}
-                    onClick={() => classify(item, "quarantine")}
-                    icon={AlertTriangle}
-                  >
-                    A revisión
-                  </Button>
-                ) : null}
+      {pendingProduct ? (
+        <ItemEditor
+          catalog={catalog}
+          product={pendingProduct}
+          saving={busy === "new"}
+          onCancel={() => setPendingProduct(null)}
+          onSave={(values) => addItem(pendingProduct, values)}
+        />
+      ) : null}
 
-                {!locked && status !== "rejected" ? (
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    disabled={busy === item.id}
-                    loading={busy === item.id && busyStatus === "rejected"}
-                    onClick={() => classify(item, "rejected")}
-                    icon={Ban}
-                  >
-                    Rechazar
-                  </Button>
-                ) : null}
-              </div>
+      {closing ? (
+        <CloseDialog
+          declaredWeight={donation.total_weight_kg}
+          hasZeroItems={items.length === 0}
+          saving={busy === "close"}
+          onCancel={() => setClosing(false)}
+          onConfirm={closeClassification}
+        />
+      ) : null}
+    </div>
+  );
+}
 
-              {locked ? (
-                <p className="mt-2 text-xs text-(--muted)">
-                  Ya afectó inventario: para rechazarlo hay que hacer un ajuste.
-                </p>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
+function ItemEditor({
+  catalog,
+  product,
+  saving,
+  onCancel,
+  onSave,
+}: {
+  catalog: Catalog;
+  product: Product;
+  saving: boolean;
+  onCancel: () => void;
+  onSave: (values: {
+    quantity: number;
+    expiry: string;
+    batch: string;
+    status: Item["classification_status"];
+  }) => void;
+}) {
+  const [quantity, setQuantity] = useState(1);
+  const [expiry, setExpiry] = useState("");
+  const [batch, setBatch] = useState("");
+  const [status, setStatus] = useState<Item["classification_status"]>(
+    product.requires_quarantine ? "quarantine" : "available"
+  );
+
+  const requiresExpiry = product.requires_expiry;
+  const requiresBatch = product.requires_batch;
+  const missingExpiry = requiresExpiry && !expiry;
+  const missingBatch = requiresBatch && !batch;
+
+  return (
+    <div className="fixed inset-0 z-20 flex items-end bg-black/40 sm:items-center sm:justify-center">
+      <div className="w-full rounded-t-lg bg-(--surface) p-5 sm:max-w-md sm:rounded-lg">
+        <h2 className="text-lg font-bold">{product.name}</h2>
+        <p className="text-sm text-(--muted)">Se mide en {unitLabel(catalog, product.default_unit_id)}</p>
+
+        <div className="mt-4">
+          <label htmlFor="di-cant" className="mb-1 block text-sm font-bold">
+            Cantidad
+          </label>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              aria-label="Restar uno"
+              className="flex h-12 w-12 items-center justify-center rounded border border-(--rule) hover:bg-(--surface-2)"
+            >
+              <Minus size={20} strokeWidth={2.5} aria-hidden="true" />
+            </button>
+            <input
+              id="di-cant"
+              type="number"
+              inputMode="decimal"
+              min={0.01}
+              step="any"
+              value={quantity}
+              onChange={(event) => setQuantity(Number(event.target.value))}
+              className="h-12 flex-1 rounded border border-(--rule) bg-(--surface) px-3 text-center text-lg font-bold"
+            />
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => q + 1)}
+              aria-label="Sumar uno"
+              className="flex h-12 w-12 items-center justify-center rounded border border-(--rule) hover:bg-(--surface-2)"
+            >
+              <Plus size={20} strokeWidth={2.5} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+
+        {requiresExpiry ? (
+          <div className="mt-4">
+            <label htmlFor="di-vence" className="mb-1 block text-sm font-bold">
+              Vencimiento
+            </label>
+            <input
+              id="di-vence"
+              type="date"
+              value={expiry}
+              onChange={(event) => setExpiry(event.target.value)}
+              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+            />
+          </div>
+        ) : null}
+
+        {requiresBatch ? (
+          <div className="mt-4">
+            <label htmlFor="di-lote" className="mb-1 block text-sm font-bold">
+              Lote
+            </label>
+            <input
+              id="di-lote"
+              value={batch}
+              onChange={(event) => setBatch(event.target.value)}
+              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+            />
+          </div>
+        ) : null}
+
+        <fieldset className="mt-4">
+          <legend className="mb-1 text-sm font-bold">Estado</legend>
+          <div className="flex gap-2">
+            {[
+              { value: "available", label: "Apto" },
+              { value: "quarantine", label: "En Revisión" },
+              { value: "pending", label: "Sin clasificar" },
+            ].map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={status === option.value}
+                onClick={() => setStatus(option.value as Item["classification_status"])}
+                className={
+                  status === option.value
+                    ? "flex-1 rounded bg-unal-green-dark px-3 py-2.5 text-sm font-bold text-white"
+                    : "flex-1 rounded border border-(--rule) px-3 py-2.5 text-sm font-bold"
+                }
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        {missingExpiry || missingBatch ? (
+          <p className="mt-3 text-sm text-unal-red">
+            Este producto exige {missingExpiry ? "fecha de vencimiento" : ""}
+            {missingExpiry && missingBatch ? " y " : ""}
+            {missingBatch ? "código de lote" : ""}.
+          </p>
+        ) : null}
+
+        <div className="mt-5 flex gap-3">
+          <button type="button" onClick={onCancel} className="rounded border border-(--rule) px-4 py-3 font-bold">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            disabled={quantity <= 0 || missingExpiry || missingBatch || saving}
+            onClick={() => onSave({ quantity, expiry, batch, status })}
+            className="flex flex-1 items-center justify-center gap-2 rounded bg-unal-green-dark px-4 py-3 font-bold text-white disabled:opacity-50"
+          >
+            {saving ? <Spinner /> : null}
+            Agregar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/*
+ * El peso clasificado arranca igual al declarado (opción B de
+ * PROPUESTA-RECEPCION-REMESAS.md — decisión de Juan Manuel): casi
+ * siempre no hay tiempo de volver a pesar, y lo que se descarta suele
+ * ser insignificante en peso. Queda editable por si de verdad hace
+ * falta corregirlo.
+ */
+function CloseDialog({
+  declaredWeight,
+  hasZeroItems,
+  saving,
+  onCancel,
+  onConfirm,
+}: {
+  declaredWeight: number;
+  hasZeroItems: boolean;
+  saving: boolean;
+  onCancel: () => void;
+  onConfirm: (weight: number) => void;
+}) {
+  const [weight, setWeight] = useState(declaredWeight || 0);
+  const [confirmedEmpty, setConfirmedEmpty] = useState(false);
+
+  return (
+    <div className="fixed inset-0 z-20 flex items-end bg-black/40 sm:items-center sm:justify-center">
+      <div className="w-full rounded-t-lg bg-(--surface) p-5 sm:max-w-sm sm:rounded-lg">
+        <h2 className="text-lg font-bold">Cerrar clasificación</h2>
+
+        {hasZeroItems ? (
+          <label className="mt-3 flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={confirmedEmpty}
+              onChange={(event) => setConfirmedEmpty(event.target.checked)}
+              className="mt-0.5"
+            />
+            Confirmo que esta remesa no tiene ningún artículo aprovechable para registrar.
+          </label>
+        ) : (
+          <>
+            <div className="mt-4">
+              <label htmlFor="peso-clasif" className="mb-1 block text-sm font-bold">
+                Peso clasificado (kg)
+              </label>
+              <input
+                id="peso-clasif"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="any"
+                value={weight}
+                onChange={(event) => setWeight(Number(event.target.value))}
+                className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+              />
+              <p className="mt-1.5 text-xs text-(--muted)">
+                Arranca igual al peso declarado ({declaredWeight} kg) — cámbialo solo si
+                de verdad se volvió a pesar.
+              </p>
+            </div>
+          </>
+        )}
+
+        <div className="mt-5 flex gap-3">
+          <button type="button" onClick={onCancel} className="rounded border border-(--rule) px-4 py-3 font-bold">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            disabled={saving || (hasZeroItems && !confirmedEmpty)}
+            onClick={() => onConfirm(weight)}
+            className="flex flex-1 items-center justify-center gap-2 rounded bg-unal-green-dark px-4 py-3 font-bold text-white disabled:opacity-50"
+          >
+            {saving ? <Spinner /> : null}
+            Confirmar cierre
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
