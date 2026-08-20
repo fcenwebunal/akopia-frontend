@@ -160,7 +160,15 @@ export async function POST(request: NextRequest) {
       record: impersonated.authStore.record,
     });
   } catch (err) {
-    console.error("Error en el puente Firebase -> AKOPIA:", err);
+    // `console.error(err)` sobre un ClientResponseError trunca los
+    // errores de validación por campo (Node los muestra como "[Object]"
+    // sin desarrollarlos) — el detalle real vive en `err.response.data`,
+    // que sí hay que serializar explícitamente para verlo en los logs.
+    const detail =
+      err && typeof err === "object" && "response" in err
+        ? JSON.stringify((err as { response: unknown }).response)
+        : String(err);
+    console.error("Error en el puente Firebase -> AKOPIA:", detail);
     return NextResponse.json(
       { message: "No se pudo completar el inicio de sesión. Intenta de nuevo." },
       { status: 500 }
