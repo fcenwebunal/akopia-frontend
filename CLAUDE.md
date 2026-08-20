@@ -808,3 +808,9 @@ Consecuencia directa de la migración `049` del backend (`CLAUDE.md` del backend
 - El encabezado de la remesa ahora muestra estado, peso declarado, peso clasificado y la merma (declarado − clasificado) cuando corresponde — la trazabilidad de peso que pedía el §4 de la propuesta, sin sumar cantidades de unidades heterogéneas (kg de arroz + litros de aceite + piezas de ropa no son sumables entre sí).
 
 Verificado con `npx tsc --noEmit`, `npx eslint` (limpio) y `npm run build`. **No verificado en navegador real** — sin Playwright disponible en esta sesión; la verificación funcional (recepción sin ítems, agregar artículo después, cerrar/reabrir, permisos de Coordinación) se hizo contra el backend con un servidor de prueba desechable.
+
+### 2026-08-20 (noche) — El enlace del subdominio ya apunta al subdominio real
+
+OTIC publicó `acopio.manizales.unal.edu.co` el mismo día (DNS público + TLS confirmados desde fuera de la red de la UNAL, sin VPN — ver bitácora del `CLAUDE.md` raíz). El enlace de `#subdominio` en `unal-header.tsx` (cabezote de escritorio, clonado al menú móvil por `unal.js`) llevaba desde el 19 de agosto al despliegue provisional de Vercel — "más adelante lo cambiaremos al correspondiente", ya anotado explícitamente en su momento como algo pendiente. Cambiado ahora que ese "más adelante" llegó: `PROVISIONAL_SITE_URL` desaparece, `SITE_HREF` (`https://acopio.manizales.unal.edu.co/`) reemplaza directamente al destino de Vercel — ya no hace falta distinguir "lo que se muestra" de "a dónde apunta", son la misma URL.
+
+Verificado con `npx tsc --noEmit` y `npm run build` limpios. Sin Playwright en esta sesión — no se vio el clic real en pantalla.

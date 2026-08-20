@@ -52,14 +52,11 @@ const SERVICIOS = [
   },
 ];
 
-// Subdominio propuesto para AKOPIA (directriz B1: sin guiones, sin www).
-// El despliegue de hoy vive en otra URL provisional; este es el destino.
+// Subdominio institucional de AKOPIA (directriz B1: sin guiones, sin www).
+// Publicado por OTIC el 20 de agosto de 2026 — DNS público y TLS ya
+// resuelven aquí de verdad, no es una promesa a futuro.
 const SITE_URL = "acopio.manizales.unal.edu.co";
-
-// A dónde apunta el enlace del subdominio MIENTRAS el subdominio real
-// no exista (sin DNS ni TLS todavía) — el despliegue provisional en
-// Vercel. Cambiar aquí cuando el subdominio institucional quede listo.
-const PROVISIONAL_SITE_URL = "https://akopia.vercel.app/";
+const SITE_HREF = `https://${SITE_URL}/`;
 
 function MainMenuGroup({ item }: Readonly<{ item: AppMenuItem }>) {
   if (!item.children) {
@@ -391,19 +388,17 @@ export function UnalHeader({
 
         <div id="bs-navbar" className="navigation d-none d-md-block">
           {/*
-            El subdominio real (§ CLAUDE.md) todavía no existe —
-            acopio.manizales.unal.edu.co no tiene DNS ni certificado
-            TLS emitido — así que el enlace apunta al despliegue
-            provisional en Vercel mientras tanto (pedido explícito del
-            19 de agosto: "más adelante lo cambiaremos al
-            correspondiente"). Sin target="_blank": es la portada del
-            sitio en el que ya se está, misma pestaña como cualquier
-            enlace interno. El menú móvil clona este mismo HTML (ver
-            unal.js prepare_content_menu), así que el enlace queda
-            activo ahí también sin tocar nada más.
+            El subdominio institucional ya existe de verdad (DNS público
+            y TLS resueltos por OTIC el 20 de agosto de 2026) — el
+            enlace apunta directo ahí, no al despliegue provisional.
+            Sin target="_blank": es la portada del sitio en el que ya se
+            está, misma pestaña como cualquier enlace interno. El menú
+            móvil clona este mismo HTML (ver unal.js
+            prepare_content_menu), así que el enlace queda activo ahí
+            también sin tocar nada más.
           */}
           <div className="site-url" id="subdominio">
-            <a href={PROVISIONAL_SITE_URL}>{SITE_URL}</a>
+            <a href={SITE_HREF}>{SITE_URL}</a>
           </div>
 
           {/*
