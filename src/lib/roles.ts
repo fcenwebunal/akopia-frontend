@@ -29,7 +29,7 @@ export const ALL_ROLES = Object.keys(ROLE_LEVELS) as UserRole[];
 
 export function hasAnyRole(
   roles: UserRole[] | undefined,
-  allowed: UserRole[]
+  allowed: readonly UserRole[]
 ): boolean {
   if (!roles) return false;
   return roles.some((role) => allowed.includes(role));

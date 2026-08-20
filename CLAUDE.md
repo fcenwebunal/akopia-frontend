@@ -782,3 +782,18 @@ Cierra el pendiente de la entrada anterior. `ProductRow` gana `canRelocate` (ocu
 Verificado con `npx tsc --noEmit` y `npm run build` limpios. Sin Playwright disponible en esta sesión.
 
 Verificado con `npx tsc --noEmit` y `npm run build` (26 rutas, limpio) tras cada tanda de cambios. Sin Playwright disponible en esta sesión — no se verificó visualmente en navegador; la verificación real de las reglas de permiso se hizo contra el backend (servidor de prueba desechable), no contra esta interfaz.
+
+### 2026-08-20 (tarde) — Pantallas de Kits, y el selector dentro de `solicitudes/nueva`
+
+Consecuencia directa de las migraciones `046`-`048` del backend (`CLAUDE.md` del backend tiene el detalle completo). Tres pantallas nuevas más un cambio en una existente:
+
+- **`src/lib/kits.ts`** (nuevo) — tipos `Kit`/`KitItem` y `loadKits()`/`loadKitItems()`, mismo patrón que `catalog.ts`.
+- **`/panel/kits`** — listado (con inactivos, para poder reactivar) y acceso al detalle. Mismos roles que ya pueden crear solicitudes (admin/coordinación/salida) — no hay una capa separada de "quién administra la plantilla oficial", a diferencia del resto del catálogo.
+- **`/panel/kits/nueva`** — el mismo constructor de renglones (`ProductPicker` + selector de cantidad) que ya usaba `solicitudes/nueva`, sin destino ni solicitante — eso lo pone cada solicitud que use el kit, no el kit mismo. Cantidad = "por unidad de kit", se multiplica por N al usarlo.
+- **`/panel/kits/[id]`** — a diferencia de "Nuevo kit" (borrador local, se envía completo al final), aquí cada cambio se guarda al momento: nombre/descripción y cada renglón son llamadas directas, sin un botón "Guardar todo". "Guardar como nuevo kit" clona los renglones actuales en un kit nuevo (la derivación pedida explícitamente), sin tocar el original.
+- **`solicitudes/nueva`** gana una sección "Partir de un kit" antes de "Qué se pide": elegir kit + cantidad N, "Cargar en la solicitud" reemplaza `lines[]` con `kit_item.quantity × N` por renglón, resuelto contra el catálogo ya cargado — un producto desactivado desde que el kit se guardó se omite con un aviso, sin ninguna llamada nueva al backend. El operador puede seguir editando después de cargar (agregar, quitar, ajustar cantidades) exactamente como si los hubiera tecleado a mano — el kit es un punto de partida, nunca un candado. `source_kit_id`/`source_kit_multiplier` viajan con la solicitud, solo para trazabilidad.
+- **Menú** — "Kits" se suma a "Operación" en `menu-config.ts`, visible para admin/coordinación/salida.
+
+**Un ajuste de lint real, no cosmético:** las tres pantallas nuevas usaban el patrón `[version, setVersion] + useCallback(..., [version])` para forzar un refetch tras guardar — que en `useAsyncData` dispara "dependencia innecesaria" porque `version` nunca se lee dentro del fetcher (a diferencia de, por ejemplo, `inventario/page.tsx`, que sí la devuelve dentro del objeto resultante y por eso no marca el aviso). Corregido usando `reload()`, que `useAsyncData` ya expone exactamente para este caso — más simple que cargar un estado extra solo para invalidar la caché.
+
+Verificado con `npx tsc --noEmit`, `npx eslint` sobre los archivos nuevos (limpio, sin errores ni advertencias tras el ajuste de arriba) y `npm run build` (28 rutas, incluidas las 3 de kits). **No verificado en navegador real** — sin Playwright disponible en esta sesión; la verificación funcional del sistema de kits (permisos, creación, contador de uso) se hizo contra el backend con un servidor de prueba desechable, documentado en el `CLAUDE.md` del backend.

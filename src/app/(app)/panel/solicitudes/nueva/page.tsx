@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { callRoute, currentUser, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
+import { loadKits, loadKitItems, type Kit } from "@/lib/kits";
 import { useAsyncData } from "@/lib/use-async-data";
 import { ProductPicker } from "@/components/app/product-picker";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
 import { AddressMapField, EMPTY_ADDRESS_VALUE, type AddressValue } from "@/components/app/address-map-field";
-import { ClipboardList, Minus, Plus } from "lucide-react";
+import { ClipboardList, Layers, Minus, Plus } from "lucide-react";
 
 interface InventorySummaryRow {
   product_id: string;
@@ -42,22 +43,24 @@ export default function NuevaSolicitudPage() {
   const operator = currentUser();
 
   const fetchCatalog = useCallback(async () => {
-    const [catalog, summary] = await Promise.all([
+    const [catalog, summary, kits] = await Promise.all([
       loadCatalog(),
       // Disponible ya excluye lo reservado y lo retenido en revisión —
       // son cubetas separadas de `available_qty`, ver inventory/summary
       // en el backend. No hace falta recalcular nada aquí.
       callRoute<{ summary: InventorySummaryRow[] }>("/api/inventory/summary"),
+      loadKits(),
     ]);
     const stockByProduct: Record<string, number> = {};
     for (const row of summary.summary) {
       stockByProduct[row.product_id] = row.available_qty;
     }
-    return { catalog, stockByProduct };
+    return { catalog, stockByProduct, kits };
   }, []);
   const { data, error: catalogError } = useAsyncData(fetchCatalog);
   const catalog = data?.catalog ?? null;
   const stockByProduct = data?.stockByProduct ?? {};
+  const kits = data?.kits ?? [];
 
   const [requesterName, setRequesterName] = useState("");
   const [requesterPhone, setRequesterPhone] = useState("");
@@ -72,6 +75,68 @@ export default function NuevaSolicitudPage() {
   const [pendingProduct, setPendingProduct] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [kitId, setKitId] = useState("");
+  const [kitMultiplier, setKitMultiplier] = useState(1);
+  const [loadingKit, setLoadingKit] = useState(false);
+  const [kitWarning, setKitWarning] = useState<string | null>(null);
+  // Trazabilidad únicamente ("esta solicitud vino de este kit, con esta
+  // N") — las cantidades ya se copiaron a `lines` al cargar, así que
+  // ajustar los renglones a mano después no pierde nada, solo deja de
+  // reflejar exactamente el kit tal cual estaba.
+  const [sourceKit, setSourceKit] = useState<{ id: string; multiplier: number } | null>(null);
+
+  async function loadKitIntoDraft() {
+    if (!kitId || !catalog) return;
+    if (
+      lines.length > 0 &&
+      !window.confirm("Esto reemplaza los renglones que ya tenías. ¿Continuar?")
+    ) {
+      return;
+    }
+
+    setLoadingKit(true);
+    setKitWarning(null);
+    setError(null);
+    try {
+      const items = await loadKitItems(kitId);
+      const productById = new Map(catalog.products.map((p) => [p.id, p]));
+
+      const newLines: DraftLine[] = [];
+      let skipped = 0;
+      for (const item of items) {
+        const product = productById.get(item.product_id);
+        if (!product) {
+          skipped += 1;
+          continue;
+        }
+        newLines.push({
+          key: crypto.randomUUID(),
+          product,
+          quantity: item.quantity * kitMultiplier,
+        });
+      }
+
+      if (newLines.length === 0) {
+        setKitWarning("Ninguno de los productos de este kit está disponible en el catálogo activo.");
+        return;
+      }
+
+      setLines(newLines);
+      setSourceKit({ id: kitId, multiplier: kitMultiplier });
+      if (skipped > 0) {
+        setKitWarning(
+          `${skipped} producto${skipped === 1 ? "" : "s"} de este kit ya no ${
+            skipped === 1 ? "está disponible" : "están disponibles"
+          } en el catálogo y se omitió${skipped === 1 ? "" : "n"}.`
+        );
+      }
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setLoadingKit(false);
+    }
+  }
 
   // Con el switch activado, solo se puede elegir (y pedir) lo que de
   // verdad hay en bodega — filtrar el catálogo aquí es más simple que
@@ -178,6 +243,8 @@ export default function NuevaSolicitudPage() {
         status: "pendiente",
         operator_id: operator.id,
         notes,
+        source_kit_id: sourceKit?.id || null,
+        source_kit_multiplier: sourceKit?.multiplier || null,
       });
 
       for (const line of lines) {
@@ -317,6 +384,70 @@ export default function NuevaSolicitudPage() {
           </div>
         </div>
       </section>
+
+      {kits.length > 0 ? (
+        <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
+          <h2 className="mb-1 text-sm font-bold">Partir de un kit</h2>
+          <p className="mb-3 text-xs text-(--muted)">
+            Precarga los renglones de una plantilla, multiplicados por la cantidad que
+            elijas. Para otro destino con el mismo kit, se repite este mismo formulario.
+          </p>
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-0 flex-1">
+              <label htmlFor="kit-select" className="mb-1 block text-sm font-bold">
+                Kit
+              </label>
+              <select
+                id="kit-select"
+                value={kitId}
+                onChange={(event) => {
+                  setKitId(event.target.value);
+                  setKitWarning(null);
+                }}
+                className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+              >
+                <option value="">Elige un kit…</option>
+                {kits.map((kit: Kit) => (
+                  <option key={kit.id} value={kit.id}>
+                    {kit.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-24">
+              <label htmlFor="kit-n" className="mb-1 block text-sm font-bold">
+                Cantidad
+              </label>
+              <input
+                id="kit-n"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={kitMultiplier}
+                onChange={(event) => setKitMultiplier(Math.max(1, Number(event.target.value)))}
+                className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+              />
+            </div>
+            <Button
+              variant="outline"
+              disabled={!kitId || loadingKit}
+              loading={loadingKit}
+              onClick={loadKitIntoDraft}
+              icon={Layers}
+            >
+              Cargar en la solicitud
+            </Button>
+          </div>
+          {kitWarning ? (
+            <p className="mt-2 text-sm text-unal-orange">{kitWarning}</p>
+          ) : null}
+          {sourceKit ? (
+            <p className="mt-2 text-sm text-unal-green-dark">
+              Renglones cargados desde el kit — puedes seguir ajustándolos abajo.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
         <h2 className="mb-3 text-sm font-bold">Qué se pide</h2>

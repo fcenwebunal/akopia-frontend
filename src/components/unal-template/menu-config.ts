@@ -31,6 +31,11 @@ export const APP_MENU: AppMenuItem[] = [
       { label: "Donaciones", href: "/panel/donaciones" },
       { label: "Solicitudes", href: "/panel/solicitudes" },
       { label: "Despachos", href: "/panel/despachos" },
+      {
+        label: "Kits",
+        href: "/panel/kits",
+        roles: ["admin", "coordinacion", "salida"],
+      },
     ],
   },
   {
