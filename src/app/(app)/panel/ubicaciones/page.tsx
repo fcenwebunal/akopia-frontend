@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Ban, PackageSearch, Plus, ShieldAlert } from "lucide-react";
 import { currentUser, pb } from "@/lib/pb";
+import { hasAnyRole } from "@/lib/roles";
 import { loadLocations, locationLabel, type Location } from "@/lib/locations";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
@@ -11,15 +12,24 @@ import { PhotoTile } from "@/components/app/photo-tile";
 import { LocationAddForm } from "@/components/app/location-add-form";
 
 /*
- * Igual que el explorador de catálogo: cualquier sesión activa puede
- * agregar una ubicación (el backend ya lo permite desde la migración
- * 035 — se crea en el momento, al recibir algo que no tiene dónde ir
- * todavía), pero solo admin puede cambiarle la foto o los datos después
- * (`locations.updateRule` sigue siendo admin-only).
+ * Igual que el explorador de catálogo: crear una ubicación y cambiarle
+ * la foto después son de los roles que interactúan con inventario
+ * (migración 045 del backend: admin, coordinación, transporte y
+ * distribución, voluntariado, salida) — comunicaciones queda fuera,
+ * decisión explícita de Juan Manuel. Antes de los roles múltiples esto
+ * era "cualquier sesión activa"; ya no.
  */
+const INVENTORY_ROLES: Parameters<typeof hasAnyRole>[1] = [
+  "admin",
+  "coordinacion",
+  "transporte_distribucion",
+  "voluntariado",
+  "salida",
+];
+
 export default function UbicacionesPage() {
   const operator = currentUser();
-  const isAdmin = operator?.role === "admin";
+  const canManageLocations = hasAnyRole(operator?.role, INVENTORY_ROLES);
 
   const [version, setVersion] = useState(0);
   const [adding, setAdding] = useState(false);
@@ -106,18 +116,20 @@ export default function UbicacionesPage() {
             photoUrl={photoOverrides[location.id] ?? location.photo_url}
             recordId={location.id}
             kind="locations"
-            onUpload={isAdmin ? (id, url) => savePhoto(id, url) : undefined}
+            onUpload={canManageLocations ? (id, url) => savePhoto(id, url) : undefined}
           />
         ))}
 
-        <button
-          type="button"
-          onClick={() => setAdding(true)}
-          className="flex aspect-square flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-(--rule) text-(--muted) hover:border-unal-green-dark hover:text-unal-green-dark"
-        >
-          <Plus size={22} strokeWidth={2.5} aria-hidden="true" />
-          <span className="text-xs font-bold">Agregar</span>
-        </button>
+        {canManageLocations ? (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="flex aspect-square flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-(--rule) text-(--muted) hover:border-unal-green-dark hover:text-unal-green-dark"
+          >
+            <Plus size={22} strokeWidth={2.5} aria-hidden="true" />
+            <span className="text-xs font-bold">Agregar</span>
+          </button>
+        ) : null}
       </div>
 
       {/*

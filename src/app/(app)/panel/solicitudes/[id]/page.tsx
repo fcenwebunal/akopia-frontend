@@ -4,6 +4,7 @@ import { use, useCallback, useState } from "react";
 import Link from "next/link";
 import { Check, PackageSearch, X, XCircle } from "lucide-react";
 import { callRoute, currentUser, errorMessage, pb, RouteError } from "@/lib/pb";
+import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,11 @@ export default function SolicitudDetallePage({
 }) {
   const { id } = use(params);
   const operator = currentUser();
-  const isAdmin = operator?.role === "admin";
+  // Aprobar/rechazar/cancelar es de admin, coordinación y salida —
+  // decisión de Juan Manuel (20 ago 2026): salida puede tanto crear
+  // como decidir sobre solicitudes, igual que ya podía transporte y
+  // distribución con despachos.
+  const canDecideRequest = hasAnyRole(operator?.role, ["admin", "coordinacion", "salida"]);
 
   const [version, setVersion] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -279,13 +284,13 @@ export default function SolicitudDetallePage({
           </Button>
         ) : null}
 
-        {canDecide && isAdmin ? (
+        {canDecide && canDecideRequest ? (
           <Button size="sm" disabled={busy} loading={busyAction === "approve"} onClick={approve} icon={Check}>
             Aprobar
           </Button>
         ) : null}
 
-        {canDecide && isAdmin ? (
+        {canDecide && canDecideRequest ? (
           <Button
             variant="danger"
             size="sm"
@@ -297,7 +302,7 @@ export default function SolicitudDetallePage({
           </Button>
         ) : null}
 
-        {canCancel && !canDecide ? (
+        {canCancel && !canDecide && canDecideRequest ? (
           <Button
             variant="outline"
             size="sm"
@@ -310,9 +315,9 @@ export default function SolicitudDetallePage({
           </Button>
         ) : null}
 
-        {canDecide && !isAdmin ? (
+        {canDecide && !canDecideRequest ? (
           <p className="text-sm text-(--muted)">
-            Aprobar o rechazar requiere un administrador.
+            Aprobar o rechazar requiere administración, coordinación o salida.
           </p>
         ) : null}
       </div>

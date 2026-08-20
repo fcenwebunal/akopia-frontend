@@ -25,8 +25,9 @@ export async function requireAdmin(token: string | null) {
 
   try {
     const { record } = await pb.collection("users").authRefresh();
+    const roles: string[] = Array.isArray(record.role) ? record.role : [];
 
-    if (record.role !== "admin" || !record.active) {
+    if (!roles.includes("admin") || !record.active) {
       throw new UnauthorizedError("Esta acción requiere un administrador activo.");
     }
 
@@ -39,12 +40,13 @@ export async function requireAdmin(token: string | null) {
   }
 }
 
-// Igual que `requireAdmin`, pero para operaciones que ambos roles pueden
-// hacer — como crear una ubicación con su foto: `locations.createRule`
-// ya lo permite a cualquier operador activo, así que la firma de subida
-// no puede ser más estricta que la regla que de todas formas se va a
-// aplicar al crear el registro.
-export async function requireActiveUser(token: string | null) {
+// Igual que `requireAdmin`, pero para cualquiera de los roles en
+// `allowed` — como firmar la subida de la foto de un producto: la
+// firma no puede ser más permisiva que `products.updateRule` en el
+// backend (los roles que tocan inventario, ver INVENTORY_ROLES en
+// utils/roles.js), o alguien sin permiso conseguiría una firma válida
+// y solo fallaría después, al intentar guardar `photo_url`.
+export async function requireRole(token: string | null, allowed: string[]) {
   if (!token) {
     throw new UnauthorizedError("Falta la sesión.");
   }
@@ -54,9 +56,13 @@ export async function requireActiveUser(token: string | null) {
 
   try {
     const { record } = await pb.collection("users").authRefresh();
+    const roles: string[] = Array.isArray(record.role) ? record.role : [];
 
     if (!record.active) {
       throw new UnauthorizedError("Esta cuenta está desactivada.");
+    }
+    if (!roles.some((role) => allowed.includes(role))) {
+      throw new UnauthorizedError("Tu rol no tiene permiso para esta acción.");
     }
 
     return record;

@@ -119,7 +119,7 @@ export default function RespaldosPage() {
     }
   }
 
-  if (admin && admin.role !== "admin") {
+  if (admin && !admin.role.includes("admin")) {
     return (
       <p role="alert" className="rounded border-l-4 border-unal-red bg-(--surface) px-4 py-3">
         Esta sección es solo para administradores.

@@ -130,7 +130,11 @@ export async function POST(request: NextRequest) {
         password,
         passwordConfirm: password,
         full_name: identity.fullName || identity.email,
-        role: isBootstrapAdmin ? "admin" : "operator",
+        // Rol de arranque, sin más significado que "algo válido hasta
+        // que un admin/coordinación revise la cuenta" — queda inactiva
+        // de todas formas (ver `active` abajo), así que este valor no
+        // otorga ningún acceso real por sí solo.
+        role: isBootstrapAdmin ? ["admin"] : ["voluntariado"],
         // Las cuentas nuevas quedan pendientes de que un admin las active,
         // salvo el correo de arranque del proyecto. Es la misma regla que
         // ya aplican todas las reglas de acceso del backend: sin `active`

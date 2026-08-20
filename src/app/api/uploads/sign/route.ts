@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
-import { requireAdmin, requireActiveUser, UnauthorizedError } from "@/lib/pb-server";
+import { requireAdmin, requireRole, UnauthorizedError } from "@/lib/pb-server";
 
 export const runtime = "nodejs";
 
@@ -17,12 +17,13 @@ export const runtime = "nodejs";
  * Solo admin para `groups`: no se pidió abrirlo y sus fotos ya se
  * resuelven bien con el sembrado por lote de Wikimedia.
  *
- * `categories`/`products`/`locations` admiten a cualquier activo desde
- * el 18 de agosto — sus `updateRule`/`createRule` ya lo permiten en el
- * backend, y para categorías/productos el hook
- * `06_catalog_photo_guard.pb.js` es quien de verdad limita a un
- * operador a tocar solo `photo_url`: la firma no puede ser más
- * estricta que la regla que de todas formas se va a aplicar al guardar.
+ * `categories`/`products`/`locations` admiten a los roles que
+ * interactúan con inventario (migración 045 del backend: Coordinación,
+ * Transporte y distribución, Voluntariado, Salida, además de Admin) —
+ * el hook `06_catalog_photo_guard.pb.js` sigue limitando a quien no
+ * sea admin/coordinación a tocar solo `photo_url`. La firma no puede
+ * ser más permisiva que esa regla, o alguien sin permiso conseguiría
+ * una firma válida que solo fallaría después, al guardar.
  */
 
 const FOLDERS: Record<string, string> = {
@@ -33,6 +34,13 @@ const FOLDERS: Record<string, string> = {
 };
 
 const ADMIN_ONLY_KINDS = new Set(["groups"]);
+const INVENTORY_ROLES = [
+  "admin",
+  "coordinacion",
+  "transporte_distribucion",
+  "voluntariado",
+  "salida",
+];
 
 export async function POST(request: NextRequest) {
   const token = request.headers.get("Authorization");
@@ -49,7 +57,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await (ADMIN_ONLY_KINDS.has(kind) ? requireAdmin(token) : requireActiveUser(token));
+    await (ADMIN_ONLY_KINDS.has(kind) ? requireAdmin(token) : requireRole(token, INVENTORY_ROLES));
   } catch (err) {
     if (err instanceof UnauthorizedError) {
       return NextResponse.json({ message: err.message }, { status: 403 });

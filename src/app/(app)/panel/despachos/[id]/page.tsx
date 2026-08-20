@@ -3,7 +3,8 @@
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle } from "lucide-react";
-import { callRoute, errorMessage, pb } from "@/lib/pb";
+import { callRoute, currentUser, errorMessage, pb } from "@/lib/pb";
+import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,12 @@ export default function DespachoDetallePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const operator = currentUser();
+  const canConfirmDelivery = hasAnyRole(operator?.role, [
+    "admin",
+    "transporte_distribucion",
+    "salida",
+  ]);
   const [version, setVersion] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -299,6 +306,11 @@ export default function DespachoDetallePage({
             <p className="mt-2 text-sm italic">{delivery.notes}</p>
           ) : null}
         </section>
+      ) : !canConfirmDelivery ? (
+        <p className="mt-6 text-sm text-(--muted)">
+          Confirmar la entrega requiere administración, transporte y
+          distribución, o salida.
+        </p>
       ) : (
         <section className="mt-6 rounded border border-(--rule) bg-(--surface) p-4">
           <h2 className="text-sm font-bold">Confirmar entrega</h2>

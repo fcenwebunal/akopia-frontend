@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useCallback } from "react";
 import { PackageSearch, ClipboardList } from "lucide-react";
-import { pb } from "@/lib/pb";
+import { currentUser, pb } from "@/lib/pb";
+import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LinkButton } from "@/components/ui/button";
 
@@ -52,6 +53,9 @@ const STATUS_STYLES: Record<Request["status"], string> = {
 };
 
 export default function SolicitudesPage() {
+  const operator = currentUser();
+  const canCreate = hasAnyRole(operator?.role, ["admin", "coordinacion", "salida"]);
+
   const fetchRequests = useCallback(async () => {
     const page = await pb.collection("requests").getList<Request>(1, 50, {
       sort: "-created",
@@ -74,9 +78,11 @@ export default function SolicitudesPage() {
           <LinkButton href="/panel/solicitudes/faltantes" variant="outline" icon={PackageSearch}>
             Productos faltantes
           </LinkButton>
-          <LinkButton href="/panel/solicitudes/nueva" icon={ClipboardList}>
-            Registrar solicitud
-          </LinkButton>
+          {canCreate ? (
+            <LinkButton href="/panel/solicitudes/nueva" icon={ClipboardList}>
+              Registrar solicitud
+            </LinkButton>
+          ) : null}
         </div>
       </div>
 

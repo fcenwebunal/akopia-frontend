@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { currentUser, pb } from "@/lib/pb";
+import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
 
@@ -79,10 +80,10 @@ export default function HistorialPage() {
       : entries;
   }, [entries, entityFilter]);
 
-  if (admin && admin.role !== "admin") {
+  if (admin && !hasAnyRole(admin.role, ["admin", "coordinacion", "comunicaciones"])) {
     return (
       <p role="alert" className="rounded border-l-4 border-unal-red bg-(--surface) px-4 py-3">
-        Esta sección es solo para administradores.
+        Esta sección es solo para administración, coordinación y comunicaciones.
       </p>
     );
   }

@@ -25,14 +25,22 @@ export const pb = new PocketBase(POCKETBASE_URL);
 // que en React 18+ dispara dos veces cada efecto en desarrollo.
 pb.autoCancellation(false);
 
-// Los únicos dos valores que admite users.role en el esquema.
-export type UserRole = "admin" | "operator";
+// Los seis roles que admite users.role en el esquema (selección
+// múltiple desde la migración 044 del backend — una cuenta puede
+// tener varios a la vez, por eso AkopiaUser.role es un arreglo).
+export type UserRole =
+  | "admin"
+  | "coordinacion"
+  | "transporte_distribucion"
+  | "voluntariado"
+  | "comunicaciones"
+  | "salida";
 
 export interface AkopiaUser {
   id: string;
   email: string;
   full_name: string;
-  role: UserRole;
+  role: UserRole[];
   phone?: string;
   active: boolean;
 }

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useCallback } from "react";
 import { Gift } from "lucide-react";
-import { pb } from "@/lib/pb";
+import { currentUser, pb } from "@/lib/pb";
+import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
 import { LinkButton } from "@/components/ui/button";
@@ -25,6 +26,9 @@ const DONOR_TYPES: Record<string, string> = {
 };
 
 export default function DonacionesPage() {
+  const operator = currentUser();
+  const canCreate = hasAnyRole(operator?.role, ["admin", "voluntariado"]);
+
   const fetchDonations = useCallback(async () => {
     const page = await pb.collection("donations").getList<Donation>(1, 50, {
       sort: "-receipt_date",
@@ -44,9 +48,11 @@ export default function DonacionesPage() {
             Las últimas donaciones registradas. El código lo asigna el servidor.
           </p>
         </div>
-        <LinkButton href="/panel/donaciones/nueva" icon={Gift}>
-          Registrar donación
-        </LinkButton>
+        {canCreate ? (
+          <LinkButton href="/panel/donaciones/nueva" icon={Gift}>
+            Registrar donación
+          </LinkButton>
+        ) : null}
       </div>
 
       {error ? (

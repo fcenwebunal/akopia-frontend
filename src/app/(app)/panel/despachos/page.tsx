@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useCallback } from "react";
 import { Truck } from "lucide-react";
-import { pb } from "@/lib/pb";
+import { currentUser, pb } from "@/lib/pb";
+import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
 import { LinkButton } from "@/components/ui/button";
@@ -32,6 +33,9 @@ const REQUEST_STATUS_STYLES: Record<string, string> = {
 };
 
 export default function DespachosPage() {
+  const operator = currentUser();
+  const canCreate = hasAnyRole(operator?.role, ["admin", "transporte_distribucion", "salida"]);
+
   const fetchDispatches = useCallback(async () => {
     const page = await pb.collection("dispatches").getList<Dispatch>(1, 50, {
       sort: "-created",
@@ -51,9 +55,11 @@ export default function DespachosPage() {
             Salidas registradas y su estado de entrega.
           </p>
         </div>
-        <LinkButton href="/panel/despachos/nueva" icon={Truck}>
-          Registrar despacho
-        </LinkButton>
+        {canCreate ? (
+          <LinkButton href="/panel/despachos/nueva" icon={Truck}>
+            Registrar despacho
+          </LinkButton>
+        ) : null}
       </div>
 
       {error ? (
