@@ -4,7 +4,8 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AlertTriangle, ArrowRight, Ban, CheckCircle, MapPin, Warehouse } from "lucide-react";
-import { callRoute, errorMessage, pb } from "@/lib/pb";
+import { callRoute, currentUser, errorMessage, pb } from "@/lib/pb";
+import { hasAnyRole } from "@/lib/roles";
 import { loadCatalog, normalize } from "@/lib/catalog";
 import { loadLocations, locationLabel, type Location } from "@/lib/locations";
 import { useAsyncData } from "@/lib/use-async-data";
@@ -45,6 +46,16 @@ interface RejectionMovement {
  * lo que necesita una decisión hoy; el resto ya está resuelto.
  */
 export default function InventarioPage() {
+  const operator = currentUser();
+  // Reubicar y rechazar van por rutas propias del backend, restringidas
+  // a admin/coordinación (ver /api/inventory/{id}/relocate y /reject).
+  // "Liberar a disponible" en cambio actualiza `donation_items`
+  // directamente, cuya regla también deja pasar al voluntariado dueño
+  // de la remesa — se ofrece el botón igual, y si la remesa no es suya
+  // el backend lo rechaza con un mensaje claro.
+  const canManageInventory = hasAnyRole(operator?.role, ["admin", "coordinacion"]);
+  const canReleaseQuarantine = hasAnyRole(operator?.role, ["admin", "coordinacion", "voluntariado"]);
+
   const [version, setVersion] = useState(0);
   const [query, setQuery] = useState("");
   const [groupId, setGroupId] = useState("");
@@ -286,6 +297,7 @@ export default function InventarioPage() {
                   <ProductRow
                     key={row.id}
                     row={row}
+                    canRelocate={canManageInventory}
                     onOpen={() => setDetail({ row, location: undefined })}
                     onRelocate={() => setRelocating(row)}
                   />
@@ -321,18 +333,22 @@ export default function InventarioPage() {
                         {locationLabel(locationById.get(row.location_id))}
                       </span>
                     </button>
-                    <Button
-                      size="sm"
-                      disabled={releasingId === row.id}
-                      loading={releasingId === row.id}
-                      onClick={() => releaseRow(row)}
-                      icon={CheckCircle}
-                    >
-                      Liberar a disponible
-                    </Button>
-                    <Button variant="danger" size="sm" onClick={() => setRejecting(row)} icon={Ban}>
-                      Rechazar
-                    </Button>
+                    {canReleaseQuarantine ? (
+                      <Button
+                        size="sm"
+                        disabled={releasingId === row.id}
+                        loading={releasingId === row.id}
+                        onClick={() => releaseRow(row)}
+                        icon={CheckCircle}
+                      >
+                        Liberar a disponible
+                      </Button>
+                    ) : null}
+                    {canManageInventory ? (
+                      <Button variant="danger" size="sm" onClick={() => setRejecting(row)} icon={Ban}>
+                        Rechazar
+                      </Button>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -376,6 +392,7 @@ export default function InventarioPage() {
                     <ProductRow
                       key={row.id}
                       row={row}
+                      canRelocate={canManageInventory}
                       onOpen={() => setDetail({ row, location })}
                       onRelocate={() => setRelocating(row)}
                     />
@@ -451,6 +468,7 @@ export default function InventarioPage() {
         <ProductLocationDetail
           row={detail.row}
           location={detail.location}
+          canToggle={canReleaseQuarantine}
           onClose={() => setDetail(null)}
           onChanged={reload}
         />
@@ -461,10 +479,12 @@ export default function InventarioPage() {
 
 function ProductRow({
   row,
+  canRelocate,
   onOpen,
   onRelocate,
 }: {
   row: InventoryRow;
+  canRelocate: boolean;
   onOpen: () => void;
   onRelocate: () => void;
 }) {
@@ -493,7 +513,7 @@ function ProductRow({
         <span className="text-sm tabular-nums text-unal-red">{row.quarantine_qty} cuarent.</span>
       ) : null}
 
-      {row.available_qty > 0 ? (
+      {row.available_qty > 0 && canRelocate ? (
         <Button variant="outline" size="sm" onClick={onRelocate} icon={MapPin}>
           Reubicar
         </Button>
@@ -736,11 +756,13 @@ const STATUS_LABELS: Record<DonationItemRow["classification_status"], string> = 
 function ProductLocationDetail({
   row,
   location,
+  canToggle,
   onClose,
   onChanged,
 }: {
   row: InventoryRow;
   location?: Location;
+  canToggle: boolean;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -840,17 +862,19 @@ function ProductLocationDetail({
                   </p>
                 ) : null}
 
-                <Button
-                  size="sm"
-                  variant={item.classification_status === "quarantine" ? "primary" : "outline"}
-                  disabled={busy === item.id}
-                  loading={busy === item.id}
-                  onClick={() => toggle(item)}
-                  icon={item.classification_status === "quarantine" ? CheckCircle : AlertTriangle}
-                  className="mt-2"
-                >
-                  {item.classification_status === "quarantine" ? "Liberar a disponible" : "Enviar a revisión"}
-                </Button>
+                {canToggle ? (
+                  <Button
+                    size="sm"
+                    variant={item.classification_status === "quarantine" ? "primary" : "outline"}
+                    disabled={busy === item.id}
+                    loading={busy === item.id}
+                    onClick={() => toggle(item)}
+                    icon={item.classification_status === "quarantine" ? CheckCircle : AlertTriangle}
+                    className="mt-2"
+                  >
+                    {item.classification_status === "quarantine" ? "Liberar a disponible" : "Enviar a revisión"}
+                  </Button>
+                ) : null}
               </li>
             ))}
           </ul>

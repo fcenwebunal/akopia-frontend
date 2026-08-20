@@ -775,4 +775,10 @@ Consecuencia directa de la migración `044`/`045` del backend (`CLAUDE.md` del b
 
 **Alcance dejado fuera a propósito, no verificado por falta de tiempo en esta sesión:** los botones de "Reubicar"/"Rechazar"/"Liberar a disponible" dentro de `/panel/inventario` no se ocultan todavía según rol (el backend ya los rechaza correctamente con `requireRole(["admin","coordinacion"])`, solo falta el espejo cosmético en la interfaz). Pendiente para una próxima sesión.
 
+### 2026-08-20 (tarde) — Pulido de roles en `/panel/inventario`
+
+Cierra el pendiente de la entrada anterior. `ProductRow` gana `canRelocate` (oculta "Reubicar" si el rol no es admin/coordinación — mismo conjunto que exige `requireRole` en `/api/inventory/{id}/relocate`); en "En Revisión", "Rechazar" se oculta con el mismo criterio (`/api/inventory/{id}/reject` es igual de estricto) y "Liberar a disponible" se ofrece también a Voluntariado, porque esa acción no pasa por una ruta propia sino por `donation_items.update` directo, cuya regla (migración `045` del backend, `adminCoordOrOwner`) también deja pasar al voluntariado dueño de la remesa — el backend decide si de verdad es su remesa, la interfaz solo evita ofrecer el botón a quien nunca podría usarlo (transporte, comunicaciones, salida). Mismo criterio aplicado al interruptor apto/en revisión de `ProductLocationDetail` (el panel por remesa), que usa la misma llamada.
+
+Verificado con `npx tsc --noEmit` y `npm run build` limpios. Sin Playwright disponible en esta sesión.
+
 Verificado con `npx tsc --noEmit` y `npm run build` (26 rutas, limpio) tras cada tanda de cambios. Sin Playwright disponible en esta sesión — no se verificó visualmente en navegador; la verificación real de las reglas de permiso se hizo contra el backend (servidor de prueba desechable), no contra esta interfaz.
