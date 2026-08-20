@@ -278,7 +278,7 @@ export default function NuevaSolicitudPage() {
   }
 
   return (
-    <div className="pb-28">
+    <div>
       <Link href="/panel/solicitudes" className="text-sm font-bold text-unal-green-dark">
         ← Solicitudes
       </Link>
@@ -515,7 +515,7 @@ export default function NuevaSolicitudPage() {
         </p>
       ) : null}
 
-      <div className="fixed inset-x-0 bottom-0 border-t border-(--rule) bg-(--surface) p-4">
+      <div className="sticky bottom-0 mt-4 border-t border-(--rule) bg-(--surface) p-4">
         <div className="mx-auto flex max-w-5xl gap-3">
           <Button variant="outline" onClick={() => router.back()} className="justify-center">
             Cancelar

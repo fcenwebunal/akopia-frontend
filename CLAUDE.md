@@ -824,3 +824,15 @@ Juan Manuel reportó no poder entrar desde `https://acopio.manizales.unal.edu.co
 **Corregido en `src/lib/pb.ts`**: cualquier valor vacío de `NEXT_PUBLIC_PB_URL` se normaliza a `"/"` en vez de `""` antes de construir el cliente — `"/"` sí empieza por `"/"`, así que el SDK nunca entra en esa rama y resuelve limpio contra `location.origin` sin importar desde qué página se dispare la petición. No hace falta tocar ningún `.env.production` existente (en la UNAL o en Vercel): el arreglo normaliza el valor vacío que ya estaba puesto en los dos, sin depender de que alguien recuerde cambiar la variable en cada sitio donde se despliega.
 
 Verificado con `npx tsc --noEmit` y `npm run build` limpios, y reconstruido en el servidor de la UNAL. **Pendiente:** el mismo `NEXT_PUBLIC_PB_URL` vacío vive también en la configuración de Vercel — ese build hay que reconstruirlo (push a `main` ya dispara el redeploy automático) para que el arreglo llegue también al despliegue provisional.
+
+### 2026-08-20 (noche) — La franja de "Guardar/Cancelar" se solapaba con el pie institucional
+
+Juan Manuel reportó con captura: en `donaciones/nueva`, `solicitudes/nueva` y `kits/nueva`, la franja inferior con los botones "Cancelar"/"Guardar…" quedaba flotando sobre el pie de página de la UNAL en vez de terminar antes de él.
+
+**Causa:** las tres pantallas usaban `position: fixed; bottom: 0` para esa franja — `fixed` la saca por completo del flujo del documento y la clava contra el borde inferior del *viewport*, sin importar qué haya ahí debajo (en este caso, el pie institucional, que sigue su propio flujo normal más abajo en el documento). Cualquiera de las dos podía terminar visible al mismo tiempo, superpuestas.
+
+**Corregido cambiando `fixed` por `sticky`** (mismo `bottom-0`, sin `inset-x-0`, que no aporta nada a un elemento `sticky` de ancho completo por defecto): un elemento `sticky` respeta su contenedor — se pega al fondo del viewport solo mientras ese contenedor sigue ocupando pantalla, y en cuanto el contenedor (el `<div>` de la propia pantalla, que termina antes del pie) se acaba, el elemento deja de pegarse y sigue el flujo normal, sin poder invadir nada que venga después en el documento (como el pie, que vive fuera de ese contenedor). El `pb-28` que reservaba espacio de sobra para compensar el `fixed` ya no hacía falta — se quitó, porque un elemento `sticky` en flujo normal no necesita ese hueco artificial.
+
+**Auditoría del resto del sistema, pedida explícitamente** ("verifica que todo se quede dentro del contenido"): revisados todos los `position: fixed` del proyecto. El resto son diálogos modales (`fixed inset-0`, fondo oscuro semitransparente) — ese patrón sí debe cubrir toda la pantalla, header y pie incluidos, mientras el diálogo está abierto; es el comportamiento correcto de un modal, no el mismo bug. `despachos/nueva` nunca tuvo este problema — ya usaba una franja de botones en flujo normal, sin `fixed`.
+
+Verificado con `npx tsc --noEmit` y `npm run build` limpios. Sin Playwright en esta sesión — no se vio el desplazamiento real hasta el pie en pantalla.
