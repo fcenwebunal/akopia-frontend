@@ -836,3 +836,9 @@ Juan Manuel reportó con captura: en `donaciones/nueva`, `solicitudes/nueva` y `
 **Auditoría del resto del sistema, pedida explícitamente** ("verifica que todo se quede dentro del contenido"): revisados todos los `position: fixed` del proyecto. El resto son diálogos modales (`fixed inset-0`, fondo oscuro semitransparente) — ese patrón sí debe cubrir toda la pantalla, header y pie incluidos, mientras el diálogo está abierto; es el comportamiento correcto de un modal, no el mismo bug. `despachos/nueva` nunca tuvo este problema — ya usaba una franja de botones en flujo normal, sin `fixed`.
 
 Verificado con `npx tsc --noEmit` y `npm run build` limpios. Sin Playwright en esta sesión — no se vio el desplazamiento real hasta el pie en pantalla.
+
+### 2026-08-20 (noche) — El enlace del subdominio vuelve a apuntar hacia arriba, a la sede
+
+Corrección de rumbo de Juan Manuel sobre el ajuste del mismo día ("el enlace del subdominio ya apunta al subdominio real"): `SITE_HREF` ya no es `https://acopio.manizales.unal.edu.co/` (la propia portada) — pasa a `https://manizales.unal.edu.co` (la sede). El texto visible (`SITE_URL`) no cambia, sigue mostrando `acopio.manizales.unal.edu.co` — es el patrón "estás aquí, el clic sube un nivel" que ya trae el widget `#subdominio` de la plantilla, en vez de un enlace que apunte a la propia página en la que ya se está.
+
+Verificado con `npx tsc --noEmit` y `npm run build` limpios, y reconstruido en el servidor de la UNAL.

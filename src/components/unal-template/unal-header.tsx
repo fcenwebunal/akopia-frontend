@@ -52,11 +52,14 @@ const SERVICIOS = [
   },
 ];
 
-// Subdominio institucional de AKOPIA (directriz B1: sin guiones, sin www).
-// Publicado por OTIC el 20 de agosto de 2026 — DNS público y TLS ya
-// resuelven aquí de verdad, no es una promesa a futuro.
+// Subdominio institucional de AKOPIA (directriz B1: sin guiones, sin www),
+// publicado por OTIC el 20 de agosto de 2026 — DNS público y TLS ya
+// resuelven aquí de verdad. Se muestra como texto ("estás aquí"), pero
+// el enlace sube un nivel, a la sede — mismo patrón que ya trae la
+// plantilla para este widget: el subdominio identifica el sitio, el
+// clic navega al padre institucional, no a la propia portada.
 const SITE_URL = "acopio.manizales.unal.edu.co";
-const SITE_HREF = `https://${SITE_URL}/`;
+const SITE_HREF = "https://manizales.unal.edu.co";
 
 function MainMenuGroup({ item }: Readonly<{ item: AppMenuItem }>) {
   if (!item.children) {
@@ -388,12 +391,14 @@ export function UnalHeader({
 
         <div id="bs-navbar" className="navigation d-none d-md-block">
           {/*
-            El subdominio institucional ya existe de verdad (DNS público
-            y TLS resueltos por OTIC el 20 de agosto de 2026) — el
-            enlace apunta directo ahí, no al despliegue provisional.
-            Sin target="_blank": es la portada del sitio en el que ya se
-            está, misma pestaña como cualquier enlace interno. El menú
-            móvil clona este mismo HTML (ver unal.js
+            El texto muestra el subdominio real de AKOPIA (ya publicado
+            por OTIC, DNS y TLS funcionando) — el enlace en sí sube un
+            nivel, a la sede (manizales.unal.edu.co), pedido explícito
+            de Juan Manuel: es el mismo patrón "estás aquí, pero el
+            clic navega al padre" que ya trae este widget en la
+            plantilla. Sin target="_blank": misma pestaña, como
+            cualquier enlace interno de la jerarquía institucional. El
+            menú móvil clona este mismo HTML (ver unal.js
             prepare_content_menu), así que el enlace queda activo ahí
             también sin tocar nada más.
           */}
