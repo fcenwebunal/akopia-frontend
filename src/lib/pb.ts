@@ -6,18 +6,27 @@ import PocketBase from "pocketbase";
  * La URL nunca se escribe en el código: el mismo build tiene que servir
  * en local, en el Ubuntu de pruebas y en la infraestructura de la UNAL.
  *
- * En producción, `NEXT_PUBLIC_PB_URL` se deja vacío a propósito: con
- * base URL vacía, el SDK de PocketBase resuelve contra
- * `location.origin` — el mismo host y protocolo desde el que se cargó
- * la página. Así funciona igual si alguien entra por la IP
- * (`http://172.23.177.12`) o por el dominio
- * (`https://acopio.manizales.unal.edu.co`), sin fijar de antemano cuál
- * de los dos va a usar el navegador, y sin depender de que el dominio
- * sea alcanzable desde donde sea que esté el usuario (ver DESPLIEGUE.md,
- * el NAT pendiente con OTIC). Fijarlo a un host concreto rompía el
- * login en cuanto se accedía por el otro — ver bitácora 19 ago 2026.
+ * En producción, `NEXT_PUBLIC_PB_URL` se deja sin definir a propósito:
+ * así el SDK resuelve contra el origen desde el que se cargó la
+ * página — el mismo host y protocolo, sea la IP (`http://172.23.177.12`)
+ * o el dominio (`https://acopio.manizales.unal.edu.co`) — sin fijar de
+ * antemano cuál va a usar el navegador (ver DESPLIEGUE.md, el NAT
+ * pendiente con OTIC). Fijarlo a un host concreto rompía el login en
+ * cuanto se accedía por el otro — ver bitácora 19 ago 2026.
+ *
+ * BUG REAL encontrado el 20 de agosto, con un login real desde `/login`
+ * en producción (no solo desde la portada): el SDK de PocketBase arma
+ * la URL base mirando si `baseURL` empieza por "/" — un string VACÍO
+ * ("") no cuenta como que sí, así que además de `location.origin` le
+ * pega `location.pathname` antes del resto ("/login/api/collections/...",
+ * un 404). Con baseURL = "/" sí empieza por "/", y esa rama nunca se
+ * ejecuta — por eso aquí se normaliza cualquier valor vacío a "/" en
+ * vez de dejarlo como "", que es indistinguible a simple vista pero se
+ * comporta distinto dentro del SDK.
  */
-export const POCKETBASE_URL = process.env.NEXT_PUBLIC_PB_URL ?? "http://127.0.0.1:8090";
+const configuredPbUrl = process.env.NEXT_PUBLIC_PB_URL;
+export const POCKETBASE_URL =
+  configuredPbUrl === undefined ? "http://127.0.0.1:8090" : configuredPbUrl || "/";
 
 export const pb = new PocketBase(POCKETBASE_URL);
 
