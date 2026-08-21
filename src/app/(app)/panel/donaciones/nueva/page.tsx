@@ -70,7 +70,7 @@ export default function NuevaDonacionPage() {
   // guarda la remesa sin artículos — quien la reciba no tiene que
   // saber todavía qué hay adentro. "Registrar todo ahora" es el
   // formulario de siempre, sin cambios. Ver PROPUESTA-RECEPCION-REMESAS.md.
-  const [quickMode, setQuickMode] = useState(false);
+  const [quickMode, setQuickMode] = useState(true);
   const [totalWeight, setTotalWeight] = useState(0);
   const [carrierName, setCarrierName] = useState("");
 
