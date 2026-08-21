@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { UserPlus } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Check, Info, UserPlus, X } from "lucide-react";
 import { currentUser, errorMessage, pb, type UserRole } from "@/lib/pb";
-import { ALL_ROLES, ROLE_LABELS, assignableRoles, hasAnyRole } from "@/lib/roles";
+import { ALL_ROLES, ROLE_LABELS, ROLE_LEVELS, assignableRoles, hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,8 @@ export default function UsuariosPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [query, setQuery] = useState("");
 
   const fetchUsers = useCallback(async () => {
     const page = await pb.collection("users").getList<ManagedUser>(1, 200, {
@@ -110,8 +112,16 @@ export default function UsuariosPage() {
     return <LoadingLine />;
   }
 
-  const pending = users.filter((user) => !user.active);
-  const active = users.filter((user) => user.active);
+  const q = query.trim().toLowerCase();
+  const matchesQuery = (user: ManagedUser) =>
+    !q ||
+    user.full_name.toLowerCase().includes(q) ||
+    user.email.toLowerCase().includes(q);
+
+  const pending = users.filter((user) => !user.active && matchesQuery(user));
+  const active = users.filter((user) => user.active && matchesQuery(user));
+  const totalShown = pending.length + active.length;
+  const hasQuery = q.length > 0;
 
   return (
     <div>
@@ -122,9 +132,18 @@ export default function UsuariosPage() {
             Quién puede operar AKOPIA, y con qué rol o roles.
           </p>
         </div>
-        <Button onClick={() => setShowCreate((v) => !v)} icon={UserPlus}>
-          Vincular correo
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => setShowGuide((v) => !v)}
+            icon={Info}
+            variant="outline"
+          >
+            {showGuide ? "Ocultar guía de roles" : "¿Qué puede hacer cada rol?"}
+          </Button>
+          <Button onClick={() => setShowCreate((v) => !v)} icon={UserPlus}>
+            Vincular correo
+          </Button>
+        </div>
       </div>
 
       {error ? (
@@ -132,6 +151,8 @@ export default function UsuariosPage() {
           {error}
         </p>
       ) : null}
+
+      {showGuide ? <RoleGuide /> : null}
 
       {showCreate ? (
         <LinkEmailForm
@@ -142,6 +163,44 @@ export default function UsuariosPage() {
           }}
           onError={setError}
         />
+      ) : null}
+
+      <div className="mt-6">
+        <label className="sr-only" htmlFor="buscar-usuario">
+          Buscar usuario
+        </label>
+        <input
+          id="buscar-usuario"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar por nombre o correo…"
+          autoComplete="off"
+          className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5 sm:max-w-sm"
+        />
+        {hasQuery ? (
+          <div className="mt-2 flex items-center justify-between text-sm text-(--muted)">
+            <span>
+              {totalShown} de {users.length} usuarios
+            </span>
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="font-bold text-unal-green-dark hover:underline"
+            >
+              Quitar búsqueda
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      {hasQuery && totalShown === 0 ? (
+        <div className="mt-6 rounded border border-(--rule) bg-(--surface) p-6">
+          <p className="font-bold">Nadie coincide con &quot;{query.trim()}&quot;.</p>
+          <p className="mt-1 text-sm text-(--muted)">
+            Busca por nombre completo o por correo.
+          </p>
+        </div>
       ) : null}
 
       {pending.length > 0 ? (
@@ -376,6 +435,151 @@ function LinkEmailForm({
         {saving ? <Spinner /> : null}
         {saving ? "Vinculando…" : "Vincular correo"}
       </button>
+    </div>
+  );
+}
+
+/*
+ * Contenido verificado contra el código real, no contra la propuesta
+ * original (PROPUESTA-ROLES-PERMISOS.md tenía puntos "por confirmar"
+ * que se resolvieron después sin volver a ese documento):
+ *
+ *   - migración 045_role_based_access_rules.js — quién ve/crea/edita
+ *     cada colección.
+ *   - pb_hooks/05_routes.pb.js — el rol exacto que exige cada ruta
+ *     propia (approve/reject/cancel, confirm-delivery, relocate, reject
+ *     de cuarentena).
+ *   - pb_hooks/07_backups.pb.js — respaldos exige `requireAdmin`, ni
+ *     siquiera Coordinación entra.
+ *
+ * Si el backend cambia una regla, esta guía queda desactualizada en
+ * silencio — no hay forma de derivarla en vivo desde el cliente, las
+ * reglas de acceso no se pueden leer por la API. Toca acordarse de
+ * tocar los dos lados.
+ */
+const ROLE_GUIDE: Record<UserRole, { can: string[]; cannot: string[] }> = {
+  admin: {
+    can: [
+      "Ve y gestiona todo: donaciones, inventario, solicitudes, despachos, catálogo, usuarios, respaldos e historial.",
+      "Único que puede asignar el rol Administrador o Coordinación a alguien.",
+      "Edita o elimina cualquier registro del catálogo maestro completo, no solo la foto.",
+      "Único rol con acceso a Respaldos (crear y descargar la base).",
+    ],
+    cannot: [],
+  },
+  coordinacion: {
+    can: [
+      "Ve el ciclo completo: donaciones, inventario, solicitudes, despachos e historial.",
+      "Clasifica cualquier donación y decide en Inventario — reubicar, liberar o rechazar cuarentena de cualquier remesa, no solo la propia.",
+      "Crea, aprueba, rechaza y cancela solicitudes.",
+      "Da de alta catálogo nuevo (producto, categoría, grupo, ubicación) y cambia fotos de lo existente.",
+      "Gestiona usuarios: activa cuentas y asigna roles de nivel 1 (Transporte y distribución, Voluntariado, Comunicaciones, Salida).",
+    ],
+    cannot: [
+      "No registra una donación nueva — eso es de Voluntariado o Administrador.",
+      "No asigna el rol Administrador ni Coordinación, y no puede editar ni desactivar una cuenta Administrador (solo verla).",
+      "Sin acceso a Respaldos ni a editar/eliminar por completo el catálogo maestro.",
+    ],
+  },
+  transporte_distribucion: {
+    can: [
+      "Arma despachos y confirma entregas.",
+      "Ve solicitudes y saldos de inventario, para saber qué llevar.",
+      "Da de alta catálogo nuevo y cambia fotos de lo existente.",
+    ],
+    cannot: [
+      "No crea ni decide solicitudes.",
+      "No ve ni clasifica donaciones.",
+      "Sin acceso a usuarios, respaldos ni historial.",
+    ],
+  },
+  voluntariado: {
+    can: [
+      "Registra donaciones nuevas (recepción) y clasifica las que recibió — disponible o cuarentena.",
+      "Da de alta catálogo nuevo y cambia fotos de lo existente.",
+      "Ve los saldos de inventario.",
+    ],
+    cannot: [
+      "No reubica ni rechaza cuarentena de forma definitiva — eso es de Coordinación/Administrador.",
+      "Sin acceso a solicitudes, despachos ni usuarios.",
+    ],
+  },
+  comunicaciones: {
+    can: [
+      "Consulta donaciones, inventario, solicitudes, despachos e historial — para reportar y difundir.",
+    ],
+    cannot: [
+      "No crea ni edita nada: ni catálogo, ni inventario, ni solicitudes, ni despachos.",
+    ],
+  },
+  salida: {
+    can: [
+      "Crea, aprueba, rechaza y cancela solicitudes — la misma decisión que Coordinación, pero solo sobre solicitudes.",
+      "Arma despachos y confirma entregas.",
+      "Da de alta catálogo nuevo y cambia fotos de lo existente.",
+      "Ve solicitudes, despachos e inventario.",
+    ],
+    cannot: [
+      "No ve ni clasifica donaciones.",
+      "No reubica ni rechaza cuarentena en Inventario.",
+      "Sin acceso a usuarios, respaldos ni historial.",
+    ],
+  },
+};
+
+function RoleGuide() {
+  const rolesByLevel = useMemo(
+    () => ALL_ROLES.slice().sort((a, b) => ROLE_LEVELS[b] - ROLE_LEVELS[a]),
+    []
+  );
+
+  return (
+    <div className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
+      <h2 className="mb-1 text-sm font-bold">Qué puede hacer cada rol</h2>
+      <p className="mb-4 text-xs text-(--muted)">
+        Una cuenta puede tener varios roles a la vez — sus permisos se suman.
+        Nadie puede asignar un rol de poder igual o mayor al suyo (Administrador
+        es la única excepción).
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {rolesByLevel.map((role) => {
+          const guide = ROLE_GUIDE[role];
+          return (
+            <div key={role} className="rounded border border-(--rule) p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="font-bold">{ROLE_LABELS[role]}</span>
+                <span className="shrink-0 rounded-full bg-(--surface-2) px-2 py-0.5 text-[11px] font-bold text-(--muted)">
+                  Nivel {ROLE_LEVELS[role]}
+                </span>
+              </div>
+              <ul className="space-y-1.5 text-xs">
+                {guide.can.map((line) => (
+                  <li key={line} className="flex gap-1.5">
+                    <Check
+                      size={14}
+                      strokeWidth={3}
+                      className="mt-0.5 shrink-0 text-unal-green-dark"
+                      aria-hidden="true"
+                    />
+                    <span className="text-(--ink-2)">{line}</span>
+                  </li>
+                ))}
+                {guide.cannot.map((line) => (
+                  <li key={line} className="flex gap-1.5">
+                    <X
+                      size={14}
+                      strokeWidth={3}
+                      className="mt-0.5 shrink-0 text-unal-red"
+                      aria-hidden="true"
+                    />
+                    <span className="text-(--muted)">{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
