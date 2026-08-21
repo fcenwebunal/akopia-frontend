@@ -76,9 +76,17 @@ export function CatalogAddForm({
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const units = Object.values(catalog.units).sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
+  // "Unidad" va siempre primera (la más usada, por lejos, en el
+  // catálogo); las unidades retiradas (active: false) siguen
+  // resolviendo su nombre en el resto de la app, pero no se ofrecen
+  // para productos nuevos.
+  const units = Object.values(catalog.units)
+    .filter((unit) => unit.active !== false)
+    .sort((a, b) => {
+      if (a.code === "UNIDAD") return -1;
+      if (b.code === "UNIDAD") return 1;
+      return a.name.localeCompare(b.name);
+    });
 
   async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];

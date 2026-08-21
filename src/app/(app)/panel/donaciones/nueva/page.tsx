@@ -8,15 +8,31 @@ import { currentUser, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
 import { ProductPicker } from "@/components/app/product-picker";
+import {
+  isGarmentUnit,
+  isPackagedUnit,
+  PackageCountField,
+  SizeField,
+} from "@/components/app/donation-item-attributes";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
+import { DecimalInput } from "@/components/ui/decimal-input";
 
 const DONOR_TYPES = [
   { value: "individual", label: "Persona" },
   { value: "empresa", label: "Empresa" },
   { value: "institucion", label: "Institución" },
   { value: "anonimo", label: "Anónimo" },
+];
+
+const DONOR_ID_TYPES = [
+  { value: "", label: "Selecciona…" },
+  { value: "cedula_ciudadania", label: "Cédula de ciudadanía" },
+  { value: "cedula_extranjeria", label: "Cédula de extranjería" },
+  { value: "nit", label: "NIT" },
+  { value: "pasaporte", label: "Pasaporte" },
+  { value: "otro", label: "Otro" },
 ];
 
 interface DraftLine {
@@ -26,6 +42,8 @@ interface DraftLine {
   expiry: string;
   batch: string;
   status: "available" | "quarantine" | "pending";
+  size: string;
+  unitsPerPackage: number;
 }
 
 /*
@@ -43,6 +61,9 @@ export default function NuevaDonacionPage() {
   const [donorType, setDonorType] = useState("individual");
   const [donorName, setDonorName] = useState("");
   const [donorPhone, setDonorPhone] = useState("");
+  const [donorEmail, setDonorEmail] = useState("");
+  const [donorIdType, setDonorIdType] = useState("");
+  const [donorIdNumber, setDonorIdNumber] = useState("");
   const [notes, setNotes] = useState("");
 
   // Recepción rápida: se captura el peso y el transportista y se
@@ -50,7 +71,7 @@ export default function NuevaDonacionPage() {
   // saber todavía qué hay adentro. "Registrar todo ahora" es el
   // formulario de siempre, sin cambios. Ver PROPUESTA-RECEPCION-REMESAS.md.
   const [quickMode, setQuickMode] = useState(false);
-  const [totalWeight, setTotalWeight] = useState("");
+  const [totalWeight, setTotalWeight] = useState(0);
   const [carrierName, setCarrierName] = useState("");
 
   const [lines, setLines] = useState<DraftLine[]>([]);
@@ -94,6 +115,8 @@ export default function NuevaDonacionPage() {
       expiry: "",
       batch: "",
       status: product.requires_quarantine ? "quarantine" : "available",
+      size: "",
+      unitsPerPackage: 1,
     });
   }
 
@@ -116,7 +139,7 @@ export default function NuevaDonacionPage() {
       return;
     }
     if (quickMode) {
-      if (!totalWeight || Number(totalWeight) <= 0) {
+      if (totalWeight <= 0) {
         setError("El peso total es obligatorio en la recepción rápida.");
         return;
       }
@@ -143,11 +166,14 @@ export default function NuevaDonacionPage() {
         donor_type: donorType,
         donor_name: donorName || "Donante anónimo",
         donor_phone: donorPhone,
+        donor_email: donorEmail,
+        donor_id_type: donorIdType || null,
+        donor_id_number: donorIdNumber,
         receipt_date: new Date().toISOString().replace("T", " "),
         operator_id: operator.id,
         notes,
         status,
-        total_weight_kg: totalWeight ? Number(totalWeight) : null,
+        total_weight_kg: totalWeight > 0 ? totalWeight : null,
         carrier_name: carrierName,
       });
 
@@ -163,6 +189,8 @@ export default function NuevaDonacionPage() {
             classification_status: line.status,
             expiry_date: line.expiry || null,
             batch_code: line.batch,
+            size: line.size,
+            units_per_package: line.unitsPerPackage,
           });
         } catch (err) {
           rejected.push(`${line.product.name}: ${errorMessage(err)}`);
@@ -269,20 +297,60 @@ export default function NuevaDonacionPage() {
           </div>
 
           <div>
+            <label htmlFor="correo" className="mb-1 block text-sm font-bold">
+              Correo <span className="font-normal text-(--muted)">(opcional)</span>
+            </label>
+            <input
+              id="correo"
+              type="email"
+              inputMode="email"
+              value={donorEmail}
+              onChange={(event) => setDonorEmail(event.target.value)}
+              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="tipo-doc" className="mb-1 block text-sm font-bold">
+              Tipo de documento <span className="font-normal text-(--muted)">(opcional)</span>
+            </label>
+            <select
+              id="tipo-doc"
+              value={donorIdType}
+              onChange={(event) => setDonorIdType(event.target.value)}
+              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+            >
+              {DONOR_ID_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="num-doc" className="mb-1 block text-sm font-bold">
+              Número de documento <span className="font-normal text-(--muted)">(opcional)</span>
+            </label>
+            <input
+              id="num-doc"
+              value={donorIdNumber}
+              onChange={(event) => setDonorIdNumber(event.target.value)}
+              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+            />
+          </div>
+
+          <div>
             <label htmlFor="peso" className="mb-1 block text-sm font-bold">
               Peso total (kg){quickMode ? <span className="text-unal-red"> *</span> : null}{" "}
               <span className="font-normal text-(--muted)">
                 {quickMode ? "" : "(opcional)"}
               </span>
             </label>
-            <input
+            <DecimalInput
               id="peso"
-              type="number"
-              inputMode="decimal"
-              min={0.01}
-              step="any"
               value={totalWeight}
-              onChange={(event) => setTotalWeight(event.target.value)}
+              onChange={setTotalWeight}
               className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
             />
           </div>
@@ -335,6 +403,8 @@ export default function NuevaDonacionPage() {
                   <p className="font-medium">{line.product.name}</p>
                   <p className="text-sm text-(--muted)">
                     {line.quantity} {unitLabel(catalog, line.product.default_unit_id)}
+                    {line.size ? ` · talla ${line.size}` : ""}
+                    {line.unitsPerPackage > 1 ? ` · ${line.unitsPerPackage} un./paquete` : ""}
                     {line.expiry ? ` · vence ${line.expiry}` : ""}
                     {line.batch ? ` · lote ${line.batch}` : ""}
                     {line.status === "quarantine" ? " · en revisión" : ""}
@@ -386,7 +456,7 @@ export default function NuevaDonacionPage() {
           </Button>
           <Button
             onClick={save}
-            disabled={saving || (quickMode ? !totalWeight : lines.length === 0)}
+            disabled={saving || (quickMode ? totalWeight <= 0 : lines.length === 0)}
             loading={saving}
             icon={Gift}
             className="flex-1 justify-center"
@@ -426,6 +496,9 @@ function LineEditor({
   const [draft, setDraft] = useState(line);
   const requiresExpiry = draft.product.requires_expiry;
   const requiresBatch = draft.product.requires_batch;
+  const unit = catalog.units[draft.product.default_unit_id];
+  const isGarment = isGarmentUnit(unit);
+  const isPackaged = isPackagedUnit(unit);
 
   const missingExpiry = requiresExpiry && !draft.expiry;
   const missingBatch = requiresBatch && !draft.batch;
@@ -453,16 +526,10 @@ function LineEditor({
             >
               <Minus size={20} strokeWidth={2.5} aria-hidden="true" />
             </button>
-            <input
+            <DecimalInput
               id="cant"
-              type="number"
-              inputMode="decimal"
-              min={0.01}
-              step="any"
               value={draft.quantity}
-              onChange={(event) =>
-                setDraft((d) => ({ ...d, quantity: Number(event.target.value) }))
-              }
+              onChange={(quantity) => setDraft((d) => ({ ...d, quantity }))}
               className="h-12 flex-1 rounded border border-(--rule) bg-(--surface) px-3 text-center text-lg font-bold"
             />
             <button
@@ -475,6 +542,22 @@ function LineEditor({
             </button>
           </div>
         </div>
+
+        {isGarment ? (
+          <SizeField
+            id="talla"
+            value={draft.size}
+            onChange={(size) => setDraft((d) => ({ ...d, size }))}
+          />
+        ) : null}
+
+        {isPackaged ? (
+          <PackageCountField
+            id="und-paquete"
+            value={draft.unitsPerPackage}
+            onChange={(unitsPerPackage) => setDraft((d) => ({ ...d, unitsPerPackage }))}
+          />
+        ) : null}
 
         {requiresExpiry ? (
           <div className="mt-4">

@@ -8,8 +8,15 @@ import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalo
 import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
 import { ProductPicker } from "@/components/app/product-picker";
+import {
+  isGarmentUnit,
+  isPackagedUnit,
+  PackageCountField,
+  SizeField,
+} from "@/components/app/donation-item-attributes";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
+import { DecimalInput } from "@/components/ui/decimal-input";
 
 interface Item {
   id: string;
@@ -19,6 +26,8 @@ interface Item {
   expiry_date: string;
   batch_code: string;
   rejection_reason: string;
+  size: string;
+  units_per_package: number;
   expand?: {
     product_id?: { name?: string };
     unit_id?: { code?: string; name?: string };
@@ -30,6 +39,9 @@ interface Donation {
   code: string;
   donor_name: string;
   donor_type: string;
+  donor_email: string;
+  donor_id_type: string;
+  donor_id_number: string;
   receipt_date: string;
   notes: string;
   status: "recepcion" | "clasificada";
@@ -38,6 +50,14 @@ interface Donation {
   carrier_name: string;
   operator_id: string;
 }
+
+const DONOR_ID_TYPE_LABELS: Record<string, string> = {
+  cedula_ciudadania: "C.C.",
+  cedula_extranjeria: "C.E.",
+  nit: "NIT",
+  pasaporte: "Pasaporte",
+  otro: "Doc.",
+};
 
 const STATUS_LABELS: Record<Item["classification_status"], string> = {
   pending: "Por clasificar",
@@ -116,7 +136,14 @@ export default function DonacionDetallePage({
 
   async function addItem(
     product: Product,
-    values: { quantity: number; expiry: string; batch: string; status: Item["classification_status"] }
+    values: {
+      quantity: number;
+      expiry: string;
+      batch: string;
+      status: Item["classification_status"];
+      size: string;
+      unitsPerPackage: number;
+    }
   ) {
     if (!data) return;
     setBusy("new");
@@ -130,6 +157,8 @@ export default function DonacionDetallePage({
         classification_status: values.status,
         expiry_date: values.expiry || null,
         batch_code: values.batch,
+        size: values.size,
+        units_per_package: values.unitsPerPackage,
       });
       // Si la remesa ya se había dado por clasificada y se le agrega
       // algo más, deja de estarlo — no tiene sentido que quede
@@ -240,6 +269,19 @@ export default function DonacionDetallePage({
         {donation.carrier_name ? ` · ${donation.carrier_name}` : ""}
       </p>
 
+      {donation.donor_email || donation.donor_id_number ? (
+        <p className="mt-0.5 text-sm text-(--muted)">
+          {[
+            donation.donor_email,
+            donation.donor_id_number
+              ? `${DONOR_ID_TYPE_LABELS[donation.donor_id_type] ?? "Documento"} ${donation.donor_id_number}`
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      ) : null}
+
       {donation.total_weight_kg ? (
         <p className="mt-1 text-sm text-(--ink-2)">
           Peso declarado: <strong>{donation.total_weight_kg} kg</strong>
@@ -298,13 +340,18 @@ export default function DonacionDetallePage({
                   </span>
                 </div>
 
-                {item.expiry_date || item.batch_code ? (
+                {item.size || (item.units_per_package > 1) || item.expiry_date || item.batch_code ? (
                   <p className="mt-1 text-sm text-(--muted)">
-                    {item.expiry_date
-                      ? `Vence ${new Date(item.expiry_date).toLocaleDateString("es-CO")}`
-                      : ""}
-                    {item.expiry_date && item.batch_code ? " · " : ""}
-                    {item.batch_code ? `Lote ${item.batch_code}` : ""}
+                    {[
+                      item.size ? `Talla ${item.size}` : "",
+                      item.units_per_package > 1 ? `${item.units_per_package} un./paquete` : "",
+                      item.expiry_date
+                        ? `Vence ${new Date(item.expiry_date).toLocaleDateString("es-CO")}`
+                        : "",
+                      item.batch_code ? `Lote ${item.batch_code}` : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                 ) : null}
 
@@ -452,17 +499,24 @@ function ItemEditor({
     expiry: string;
     batch: string;
     status: Item["classification_status"];
+    size: string;
+    unitsPerPackage: number;
   }) => void;
 }) {
   const [quantity, setQuantity] = useState(1);
   const [expiry, setExpiry] = useState("");
   const [batch, setBatch] = useState("");
+  const [size, setSize] = useState("");
+  const [unitsPerPackage, setUnitsPerPackage] = useState(1);
   const [status, setStatus] = useState<Item["classification_status"]>(
     product.requires_quarantine ? "quarantine" : "available"
   );
 
   const requiresExpiry = product.requires_expiry;
   const requiresBatch = product.requires_batch;
+  const unit = catalog.units[product.default_unit_id];
+  const isGarment = isGarmentUnit(unit);
+  const isPackaged = isPackagedUnit(unit);
   const missingExpiry = requiresExpiry && !expiry;
   const missingBatch = requiresBatch && !batch;
 
@@ -485,14 +539,10 @@ function ItemEditor({
             >
               <Minus size={20} strokeWidth={2.5} aria-hidden="true" />
             </button>
-            <input
+            <DecimalInput
               id="di-cant"
-              type="number"
-              inputMode="decimal"
-              min={0.01}
-              step="any"
               value={quantity}
-              onChange={(event) => setQuantity(Number(event.target.value))}
+              onChange={setQuantity}
               className="h-12 flex-1 rounded border border-(--rule) bg-(--surface) px-3 text-center text-lg font-bold"
             />
             <button
@@ -505,6 +555,12 @@ function ItemEditor({
             </button>
           </div>
         </div>
+
+        {isGarment ? <SizeField id="di-talla" value={size} onChange={setSize} /> : null}
+
+        {isPackaged ? (
+          <PackageCountField id="di-und-paquete" value={unitsPerPackage} onChange={setUnitsPerPackage} />
+        ) : null}
 
         {requiresExpiry ? (
           <div className="mt-4">
@@ -575,7 +631,7 @@ function ItemEditor({
           <button
             type="button"
             disabled={quantity <= 0 || missingExpiry || missingBatch || saving}
-            onClick={() => onSave({ quantity, expiry, batch, status })}
+            onClick={() => onSave({ quantity, expiry, batch, status, size, unitsPerPackage })}
             className="flex flex-1 items-center justify-center gap-2 rounded bg-unal-green-dark px-4 py-3 font-bold text-white disabled:opacity-50"
           >
             {saving ? <Spinner /> : null}
@@ -631,14 +687,10 @@ function CloseDialog({
               <label htmlFor="peso-clasif" className="mb-1 block text-sm font-bold">
                 Peso clasificado (kg)
               </label>
-              <input
+              <DecimalInput
                 id="peso-clasif"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="any"
                 value={weight}
-                onChange={(event) => setWeight(Number(event.target.value))}
+                onChange={setWeight}
                 className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
               />
               <p className="mt-1.5 text-xs text-(--muted)">
