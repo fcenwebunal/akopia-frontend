@@ -842,3 +842,15 @@ Verificado con `npx tsc --noEmit` y `npm run build` limpios. Sin Playwright en e
 Corrección de rumbo de Juan Manuel sobre el ajuste del mismo día ("el enlace del subdominio ya apunta al subdominio real"): `SITE_HREF` ya no es `https://acopio.manizales.unal.edu.co/` (la propia portada) — pasa a `https://manizales.unal.edu.co` (la sede). El texto visible (`SITE_URL`) no cambia, sigue mostrando `acopio.manizales.unal.edu.co` — es el patrón "estás aquí, el clic sube un nivel" que ya trae el widget `#subdominio` de la plantilla, en vez de un enlace que apunte a la propia página en la que ya se está.
 
 Verificado con `npx tsc --noEmit` y `npm run build` limpios, y reconstruido en el servidor de la UNAL.
+
+### 2026-08-21 (madrugada) — `vercel.json`: el despliegue de Vercel pasa a ser solo un redirector
+
+El despliegue provisional se retira (contexto completo en el `CLAUDE.md` de la raíz). Lo que le toca a este repositorio es un archivo nuevo, `vercel.json`, que manda todo (`/:path*`) a `https://acopio.manizales.unal.edu.co/:path*` con un 307.
+
+**La razón de que sea `vercel.json` y no `next.config.ts` es la que importa recordar:** este mismo repositorio es el que corre en el servidor de la UNAL. Un `redirects()` en la configuración de Next.js, o un `middleware.ts`, se habrían aplicado **también** allá — y el sitio institucional se habría puesto a redirigirse a sí mismo en un bucle infinito. `vercel.json` es un archivo de la plataforma: `next build` y `next start` no lo leen nunca. Eso hace innecesario cualquier `if (process.env.VERCEL)`, que es justo el tipo de ramificación que falla en el entorno donde no se probó.
+
+`permanent: false` (307, no 308) también es deliberado: un 308 queda cacheado en el navegador de cada persona indefinidamente y es muy difícil de deshacer si el redirector alguna vez tiene que apagarse.
+
+**Cuidado si algún día se revive el despliegue de Vercel:** mientras `vercel.json` esté en `main`, cualquier despliegue de este repositorio en Vercel será un redirector, no la aplicación. Hay que quitar el archivo primero.
+
+`npm run build` limpio (el archivo no participa del build de Next.js, pero se verificó igual).

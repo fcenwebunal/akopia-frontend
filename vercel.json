@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "destination": "https://acopio.manizales.unal.edu.co/:path*",
+      "permanent": false
+    }
+  ]
+}
