@@ -2,6 +2,7 @@
 
 import { use, useCallback, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, Ban, CheckCircle, Lock, Minus, Plus, RotateCcw } from "lucide-react";
 import { currentUser, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
@@ -14,6 +15,7 @@ import {
   PackageCountField,
   SizeField,
 } from "@/components/app/donation-item-attributes";
+import { DeleteRecordButton, EditRecordButton } from "@/components/app/record-actions";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { DecimalInput } from "@/components/ui/decimal-input";
@@ -39,6 +41,7 @@ interface Donation {
   code: string;
   donor_name: string;
   donor_type: string;
+  donor_phone: string;
   donor_email: string;
   donor_id_type: string;
   donor_id_number: string;
@@ -50,6 +53,22 @@ interface Donation {
   carrier_name: string;
   operator_id: string;
 }
+
+const DONOR_TYPE_OPTIONS = [
+  { value: "individual", label: "Persona" },
+  { value: "empresa", label: "Empresa" },
+  { value: "institucion", label: "Institución" },
+  { value: "anonimo", label: "Anónimo" },
+];
+
+const DONOR_ID_TYPE_OPTIONS = [
+  { value: "", label: "Sin especificar" },
+  { value: "cedula_ciudadania", label: "Cédula de ciudadanía" },
+  { value: "cedula_extranjeria", label: "Cédula de extranjería" },
+  { value: "nit", label: "NIT" },
+  { value: "pasaporte", label: "Pasaporte" },
+  { value: "otro", label: "Otro" },
+];
 
 const DONOR_ID_TYPE_LABELS: Record<string, string> = {
   cedula_ciudadania: "C.C.",
@@ -91,8 +110,13 @@ export default function DonacionDetallePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const operator = currentUser();
   const canAddItems = hasAnyRole(operator?.role, CAN_ADD_ITEMS);
+  // Editar/eliminar con motivo es más estricto que el resto de esta
+  // pantalla: solo admin/coordinación, nunca "el dueño" — así lo exige
+  // 11_edit_delete_with_reason.pb.js en el backend.
+  const canManageRecords = hasAnyRole(operator?.role, ["admin", "coordinacion"]);
 
   const [busy, setBusy] = useState<string | null>(null);
   const [busyStatus, setBusyStatus] = useState<Item["classification_status"] | null>(null);
@@ -304,6 +328,45 @@ export default function DonacionDetallePage({
         <p className="mt-2 text-sm text-(--ink-2)">{donation.notes}</p>
       ) : null}
 
+      {canManageRecords ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <EditRecordButton
+            collection="donations"
+            id={donation.id}
+            onSaved={reload}
+            fields={[
+              { name: "donor_type", label: "Tipo de donante", type: "select", options: DONOR_TYPE_OPTIONS },
+              { name: "donor_name", label: "Nombre del donante" },
+              { name: "donor_phone", label: "Teléfono", type: "tel" },
+              { name: "donor_email", label: "Correo", type: "email" },
+              { name: "donor_id_type", label: "Tipo de documento", type: "select", options: DONOR_ID_TYPE_OPTIONS },
+              { name: "donor_id_number", label: "Número de documento" },
+              { name: "carrier_name", label: "Transportista" },
+              { name: "total_weight_kg", label: "Peso declarado (kg)", type: "number" },
+              { name: "notes", label: "Notas", type: "textarea" },
+            ]}
+            values={{
+              donor_type: donation.donor_type,
+              donor_name: donation.donor_name,
+              donor_phone: donation.donor_phone,
+              donor_email: donation.donor_email,
+              donor_id_type: donation.donor_id_type,
+              donor_id_number: donation.donor_id_number,
+              carrier_name: donation.carrier_name,
+              total_weight_kg: donation.total_weight_kg,
+              notes: donation.notes,
+            }}
+          />
+          <DeleteRecordButton
+            collection="donations"
+            id={donation.id}
+            label="Eliminar donación"
+            itemDescription={donation.code}
+            onDeleted={() => router.push("/panel/donaciones")}
+          />
+        </div>
+      ) : null}
+
       {pending > 0 ? (
         <p className="mt-4 rounded border-l-4 border-unal-yellow bg-(--surface) px-4 py-3 text-sm">
           <strong>{pending}</strong> artículo(s) sin clasificar. Hasta que no se
@@ -392,6 +455,36 @@ export default function DonacionDetallePage({
                     >
                       Rechazar
                     </Button>
+                  ) : null}
+
+                  {canManageRecords && !locked ? (
+                    <>
+                      <EditRecordButton
+                        collection="donation_items"
+                        id={item.id}
+                        onSaved={reload}
+                        fields={[
+                          { name: "quantity", label: "Cantidad", type: "number" },
+                          { name: "expiry_date", label: "Vencimiento", type: "date" },
+                          { name: "batch_code", label: "Lote" },
+                          { name: "size", label: "Talla" },
+                          { name: "units_per_package", label: "Unidades por paquete", type: "number" },
+                        ]}
+                        values={{
+                          quantity: item.quantity,
+                          expiry_date: item.expiry_date,
+                          batch_code: item.batch_code,
+                          size: item.size,
+                          units_per_package: item.units_per_package,
+                        }}
+                      />
+                      <DeleteRecordButton
+                        collection="donation_items"
+                        id={item.id}
+                        itemDescription={item.expand?.product_id?.name}
+                        onDeleted={reload}
+                      />
+                    </>
                   ) : null}
                 </div>
 

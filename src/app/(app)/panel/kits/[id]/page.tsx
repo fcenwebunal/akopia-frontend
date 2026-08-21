@@ -10,6 +10,7 @@ import { loadKitItems, type Kit, type KitItem } from "@/lib/kits";
 import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
 import { ProductPicker } from "@/components/app/product-picker";
+import { DeleteRecordButton } from "@/components/app/record-actions";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 
@@ -28,6 +29,7 @@ export default function KitDetallePage({ params }: { params: Promise<{ id: strin
   const router = useRouter();
   const operator = currentUser();
   const canManage = hasAnyRole(operator?.role, KIT_ROLES);
+  const canDeactivate = hasAnyRole(operator?.role, ["admin", "coordinacion"]);
 
   const [name, setName] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
@@ -209,6 +211,15 @@ export default function KitDetallePage({ params }: { params: Promise<{ id: strin
           <Button size="sm" variant="outline" onClick={deriveAsNewKit} disabled={deriving} loading={deriving} icon={Copy}>
             Guardar como nuevo kit
           </Button>
+          {canDeactivate && kit.active !== false ? (
+            <DeleteRecordButton
+              collection="kits"
+              id={kit.id}
+              label="Eliminar kit"
+              itemDescription={kit.name}
+              onDeleted={() => router.push("/panel/kits")}
+            />
+          ) : null}
         </div>
       </div>
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CheckCircle } from "lucide-react";
 import { callRoute, currentUser, errorMessage, pb } from "@/lib/pb";
 import { hasAnyRole } from "@/lib/roles";
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { CoordinatesDisplay } from "@/components/app/coordinates-display";
 import { AddressMapField, EMPTY_ADDRESS_VALUE, type AddressValue } from "@/components/app/address-map-field";
 import { MANIZALES_CENTER } from "@/lib/coordinates";
+import { DeleteRecordButton, EditRecordButton } from "@/components/app/record-actions";
 
 interface Dispatch {
   id: string;
@@ -79,12 +81,14 @@ export default function DespachoDetallePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const operator = currentUser();
   const canConfirmDelivery = hasAnyRole(operator?.role, [
     "admin",
     "transporte_distribucion",
     "salida",
   ]);
+  const canManageRecords = hasAnyRole(operator?.role, ["admin", "coordinacion"]);
   const [version, setVersion] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,13 +129,23 @@ export default function DespachoDetallePage({
   // persona. Solo mientras el campo siga vacío, para no pisar lo que ya
   // se haya escrito a mano si `data` se vuelve a cargar por otra razón
   // (por ejemplo, al guardar la ubicación en el mapa).
-  useEffect(() => {
-    if (!data || data.delivery) return;
-    const request = data.dispatch.expand?.request_id;
-    if (!request) return;
-    setReceiverName((current) => current || request.requester_name || "");
-    setReceiverPhone((current) => current || request.requester_phone || "");
-  }, [data]);
+  //
+  // Ajustado durante el render, no en un efecto — react-hooks/
+  // set-state-in-effect lo rechaza (mismo patrón que DecimalInput):
+  // comparar contra el `data` ya procesado evita el re-render en
+  // cascada de un setState dentro de un useEffect, disparando solo
+  // cuando `data` cambia de verdad.
+  const [processedData, setProcessedData] = useState<typeof data>(null);
+  if (data !== processedData) {
+    setProcessedData(data);
+    if (data && !data.delivery) {
+      const request = data.dispatch.expand?.request_id;
+      if (request) {
+        setReceiverName((current) => current || request.requester_name || "");
+        setReceiverPhone((current) => current || request.requester_phone || "");
+      }
+    }
+  }
 
   function startEditingLocation(dispatch: Dispatch) {
     const hasCoords = dispatch.destination_lat !== 0 || dispatch.destination_lng !== 0;
@@ -246,6 +260,39 @@ export default function DespachoDetallePage({
         {dispatch.notes ? <p className="italic">{dispatch.notes}</p> : null}
       </div>
 
+      {canManageRecords ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <EditRecordButton
+            collection="dispatches"
+            id={dispatch.id}
+            onSaved={() => setVersion((v) => v + 1)}
+            fields={[
+              { name: "driver_name", label: "Conductor" },
+              { name: "driver_phone", label: "Teléfono del conductor", type: "tel" },
+              { name: "vehicle_plate", label: "Placa del vehículo" },
+              { name: "brigade", label: "Brigada" },
+              { name: "notes", label: "Notas", type: "textarea" },
+            ]}
+            values={{
+              driver_name: dispatch.driver_name,
+              driver_phone: dispatch.driver_phone,
+              vehicle_plate: dispatch.vehicle_plate,
+              brigade: dispatch.brigade,
+              notes: dispatch.notes,
+            }}
+          />
+          {!delivery ? (
+            <DeleteRecordButton
+              collection="dispatches"
+              id={dispatch.id}
+              label="Eliminar despacho"
+              itemDescription={dispatch.code}
+              onDeleted={() => router.push("/panel/despachos")}
+            />
+          ) : null}
+        </div>
+      ) : null}
+
       <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-bold">Ubicación</h2>
@@ -304,6 +351,33 @@ export default function DespachoDetallePage({
           </p>
           {delivery.notes ? (
             <p className="mt-2 text-sm italic">{delivery.notes}</p>
+          ) : null}
+
+          {canManageRecords ? (
+            <div className="mt-3">
+              <EditRecordButton
+                collection="deliveries"
+                id={delivery.id}
+                onSaved={() => setVersion((v) => v + 1)}
+                fields={[
+                  { name: "receiver_name", label: "Nombre de quien recibió" },
+                  { name: "receiver_phone", label: "Teléfono", type: "tel" },
+                  { name: "receiver_id_number", label: "Número de documento" },
+                  { name: "notes", label: "Notas", type: "textarea" },
+                ]}
+                values={{
+                  receiver_name: delivery.receiver_name,
+                  receiver_phone: delivery.receiver_phone,
+                  receiver_id_number: delivery.receiver_id_number,
+                  notes: delivery.notes,
+                }}
+              />
+              <p className="mt-1.5 text-xs text-(--muted)">
+                Una entrega confirmada no se puede eliminar ni cambiar de
+                resultado — ya generó una salida real de inventario. Solo se
+                corrigen estos datos.
+              </p>
+            </div>
           ) : null}
         </section>
       ) : !canConfirmDelivery ? (

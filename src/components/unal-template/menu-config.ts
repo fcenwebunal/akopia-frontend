@@ -43,6 +43,11 @@ export const APP_MENU: AppMenuItem[] = [
     children: [
       { label: "Inventario", href: "/panel/inventario" },
       { label: "Ubicaciones", href: "/panel/ubicaciones" },
+      {
+        label: "Catálogo",
+        href: "/panel/catalogo",
+        roles: ["admin", "coordinacion"],
+      },
     ],
   },
   {

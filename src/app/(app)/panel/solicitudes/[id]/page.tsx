@@ -2,6 +2,7 @@
 
 import { use, useCallback, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Check, PackageSearch, X, XCircle } from "lucide-react";
 import { callRoute, currentUser, errorMessage, pb, RouteError } from "@/lib/pb";
 import { hasAnyRole } from "@/lib/roles";
@@ -9,6 +10,14 @@ import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { CoordinatesDisplay } from "@/components/app/coordinates-display";
+import { DeleteRecordButton, EditRecordButton } from "@/components/app/record-actions";
+
+const PRIORITY_OPTIONS = [
+  { value: "baja", label: "Baja" },
+  { value: "media", label: "Media" },
+  { value: "alta", label: "Alta" },
+  { value: "critica", label: "Crítica" },
+];
 
 interface RequestItem {
   id: string;
@@ -57,12 +66,14 @@ export default function SolicitudDetallePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const operator = currentUser();
   // Aprobar/rechazar/cancelar es de admin, coordinación y salida —
   // decisión de Juan Manuel (20 ago 2026): salida puede tanto crear
   // como decidir sobre solicitudes, igual que ya podía transporte y
   // distribución con despachos.
   const canDecideRequest = hasAnyRole(operator?.role, ["admin", "coordinacion", "salida"]);
+  const canManageRecords = hasAnyRole(operator?.role, ["admin", "coordinacion"]);
 
   const [version, setVersion] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -219,6 +230,41 @@ export default function SolicitudDetallePage({
         ) : null}
       </div>
 
+      {canManageRecords ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <EditRecordButton
+            collection="requests"
+            id={request.id}
+            onSaved={() => setVersion((v) => v + 1)}
+            fields={[
+              { name: "requester_name", label: "Nombre de quien pide" },
+              { name: "requester_phone", label: "Teléfono", type: "tel" },
+              { name: "requester_institution", label: "Institución" },
+              { name: "destination", label: "Destino" },
+              { name: "priority", label: "Prioridad", type: "select", options: PRIORITY_OPTIONS },
+              { name: "beneficiary_count", label: "Personas beneficiadas", type: "number" },
+              { name: "notes", label: "Notas", type: "textarea" },
+            ]}
+            values={{
+              requester_name: request.requester_name,
+              requester_phone: request.requester_phone,
+              requester_institution: request.requester_institution,
+              destination: request.destination,
+              priority: request.priority,
+              beneficiary_count: request.beneficiary_count,
+              notes: request.notes,
+            }}
+          />
+          <DeleteRecordButton
+            collection="requests"
+            id={request.id}
+            label="Eliminar solicitud"
+            itemDescription={request.code}
+            onDeleted={() => router.push("/panel/solicitudes")}
+          />
+        </div>
+      ) : null}
+
       {error ? (
         <div role="alert" className="mt-4 rounded border-l-4 border-unal-red bg-(--surface) px-4 py-3">
           <p>{error}</p>
@@ -242,7 +288,7 @@ export default function SolicitudDetallePage({
             (row) => row.request_item_id === item.id
           );
           return (
-            <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
+            <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
               <div>
                 <p className="font-medium">{item.expand?.product_id?.name ?? "—"}</p>
                 <p className="text-sm text-(--muted)">
@@ -252,19 +298,40 @@ export default function SolicitudDetallePage({
                   {item.status}
                 </p>
               </div>
-              {availabilityRow ? (
-                <span
-                  className={
-                    availabilityRow.sufficient
-                      ? "rounded bg-unal-green-soft px-2 py-0.5 text-xs font-bold text-unal-green-dark"
-                      : "rounded bg-(--surface-2) px-2 py-0.5 text-xs font-bold text-unal-red"
-                  }
-                >
-                  {availabilityRow.sufficient
-                    ? "Disponible"
-                    : `Faltan ${availabilityRow.shortage}`}
-                </span>
-              ) : null}
+              <div className="ml-auto flex items-center gap-2">
+                {availabilityRow ? (
+                  <span
+                    className={
+                      availabilityRow.sufficient
+                        ? "rounded bg-unal-green-soft px-2 py-0.5 text-xs font-bold text-unal-green-dark"
+                        : "rounded bg-(--surface-2) px-2 py-0.5 text-xs font-bold text-unal-red"
+                    }
+                  >
+                    {availabilityRow.sufficient
+                      ? "Disponible"
+                      : `Faltan ${availabilityRow.shortage}`}
+                  </span>
+                ) : null}
+                {canManageRecords && item.status === "pendiente" ? (
+                  <>
+                    <EditRecordButton
+                      collection="request_items"
+                      id={item.id}
+                      onSaved={() => setVersion((v) => v + 1)}
+                      fields={[
+                        { name: "quantity_requested", label: "Cantidad pedida", type: "number" },
+                      ]}
+                      values={{ quantity_requested: item.quantity_requested }}
+                    />
+                    <DeleteRecordButton
+                      collection="request_items"
+                      id={item.id}
+                      itemDescription={item.expand?.product_id?.name}
+                      onDeleted={() => setVersion((v) => v + 1)}
+                    />
+                  </>
+                ) : null}
+              </div>
             </li>
           );
         })}

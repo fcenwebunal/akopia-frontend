@@ -11,6 +11,7 @@ import { loadLocations, locationLabel, type Location } from "@/lib/locations";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
+import { DecimalInput } from "@/components/ui/decimal-input";
 import { LocationPicker } from "@/components/app/location-picker";
 
 interface InventoryRow {
@@ -469,6 +470,7 @@ export default function InventarioPage() {
           row={detail.row}
           location={detail.location}
           canToggle={canReleaseQuarantine}
+          canAdjust={canManageInventory}
           onClose={() => setDetail(null)}
           onChanged={reload}
         />
@@ -757,18 +759,59 @@ function ProductLocationDetail({
   row,
   location,
   canToggle,
+  canAdjust,
   onClose,
   onChanged,
 }: {
   row: InventoryRow;
   location?: Location;
   canToggle: boolean;
+  canAdjust: boolean;
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const operator = currentUser();
   const [version, setVersion] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [adjusting, setAdjusting] = useState(false);
+  const [newQuantity, setNewQuantity] = useState(row.available_qty);
+  const [adjustReason, setAdjustReason] = useState("");
+  const [savingAdjust, setSavingAdjust] = useState(false);
+  const [adjustError, setAdjustError] = useState<string | null>(null);
+
+  async function saveAdjustment() {
+    if (!operator) return;
+    if (adjustReason.trim().length < 5) {
+      setAdjustError("Escribe un motivo (mínimo 5 caracteres).");
+      return;
+    }
+    if (newQuantity === row.available_qty) {
+      setAdjustError("La cantidad nueva es igual a la actual — no hay nada que ajustar.");
+      return;
+    }
+
+    setSavingAdjust(true);
+    setAdjustError(null);
+    try {
+      await pb.collection("adjustments").create({
+        inventory_id: row.id,
+        product_id: row.product_id,
+        location_id: row.location_id || null,
+        quantity_before: row.available_qty,
+        quantity_after: newQuantity,
+        reason: adjustReason,
+        operator_id: operator.id,
+      });
+      setAdjusting(false);
+      onChanged();
+      onClose();
+    } catch (err) {
+      setAdjustError(errorMessage(err));
+    } finally {
+      setSavingAdjust(false);
+    }
+  }
 
   const fetchItems = useCallback(async () => {
     const locationFilter = row.location_id
@@ -811,6 +854,63 @@ function ProductLocationDetail({
             Cerrar
           </button>
         </div>
+
+        {canAdjust ? (
+          <div className="mt-3">
+            {!adjusting ? (
+              <Button variant="outline" size="sm" onClick={() => setAdjusting(true)}>
+                Ajustar cantidad disponible
+              </Button>
+            ) : (
+              <div className="rounded border border-(--rule) p-3">
+                <p className="text-sm">
+                  Disponible ahora: <strong>{row.available_qty}</strong>
+                </p>
+                <label htmlFor="ajuste-cant" className="mb-1 mt-2 block text-sm font-bold">
+                  Cantidad correcta
+                </label>
+                <DecimalInput
+                  id="ajuste-cant"
+                  value={newQuantity}
+                  onChange={setNewQuantity}
+                  className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+                />
+                <label htmlFor="ajuste-motivo" className="mb-1 mt-2 block text-sm font-bold">
+                  Motivo <span className="text-unal-red">*</span>
+                </label>
+                <textarea
+                  id="ajuste-motivo"
+                  value={adjustReason}
+                  onChange={(event) => setAdjustReason(event.target.value)}
+                  rows={2}
+                  placeholder="Ej.: conteo físico no coincidía"
+                  className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+                />
+                {adjustError ? (
+                  <p className="mt-2 text-sm text-unal-red">{adjustError}</p>
+                ) : null}
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAdjusting(false)}
+                    className="rounded border border-(--rule) px-3 py-2 text-sm font-bold"
+                  >
+                    Cancelar
+                  </button>
+                  <Button
+                    size="sm"
+                    disabled={savingAdjust}
+                    loading={savingAdjust}
+                    onClick={saveAdjustment}
+                    className="flex-1 justify-center"
+                  >
+                    Guardar ajuste
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
 
         {error ? (
           <p role="alert" className="mt-4 rounded border-l-4 border-unal-red bg-(--surface-2) px-4 py-3 text-sm">

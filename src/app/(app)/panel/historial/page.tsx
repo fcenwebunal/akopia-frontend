@@ -34,6 +34,13 @@ const ENTITY_LABELS: Record<string, string> = {
   dispatches: "Despacho",
   deliveries: "Entrega",
   users: "Usuario",
+  kits: "Kit",
+  kit_items: "Renglón de kit",
+  adjustments: "Ajuste de inventario",
+  products: "Producto",
+  categories: "Categoría",
+  groups: "Grupo",
+  locations: "Ubicación",
 };
 
 const ACTION_LABELS: Record<Action, string> = {
@@ -158,6 +165,13 @@ export default function HistorialPage() {
               <p className="mt-1 text-sm text-(--muted)">
                 {entry.expand?.operator_id?.full_name ?? "Operador desconocido"}
               </p>
+
+              {entry.notes ? (
+                <p className="mt-2 rounded border-l-4 border-unal-green-dark bg-(--surface-2) px-3 py-2 text-sm">
+                  <span className="font-bold">Motivo: </span>
+                  {entry.notes}
+                </p>
+              ) : null}
 
               {entry.changes?.changes && entry.changes.changes.length > 0 ? (
                 <ul className="mt-2 space-y-0.5 text-sm">
