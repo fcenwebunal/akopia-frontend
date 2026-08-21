@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { pb, type AkopiaUser } from "@/lib/pb";
 
 /*
@@ -15,7 +15,21 @@ import { pb, type AkopiaUser } from "@/lib/pb";
  * en el primer intento. Presente en los tres momentos (portada,
  * login/registro, app), pedido explícito del 2026-08-18.
  */
-export function AccountBar() {
+
+// Mismos valores que :root en globals.css (tema claro) — se fijan aquí
+// literalmente, no se importan, porque el objetivo es lo contrario de
+// heredar el tema: en la portada, con su fondo de imagen fijo, el modo
+// oscuro deja el texto casi ilegible contra ese fondo claro. Pedido
+// explícito del 21 de agosto: solo esta franja, solo en la portada, se
+// queda siempre en claro sin importar el tema real del sitio.
+const LIGHT_THEME_VARS = {
+  "--ink": "#232323",
+  "--ink-2": "#4b4b4b",
+  "--rule": "#d9d9d9",
+  "--surface-2": "#f7f8f4",
+} as CSSProperties;
+
+export function AccountBar({ forceLight = false }: { forceLight?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<AkopiaUser | null>(null);
@@ -70,7 +84,7 @@ export function AccountBar() {
     // tras comparar visualmente contra una captura.
     <div
       className="akopia-content float-right flex items-center gap-3 pr-4 md:mr-9.5 md:mt-0.5 font-sans text-sm text-(--ink)"
-      style={{ height: 35 }}
+      style={forceLight ? { height: 35, ...LIGHT_THEME_VARS } : { height: 35 }}
     >
       {!checked ? null : user ? (
         <>

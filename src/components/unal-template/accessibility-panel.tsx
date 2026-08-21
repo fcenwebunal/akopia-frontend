@@ -337,7 +337,15 @@ export function AccessibilityPanel({
         dejando un hueco enorme en medio — no era lo pedido: "junto al
         botón", no "en la esquina opuesta de la pantalla".
       */}
-      <AccountBar />
+      {/*
+        forceLight={overlay}: `overlay` ya identifica exactamente la
+        portada (la única pantalla con fondo de imagen fijo, donde el
+        modo oscuro deja "Hola, ..." y "Cerrar sesión" casi ilegibles —
+        pedido explícito del 21 de agosto, acotado solo a esta franja y
+        solo aquí). En cualquier otra pantalla `overlay` es `false` y
+        <AccountBar> sigue el tema real, sin cambios.
+      */}
+      <AccountBar forceLight={overlay} />
     </div>
   );
 }
