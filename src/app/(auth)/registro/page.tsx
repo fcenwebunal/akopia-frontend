@@ -5,10 +5,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   firebaseErrorMessage,
+  isAccountExistsWithDifferentCredential,
+  linkGoogleAfterPasswordCollision,
+  linkPasswordAfterGoogle,
   registerWithFirebase,
   signInWithGoogle,
 } from "@/lib/firebase";
 import { errorMessage, establishFirebaseSession } from "@/lib/pb";
+import { checkEmailStatus, type EmailStatus } from "@/lib/auth-status";
 import { GoogleButton } from "@/components/public/google-button";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -19,7 +23,30 @@ import { Spinner } from "@/components/ui/spinner";
  * acceso del backend — sin `active` no se puede hacer nada — solo que
  * ahora quien lo activa es un administrador desde /panel/usuarios, en
  * vez de crear la cuenta él mismo desde cero.
+ *
+ * El correo se comprueba al salir del campo (/api/auth/email-status) para
+ * adaptar el formulario a tres situaciones reales, distintas de "correo
+ * nuevo":
+ *
+ *   1. Un admin ya vinculó este correo (nombre y rol listos, pero nunca
+ *      entró) — el nombre se hereda y no se puede editar aquí: cambiarlo
+ *      en este formulario no tendría ningún efecto (el puente nunca pisa
+ *      un `full_name` ya existente), así que mejor no ofrecer un campo
+ *      que en realidad no hace nada.
+ *   2. El correo ya tiene cuenta en AKOPIA (con Google, con contraseña, o
+ *      las dos). Crear una cuenta nueva no aplica — se ofrece iniciar
+ *      sesión, o confirmar con Google para agregarle esta contraseña si
+ *      todavía no la tenía.
+ *   3. Correo nuevo del todo — el formulario de siempre.
  */
+function isPreLinkedByAdmin(status: EmailStatus): boolean {
+  return status.exists && !status.linked;
+}
+
+function alreadyHasAccount(status: EmailStatus): boolean {
+  return status.exists && status.linked;
+}
+
 export default function RegistroPage() {
   const router = useRouter();
 
@@ -30,17 +57,76 @@ export default function RegistroPage() {
   const [pending, setPending] = useState(false);
   const [googlePending, setGooglePending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailStatus, setEmailStatus] = useState<EmailStatus | null>(null);
+  const [googleLinkError, setGoogleLinkError] = useState<unknown>(null);
+
+  async function checkEmail() {
+    if (!email.trim() || !email.includes("@")) {
+      setEmailStatus(null);
+      return;
+    }
+    const status = await checkEmailStatus(email.trim());
+    setEmailStatus(status);
+    if (isPreLinkedByAdmin(status) && status.fullName) {
+      setFullName(status.fullName);
+    }
+  }
 
   async function handleGoogle() {
+    setError(null);
+    setGoogleLinkError(null);
+    setGooglePending(true);
+
+    if (emailStatus && alreadyHasAccount(emailStatus) && password && password !== confirm) {
+      setError("Las contraseñas no coinciden.");
+      setGooglePending(false);
+      return;
+    }
+
+    try {
+      let idToken = await signInWithGoogle();
+
+      if (emailStatus && alreadyHasAccount(emailStatus) && password) {
+        idToken = await linkPasswordAfterGoogle(email.trim(), password);
+      }
+
+      const user = await establishFirebaseSession(idToken);
+      router.push(user.active ? "/panel" : "/panel/pendiente");
+    } catch (err) {
+      if (isAccountExistsWithDifferentCredential(err)) {
+        setGoogleLinkError(err);
+        setError(
+          "Ya existe una cuenta con contraseña para este correo. Escribe tu contraseña abajo y presiona \"Vincular con Google\" para confirmarlo."
+        );
+      } else {
+        setError(firebaseErrorMessage(err));
+      }
+    } finally {
+      setGooglePending(false);
+    }
+  }
+
+  async function handleLinkGoogle() {
+    if (!googleLinkError) return;
+    if (!password) {
+      setError("Escribe tu contraseña para confirmar la vinculación.");
+      return;
+    }
+
     setError(null);
     setGooglePending(true);
 
     try {
-      const idToken = await signInWithGoogle();
+      const idToken = await linkGoogleAfterPasswordCollision(googleLinkError, password);
       const user = await establishFirebaseSession(idToken);
+      setGoogleLinkError(null);
       router.push(user.active ? "/panel" : "/panel/pendiente");
     } catch (err) {
-      setError(firebaseErrorMessage(err));
+      setError(
+        firebaseErrorMessage(err) === "Ocurrió un error inesperado. Intenta de nuevo."
+          ? "La contraseña no es correcta."
+          : firebaseErrorMessage(err)
+      );
     } finally {
       setGooglePending(false);
     }
@@ -50,6 +136,13 @@ export default function RegistroPage() {
     event.preventDefault();
     setError(null);
 
+    if (emailStatus && alreadyHasAccount(emailStatus)) {
+      setError(
+        "Ya existe una cuenta de AKOPIA con este correo. Inicia sesión, o confírmalo con Google para agregarle esta contraseña."
+      );
+      return;
+    }
+
     if (password !== confirm) {
       setError("Las contraseñas no coinciden.");
       return;
@@ -58,20 +151,35 @@ export default function RegistroPage() {
     setPending(true);
 
     try {
-      const idToken = await registerWithFirebase(fullName, email, password);
+      const inheritedName = emailStatus && isPreLinkedByAdmin(emailStatus)
+        ? emailStatus.fullName ?? fullName
+        : fullName;
+      const idToken = await registerWithFirebase(inheritedName, email, password);
       const user = await establishFirebaseSession(idToken);
 
       router.push(user.active ? "/panel" : "/panel/pendiente");
     } catch (err) {
-      setError(
-        (err as { code?: string }).code
-          ? firebaseErrorMessage(err)
-          : errorMessage(err)
-      );
+      const code = (err as { code?: string }).code;
+      if (code === "auth/email-already-in-use") {
+        // Salvaguarda: si por lo que sea no se llegó a comprobar el
+        // correo al salir del campo (autocompletado, envío directo), el
+        // propio intento de Firebase ya deja claro que existe — se
+        // refleja aquí para que el formulario reaccione igual que si se
+        // hubiera detectado a tiempo.
+        setEmailStatus({ exists: true, linked: true, fullName: null });
+        setError(
+          "Ya existe una cuenta de AKOPIA con este correo. Inicia sesión, o confírmalo con Google para agregarle esta contraseña."
+        );
+      } else {
+        setError(code ? firebaseErrorMessage(err) : errorMessage(err));
+      }
     } finally {
       setPending(false);
     }
   }
+
+  const linked = emailStatus ? alreadyHasAccount(emailStatus) : false;
+  const preLinked = emailStatus ? isPreLinkedByAdmin(emailStatus) : false;
 
   return (
     <div className="mx-auto max-w-md px-5 py-16">
@@ -79,10 +187,20 @@ export default function RegistroPage() {
       <p className="mt-2 text-(--ink-2)">
         Un administrador debe activarla antes de que puedas entrar a operar.
       </p>
+      <p className="mt-1 text-xs text-(--muted)">
+        AKOPIA es un sistema propio, independiente del usuario y contraseña de
+        la UNAL — el correo puede ser el mismo, la cuenta no.
+      </p>
 
       <div className="mt-8">
         <GoogleButton
-          label={googlePending ? "Conectando…" : "Continuar con Google"}
+          label={
+            googlePending
+              ? "Conectando…"
+              : linked
+                ? "Confirmar con Google"
+                : "Continuar con Google"
+          }
           disabled={googlePending || pending}
           loading={googlePending}
           onClick={handleGoogle}
@@ -101,18 +219,33 @@ export default function RegistroPage() {
           value={fullName}
           onChange={setFullName}
           autoComplete="name"
+          disabled={preLinked}
+          hint={
+            preLinked
+              ? "Ya te registró un administrador con este nombre — no se puede cambiar aquí."
+              : undefined
+          }
         />
         <Field
           id="correo"
           label="Correo"
           type="email"
           value={email}
-          onChange={setEmail}
+          onChange={(value) => {
+            setEmail(value);
+            setEmailStatus(null);
+          }}
+          onBlur={checkEmail}
           autoComplete="email"
+          hint={
+            linked
+              ? "Ya existe una cuenta de AKOPIA con este correo."
+              : undefined
+          }
         />
         <Field
           id="clave"
-          label="Contraseña"
+          label={linked ? "Contraseña que quieres agregar" : "Contraseña"}
           type="password"
           value={password}
           onChange={setPassword}
@@ -136,14 +269,37 @@ export default function RegistroPage() {
           </p>
         ) : null}
 
-        <button
-          type="submit"
-          disabled={pending || googlePending}
-          className="flex w-full items-center justify-center gap-2 rounded bg-unal-green-dark px-6 py-3 font-bold text-white hover:bg-unal-green disabled:opacity-60"
-        >
-          {pending ? <Spinner /> : null}
-          {pending ? "Creando cuenta…" : "Crear cuenta"}
-        </button>
+        {googleLinkError ? (
+          <button
+            type="button"
+            disabled={pending || googlePending}
+            onClick={handleLinkGoogle}
+            className="flex w-full items-center justify-center gap-2 rounded border-2 border-unal-green-dark px-6 py-3 font-bold text-unal-green-dark hover:bg-(--surface-2) disabled:opacity-60"
+          >
+            {googlePending ? <Spinner /> : null}
+            {googlePending ? "Vinculando…" : "Vincular con Google"}
+          </button>
+        ) : null}
+
+        {linked ? (
+          <p className="text-sm text-(--ink-2)">
+            Escribe la contraseña arriba y usa &quot;Confirmar con Google&quot;
+            — o{" "}
+            <Link href="/login" className="font-bold text-unal-green-dark underline">
+              inicia sesión
+            </Link>{" "}
+            si ya la tienes.
+          </p>
+        ) : (
+          <button
+            type="submit"
+            disabled={pending || googlePending}
+            className="flex w-full items-center justify-center gap-2 rounded bg-unal-green-dark px-6 py-3 font-bold text-white hover:bg-unal-green disabled:opacity-60"
+          >
+            {pending ? <Spinner /> : null}
+            {pending ? "Creando cuenta…" : "Crear cuenta"}
+          </button>
+        )}
       </form>
 
       <p className="mt-8 text-(--ink-2)">
@@ -163,14 +319,20 @@ function Field({
   type,
   value,
   onChange,
+  onBlur,
   autoComplete,
+  disabled = false,
+  hint,
 }: {
   id: string;
   label: string;
   type: string;
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   autoComplete: string;
+  disabled?: boolean;
+  hint?: string;
 }) {
   return (
     <div>
@@ -183,11 +345,14 @@ function Field({
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onBlur={onBlur}
         autoComplete={autoComplete}
         required
+        disabled={disabled}
         minLength={type === "password" ? 6 : undefined}
-        className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5 focus:border-unal-green-dark"
+        className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5 focus:border-unal-green-dark disabled:opacity-70"
       />
+      {hint ? <p className="mt-1 text-xs text-(--muted)">{hint}</p> : null}
     </div>
   );
 }

@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import PocketBase from "pocketbase";
+import type PocketBase from "pocketbase";
 import { FirebaseTokenError, verifyFirebaseToken } from "@/lib/firebase-server";
+import { serviceClient } from "@/lib/pocketbase-service";
 
 export const runtime = "nodejs";
-
-// Servidor a servidor: siempre local, nunca la URL pública que ve el
-// navegador (ver src/lib/pb.ts sobre por qué esa se deja vacía/relativa).
-const POCKETBASE_URL = process.env.PB_INTERNAL_URL ?? "http://127.0.0.1:8090";
 
 /*
  * Puente entre Firebase Authentication y la sesión real de AKOPIA.
@@ -41,22 +38,6 @@ const IMPERSONATE_DURATION_SECONDS = 3600 * 12;
 // validation_max_text_constraint — pasó en la primera prueba real.
 function randomPassword(): string {
   return crypto.randomUUID();
-}
-
-async function serviceClient(): Promise<PocketBase> {
-  const email = process.env.POCKETBASE_SERVICE_EMAIL;
-  const password = process.env.POCKETBASE_SERVICE_PASSWORD;
-
-  if (!email || !password) {
-    throw new Error(
-      "Faltan POCKETBASE_SERVICE_EMAIL / POCKETBASE_SERVICE_PASSWORD en el servidor. " +
-        "Crea el superusuario con `pocketbase superuser upsert` y configura estas variables."
-    );
-  }
-
-  const pb = new PocketBase(POCKETBASE_URL);
-  await pb.collection("_superusers").authWithPassword(email, password);
-  return pb;
 }
 
 export async function POST(request: NextRequest) {
