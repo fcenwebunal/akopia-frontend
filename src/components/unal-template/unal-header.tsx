@@ -58,7 +58,7 @@ const SERVICIOS = [
 // el enlace sube un nivel, a la sede — mismo patrón que ya trae la
 // plantilla para este widget: el subdominio identifica el sitio, el
 // clic navega al padre institucional, no a la propia portada.
-const SITE_URL = "acopio.manizales.unal.edu.co";
+const SITE_URL = "manizales.unal.edu.co";
 const SITE_HREF = "https://manizales.unal.edu.co";
 
 function MainMenuGroup({ item }: Readonly<{ item: AppMenuItem }>) {
