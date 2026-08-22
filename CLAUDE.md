@@ -945,3 +945,23 @@ Verificado con `npx tsc --noEmit` y `npm run build` limpios. Sin Playwright en e
 Aplicado en las cinco vistas de producto de la pantalla: `ProductRow` (Por Ubicar y las tarjetas por ubicación), la lista "En Revisión", "Rechazados" (miniatura más chica, 32px, es un libro histórico no una acción), y el encabezado del panel de detalle por remesa (`ProductLocationDetail`, 48px).
 
 Verificado con `npx tsc --noEmit` y `npm run build` (30 rutas) limpios. Sin Playwright en esta sesión — no se vieron las miniaturas reales en pantalla.
+
+### 2026-08-21 (noche) — `/panel/catalogo` rediseñado a tarjetas con foto, y alta de grupo/categoría/producto/ubicación desde ahí mismo
+
+Pedido explícito, con captura: la pantalla mostraba listas de filas de solo texto; se pidió una tarjeta por elemento (imagen arriba, las mismas etiquetas de siempre debajo, editar/eliminar al final) en las cuatro secciones, más un botón para crear cada tipo de elemento — incluida la foto obligatoria.
+
+**Tarjetas** — `CatalogCard`/`PhotoBox` (nuevos, locales a esta pantalla): imagen o inicial de color (mismo criterio ya usado en `/panel/inventario` el mismo día — hash determinístico por nombre, así la tarjeta no "parpadea" entre recargas sin foto) con una cámara para cambiarla, nombre, la misma etiqueta secundaria que ya mostraba cada fila (grupo de la categoría, categoría del producto, descripción de grupo/ubicación), la insignia "Desactivado", y Editar/Eliminar apilados al final — solo si el registro sigue activo, igual que antes. Grid responsivo (`grid-cols-2` en móvil hasta `grid-cols-5` en escritorio).
+
+**No se reutilizó `PhotoTile`** (la casilla que ya usa el explorador de catálogo desde el 18 de agosto): esa pieza fija imagen+nombre+subtítulo en un layout propio pensado para selección, sin espacio para una insignia de "Desactivado" ni para los botones de acción de esta pantalla. Se optó por una versión local, con el mismo criterio visual (mismo algoritmo de color por hash, ya duplicado antes en `PhotoTile` e `inventario/page.tsx` — una tercera copia pequeña y estable es más simple que forzar three componentes distintos a compartir un layout que no les sirve a los tres por igual).
+
+**Subir una foto nueva no pasa por "editar con motivo".** Igual que en el resto del catálogo desde el 18 de agosto, `photo_url` se guarda con un `pb.collection(...).update()` directo — el backend (`06_catalog_photo_guard.pb.js`) ya lo trata distinto del resto de los campos a propósito: es una foto, no un dato de negocio que necesite justificarse. `EditRecordButton`/`DeleteRecordButton` ganaron una prop `className` (antes no existía forma de hacerlos ocupar el ancho completo de una tarjeta) para poder apilarlos ahí sin duplicar el componente.
+
+**Alta de los cuatro tipos**, con foto obligatoria en los cuatro:
+
+- **`CatalogAddForm`** (ya existía, para crear desde dentro del explorador jerárquico de `ProductPicker`) se amplía para poder abrirse también **sin** contexto previo: si no llega `groupId`/`categoryId` por props, el formulario ofrece su propio selector (grupo para una categoría nueva; categoría — con su grupo entre paréntesis, porque son 57 categorías en una sola lista — para un producto nuevo), reutilizando toda la validación de duplicados y la subida de foto que ya tenía. Ningún cambio de comportamiento para quien ya lo usaba desde `ProductPicker` (`groupId`/`categoryId` siguen llegando fijos ahí).
+- **`LocationAddForm`** — la foto pasa de opcional a obligatoria (mismo criterio que ya regía grupo/categoría/producto desde el 18 de agosto; no estaba claro por qué ubicaciones había quedado afuera, y el pedido de hoy lo pareja).
+- Al crear cualquiera de los cuatro, la pantalla simplemente recarga el catálogo completo (`reload()`) — a diferencia de `ProductPicker`, que fusiona lo nuevo a mano para no interrumpir una captura en curso, aquí no hay ninguna captura que proteger.
+
+**Un ajuste de tipos, no de comportamiento:** `CatalogAddForm` espera el tipo `Product` de `@/lib/catalog` (con `requires_expiry`/`requires_batch`/`requires_quarantine`/`active` como `boolean` obligatorios); el `ProductRow` propio de esta pantalla los declara opcionales (reflejando que un valor `undefined` es indistinguible de `false` para un `BoolField` de PocketBase). Se resuelve normalizando con `Boolean(...)` al armar el objeto que se le pasa al formulario, sin tocar ninguno de los dos tipos.
+
+Verificado con `npx tsc --noEmit`, `eslint` y `npm run build` (30 rutas) limpios. Sin Playwright en esta sesión — no se vio la cuadrícula real en pantalla.

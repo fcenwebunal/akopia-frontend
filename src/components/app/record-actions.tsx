@@ -34,6 +34,7 @@ export function EditRecordButton({
   onSaved,
   label = "Editar",
   size = "sm",
+  className,
 }: {
   collection: string;
   id: string;
@@ -42,6 +43,7 @@ export function EditRecordButton({
   onSaved: () => void;
   label?: string;
   size?: "sm" | "md";
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Record<string, string | number | boolean>>({});
@@ -101,7 +103,7 @@ export function EditRecordButton({
 
   return (
     <>
-      <Button variant="outline" size={size} icon={Pencil} onClick={openDialog}>
+      <Button variant="outline" size={size} icon={Pencil} onClick={openDialog} className={className}>
         {label}
       </Button>
 
@@ -231,6 +233,7 @@ export function DeleteRecordButton({
   label = "Eliminar",
   size = "sm",
   itemDescription,
+  className,
 }: {
   collection: string;
   id: string;
@@ -239,6 +242,7 @@ export function DeleteRecordButton({
   size?: "sm" | "md";
   /** Texto corto de qué se va a eliminar, para el título del diálogo. */
   itemDescription?: string;
+  className?: string;
 }) {
   const [checking, setChecking] = useState(false);
   const [dialog, setDialog] = useState<{
@@ -298,6 +302,7 @@ export function DeleteRecordButton({
         onClick={startDelete}
         disabled={checking}
         loading={checking}
+        className={className}
       >
         {label}
       </Button>

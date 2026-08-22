@@ -40,6 +40,11 @@ const PHOTO_KINDS: Record<AddKind, PhotoKind> = {
  * La foto es obligatoria en los tres niveles — se sube antes de crear,
  * igual que en `LocationAddForm`, y sin ella el botón "Crear" ni se
  * intenta.
+ *
+ * `groupId`/`categoryId` son el padre fijo cuando se abre desde dentro
+ * del explorador jerárquico (`ProductPicker`, ya parado en ese grupo o
+ * categoría). Cuando se abre desde `/panel/catalogo` — sin ese
+ * contexto — se omiten y el formulario ofrece su propio selector.
  */
 export function CatalogAddForm({
   kind,
@@ -56,7 +61,10 @@ export function CatalogAddForm({
   onCancel: () => void;
   onCreated: (record: Group | Category | Product) => void;
 }) {
-  const parentCategory = catalog.categories.find((c) => c.id === categoryId);
+  const [pickedParentId, setPickedParentId] = useState("");
+  const effectiveGroupId = groupId ?? pickedParentId;
+  const effectiveCategoryId = categoryId ?? pickedParentId;
+  const parentCategory = catalog.categories.find((c) => c.id === effectiveCategoryId);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -109,9 +117,9 @@ export function CatalogAddForm({
   function siblings(): { name: string }[] {
     if (kind === "group") return catalog.groups;
     if (kind === "category") {
-      return catalog.categories.filter((c) => c.group_id === groupId);
+      return catalog.categories.filter((c) => c.group_id === effectiveGroupId);
     }
-    return catalog.products.filter((p) => p.category_id === categoryId);
+    return catalog.products.filter((p) => p.category_id === effectiveCategoryId);
   }
 
   async function save() {
@@ -120,6 +128,15 @@ export function CatalogAddForm({
     const trimmed = name.trim();
     if (trimmed.length < 2) {
       setError("El nombre debe tener al menos 2 letras.");
+      return;
+    }
+
+    if (kind === "category" && !effectiveGroupId) {
+      setError("Elige el grupo al que pertenece.");
+      return;
+    }
+    if (kind === "product" && !effectiveCategoryId) {
+      setError("Elige la categoría a la que pertenece.");
       return;
     }
 
@@ -154,7 +171,7 @@ export function CatalogAddForm({
       } else if (kind === "category") {
         record = await pb.collection("categories").create<Category>({
           name: trimmed,
-          group_id: groupId,
+          group_id: effectiveGroupId,
           description,
           default_unit_id: unitId || null,
           photo_url: photoUrl,
@@ -163,7 +180,7 @@ export function CatalogAddForm({
       } else {
         record = await pb.collection("products").create<Product>({
           name: trimmed,
-          category_id: categoryId,
+          category_id: effectiveCategoryId,
           default_unit_id: unitId,
           description,
           min_stock_alert: minStockAlert ? Number(minStockAlert) : null,
@@ -193,13 +210,66 @@ export function CatalogAddForm({
     <div className="fixed inset-0 z-30 flex items-end bg-black/40 sm:items-center sm:justify-center">
       <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-lg bg-(--surface) p-5 sm:max-w-sm sm:rounded-lg">
         <h2 className="text-lg font-bold">Nuevo{kind === "category" ? "a" : ""} {KIND_LABELS[kind]}</h2>
-        {kind === "category" ? (
+        {kind === "category" && groupId ? (
           <p className="text-sm text-(--muted)">
             En {catalog.groups.find((g) => g.id === groupId)?.name}
           </p>
         ) : null}
-        {kind === "product" ? (
+        {kind === "product" && categoryId ? (
           <p className="text-sm text-(--muted)">En {parentCategory?.name}</p>
+        ) : null}
+
+        {kind === "category" && !groupId ? (
+          <div className="mt-4">
+            <label htmlFor="ca-grupo" className="mb-1 block text-sm font-bold">
+              Grupo
+            </label>
+            <select
+              id="ca-grupo"
+              value={pickedParentId}
+              onChange={(event) => setPickedParentId(event.target.value)}
+              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+            >
+              <option value="">Selecciona…</option>
+              {catalog.groups
+                .filter((g) => g.active !== false)
+                .map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+            </select>
+          </div>
+        ) : null}
+
+        {kind === "product" && !categoryId ? (
+          <div className="mt-4">
+            <label htmlFor="ca-categoria" className="mb-1 block text-sm font-bold">
+              Categoría
+            </label>
+            <select
+              id="ca-categoria"
+              value={pickedParentId}
+              onChange={(event) => {
+                const newCategoryId = event.target.value;
+                setPickedParentId(newCategoryId);
+                if (!unitId) {
+                  const category = catalog.categories.find((c) => c.id === newCategoryId);
+                  if (category?.default_unit_id) setUnitId(category.default_unit_id);
+                }
+              }}
+              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+            >
+              <option value="">Selecciona…</option>
+              {catalog.categories
+                .filter((c) => c.active !== false)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} — {catalog.groups.find((g) => g.id === c.group_id)?.name ?? "?"}
+                  </option>
+                ))}
+            </select>
+          </div>
         ) : null}
 
         <div className="mt-4">

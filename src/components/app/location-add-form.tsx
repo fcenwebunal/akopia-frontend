@@ -64,6 +64,11 @@ export function LocationAddForm({
       return;
     }
 
+    if (!photoUrl) {
+      setError("Sube una foto antes de crear.");
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -97,7 +102,12 @@ export function LocationAddForm({
       <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-lg bg-(--surface) p-5 sm:max-w-sm sm:rounded-lg">
         <h2 className="text-lg font-bold">Nueva ubicación</h2>
 
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4">
+          <span className="mb-1 block text-center text-sm font-bold">
+            Foto <span className="text-unal-red">*</span>
+          </span>
+        </div>
+        <div className="flex justify-center">
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
