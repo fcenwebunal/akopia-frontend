@@ -8,6 +8,7 @@ import { currentUser, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
 import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
+import { formatQuantity } from "@/lib/format";
 import { ProductPicker } from "@/components/app/product-picker";
 import {
   isGarmentUnit,
@@ -308,15 +309,15 @@ export default function DonacionDetallePage({
 
       {donation.total_weight_kg ? (
         <p className="mt-1 text-sm text-(--ink-2)">
-          Peso declarado: <strong>{donation.total_weight_kg} kg</strong>
+          Peso declarado: <strong>{formatQuantity(donation.total_weight_kg)} kg</strong>
           {donation.status === "clasificada" && donation.classified_weight_kg ? (
             <>
               {" · "}
-              Peso clasificado: <strong>{donation.classified_weight_kg} kg</strong>
+              Peso clasificado: <strong>{formatQuantity(donation.classified_weight_kg)} kg</strong>
               {donation.classified_weight_kg < donation.total_weight_kg ? (
                 <span className="text-(--muted)">
                   {" "}
-                  (merma {(donation.total_weight_kg - donation.classified_weight_kg).toFixed(2)} kg)
+                  (merma {formatQuantity(donation.total_weight_kg - donation.classified_weight_kg)} kg)
                 </span>
               ) : null}
             </>
@@ -396,7 +397,7 @@ export default function DonacionDetallePage({
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="font-bold">{item.expand?.product_id?.name ?? "—"}</span>
                   <span className="text-(--muted)">
-                    {item.quantity} {item.expand?.unit_id?.code ?? item.expand?.unit_id?.name ?? ""}
+                    {formatQuantity(item.quantity)} {item.expand?.unit_id?.code ?? item.expand?.unit_id?.name ?? ""}
                   </span>
                   <span className={`ml-auto rounded px-2 py-0.5 text-xs font-bold ${STATUS_STYLES[status]}`}>
                     {STATUS_LABELS[status]}

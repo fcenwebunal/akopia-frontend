@@ -9,6 +9,7 @@ import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalo
 import { loadKitItems, type Kit, type KitItem } from "@/lib/kits";
 import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
+import { formatQuantity } from "@/lib/format";
 import { ProductPicker } from "@/components/app/product-picker";
 import { DeleteRecordButton } from "@/components/app/record-actions";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
@@ -260,7 +261,7 @@ export default function KitDetallePage({ params }: { params: Promise<{ id: strin
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{product?.name ?? "Producto ya no disponible"}</p>
                     <p className="text-sm text-(--muted)">
-                      {item.quantity} {product ? unitLabel(catalog, product.default_unit_id) : ""}
+                      {formatQuantity(item.quantity)} {product ? unitLabel(catalog, product.default_unit_id) : ""}
                     </p>
                   </div>
                   {product ? (

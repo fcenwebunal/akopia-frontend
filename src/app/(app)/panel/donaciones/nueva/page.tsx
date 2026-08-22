@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { currentUser, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
+import { formatQuantity } from "@/lib/format";
 import { ProductPicker } from "@/components/app/product-picker";
 import {
   isGarmentUnit,
@@ -402,7 +403,7 @@ export default function NuevaDonacionPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{line.product.name}</p>
                   <p className="text-sm text-(--muted)">
-                    {line.quantity} {unitLabel(catalog, line.product.default_unit_id)}
+                    {formatQuantity(line.quantity)} {unitLabel(catalog, line.product.default_unit_id)}
                     {line.size ? ` · talla ${line.size}` : ""}
                     {line.unitsPerPackage > 1 ? ` · ${line.unitsPerPackage} un./paquete` : ""}
                     {line.expiry ? ` · vence ${line.expiry}` : ""}

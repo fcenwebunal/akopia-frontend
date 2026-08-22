@@ -8,6 +8,7 @@ import { currentUser, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
 import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
+import { formatQuantity } from "@/lib/format";
 import { ProductPicker } from "@/components/app/product-picker";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
@@ -193,7 +194,7 @@ export default function NuevoKitPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{line.product.name}</p>
                   <p className="text-sm text-(--muted)">
-                    {line.quantity} {unitLabel(catalog, line.product.default_unit_id)}
+                    {formatQuantity(line.quantity)} {unitLabel(catalog, line.product.default_unit_id)}
                   </p>
                 </div>
                 <button

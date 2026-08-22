@@ -1,4 +1,5 @@
 import type { MissingProduct } from "@/lib/missing-products";
+import { formatQuantity } from "@/lib/format";
 
 /*
  * Puramente presentacional: nada de `pb`, `fetch`, hooks de datos ni
@@ -78,7 +79,7 @@ function MissingProductCard({ item }: { item: MissingProduct }) {
       </div>
 
       <p className="mt-3 text-2xl font-black tabular-nums text-unal-red">
-        {item.missing_qty}
+        {formatQuantity(item.missing_qty)}
         <span className="ml-1 text-sm font-bold text-(--muted)">{item.unit} faltan</span>
       </p>
 
@@ -89,7 +90,7 @@ function MissingProductCard({ item }: { item: MissingProduct }) {
         />
       </div>
       <p className="mt-1 text-xs text-(--muted)">
-        {item.available_qty} de {item.requested_qty} {item.unit.toLowerCase()} pedidos ya están cubiertos
+        {formatQuantity(item.available_qty)} de {formatQuantity(item.requested_qty)} {item.unit.toLowerCase()} pedidos ya están cubiertos
       </p>
     </li>
   );

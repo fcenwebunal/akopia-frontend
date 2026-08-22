@@ -7,6 +7,7 @@ import { callRoute, currentUser, errorMessage, pb } from "@/lib/pb";
 import { loadCatalog, unitLabel, type Catalog, type Product } from "@/lib/catalog";
 import { loadKits, loadKitItems, type Kit } from "@/lib/kits";
 import { useAsyncData } from "@/lib/use-async-data";
+import { formatQuantity } from "@/lib/format";
 import { ProductPicker } from "@/components/app/product-picker";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Toggle } from "@/components/ui/toggle";
@@ -481,7 +482,7 @@ export default function NuevaSolicitudPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{line.product.name}</p>
                   <p className="text-sm text-(--muted)">
-                    {line.quantity} {unitLabel(catalog, line.product.default_unit_id)}
+                    {formatQuantity(line.quantity)} {unitLabel(catalog, line.product.default_unit_id)}
                   </p>
                 </div>
                 <button
@@ -581,7 +582,9 @@ function QuantityPrompt({
         <h2 className="text-lg font-bold">{product.name}</h2>
         <p className="text-sm text-(--muted)">
           Se mide en {unitLabel(catalog, product.default_unit_id)}
-          {max !== undefined ? ` · disponible: ${max}` : ` · disponible ahora: ${available}`}
+          {max !== undefined
+            ? ` · disponible: ${formatQuantity(max)}`
+            : ` · disponible ahora: ${formatQuantity(available)}`}
         </p>
 
         <div className="mt-4 flex items-center gap-2">
@@ -616,14 +619,14 @@ function QuantityPrompt({
 
         {exceedsMax ? (
           <p className="mt-2 text-sm text-unal-red">
-            Solo hay {max} disponible{max === 1 ? "" : "s"}.
+            Solo hay {formatQuantity(max ?? 0)} disponible{max === 1 ? "" : "s"}.
           </p>
         ) : null}
 
         {shortage > 0 ? (
           <p className="mt-2 text-sm text-unal-orange">
-            Solo hay {available} disponible{available === 1 ? "" : "s"} ahora mismo. El
-            faltante ({shortage}) quedará registrado como demanda insatisfecha en
+            Solo hay {formatQuantity(available)} disponible{available === 1 ? "" : "s"} ahora mismo. El
+            faltante ({formatQuantity(shortage)}) quedará registrado como demanda insatisfecha en
             «Productos faltantes».
           </p>
         ) : null}

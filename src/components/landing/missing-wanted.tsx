@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { MissingProduct } from "@/lib/missing-products";
+import { formatQuantity } from "@/lib/format";
 
 /*
  * Sección pública de "qué donar ahora", alimentada por la misma ruta
@@ -85,7 +86,7 @@ function MissingCard({ item }: { item: MissingProduct }) {
         </div>
 
         <p className="mt-2 text-2xl font-black tabular-nums text-[#d9603a]">
-          {item.missing_qty}
+          {formatQuantity(item.missing_qty)}
           <span className="ml-1 text-sm font-bold text-[#6b7d68]">
             {item.unit.toLowerCase()} faltan
           </span>
@@ -95,7 +96,7 @@ function MissingCard({ item }: { item: MissingProduct }) {
           <div className="h-full rounded-full bg-[#3f7a3e]" style={{ width: `${coveredPct}%` }} />
         </div>
         <p className="mt-1 text-xs text-[#6b7d68]">
-          {item.available_qty} de {item.requested_qty} {item.unit.toLowerCase()} ya cubiertos
+          {formatQuantity(item.available_qty)} de {formatQuantity(item.requested_qty)} {item.unit.toLowerCase()} ya cubiertos
         </p>
       </div>
     </li>

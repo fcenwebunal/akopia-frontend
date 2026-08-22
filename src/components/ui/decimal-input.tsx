@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatQuantity } from "@/lib/format";
 
 /*
  * Reemplaza <input type="number"> para pesos y cantidades. En Windows
@@ -70,5 +71,5 @@ export function parseDecimal(text: string): number {
 }
 
 function formatDecimal(value: number): string {
-  return Number.isFinite(value) ? String(value) : "";
+  return Number.isFinite(value) ? formatQuantity(value) : "";
 }

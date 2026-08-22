@@ -921,3 +921,15 @@ Consecuencia directa de la migración `054` y `11_edit_delete_with_reason.pb.js`
 **Un bug real, encontrado por el propio lint, en código que esta sesión no había tocado:** `despachos/[id]/page.tsx` ya tenía un `useEffect` (del 18 de agosto, para precargar el nombre/teléfono de quien recibe desde la solicitud) que dispara `react-hooks/set-state-in-effect` — no se había detectado antes porque nunca se había corrido `eslint` sobre ese archivo en una sesión donde también se tocara. Corregido con el mismo patrón que ya se usó para `DecimalInput` el mismo día: comparar contra el `data` ya procesado y ajustar el estado durante el render, no en un efecto.
 
 Verificado con `npx tsc --noEmit`, `eslint` y `npm run build` (30 rutas, incluida `/panel/catalogo`) limpios. La lógica de bloqueo/motivo/historial se verificó de punta a punta contra el backend real (instancia desechable) — detalle completo en el `CLAUDE.md` del backend. **Sin Playwright en esta sesión** — los diálogos nuevos no se probaron con clics reales en un navegador.
+
+### 2026-08-21 (noche) — Cantidades y pesos con residuo de punto flotante, en toda la app
+
+Reportado con captura: `/panel/inventario` mostraba "50.900000000000006 PAQUETE disp." — residuo de sumar decimales en punto flotante (JS/SQLite), sin que el dato en sí estuviera mal. Pedido explícito: máximo 3 decimales, y sin ceros de relleno al final (8.10 → "8.1", 8.00 → "8").
+
+**`src/lib/format.ts`** (nuevo) — `formatQuantity(value)`: redondea a 3 decimales (`Math.round(value * 1000) / 1000`) y convierte a texto con `toString()`, que ya omite los ceros finales por sí solo — no hizo falta ningún recorte de texto a mano.
+
+**No era solo un renglón de Inventario** — cualquier pantalla que muestra una cantidad o peso que viene de sumar valores (saldo de `inventory`, `donation_items.quantity`, `total_weight_kg`, disponibilidad de `/api/requests/missing-products` o de `availability`) podía arrastrar el mismo residuo. Aplicado en los 8 archivos donde aparecía: `inventario/page.tsx` (todos los saldos, el detalle por remesa, los diálogos de reubicar/rechazar/ajustar), `donaciones/nueva` y `donaciones/[id]` (líneas del borrador, peso declarado/clasificado/merma, cantidad por artículo), `solicitudes/nueva` y `solicitudes/[id]` (líneas, disponible/faltante en el selector de cantidad, detalle de disponibilidad al rechazar por falta de stock), `kits/nueva` y `kits/[id]` (líneas del kit), y los dos componentes de "productos faltantes" (`missing-products-list.tsx` del panel, `missing-wanted.tsx` de la portada pública).
+
+**`DecimalInput` también se corrigió** (`formatDecimal()` ahora usa `formatQuantity()` en vez de `String(value)`): sin esto, un campo editable que arranca con un valor ya contaminado (por ejemplo, "Cantidad correcta" al ajustar inventario, precargado con `row.available_qty`) habría mostrado el mismo residuo dentro del propio input, no solo en las etiquetas de solo lectura.
+
+Verificado con `npx tsc --noEmit` y `npm run build` limpios. Sin Playwright en esta sesión — no se vio el número corregido en pantalla.

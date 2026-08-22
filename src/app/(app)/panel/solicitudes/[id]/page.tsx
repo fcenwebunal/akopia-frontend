@@ -7,6 +7,7 @@ import { Check, PackageSearch, X, XCircle } from "lucide-react";
 import { callRoute, currentUser, errorMessage, pb, RouteError } from "@/lib/pb";
 import { hasAnyRole } from "@/lib/roles";
 import { useAsyncData } from "@/lib/use-async-data";
+import { formatQuantity } from "@/lib/format";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { CoordinatesDisplay } from "@/components/app/coordinates-display";
@@ -272,8 +273,8 @@ export default function SolicitudDetallePage({
             <ul className="mt-2 list-disc pl-5 text-sm">
               {missing.map((row) => (
                 <li key={row.product}>
-                  {row.product}: pide {row.requested}, hay {row.available} — faltan{" "}
-                  {row.shortage}
+                  {row.product}: pide {formatQuantity(row.requested)}, hay {formatQuantity(row.available)} — faltan{" "}
+                  {formatQuantity(row.shortage)}
                 </li>
               ))}
             </ul>
@@ -292,7 +293,7 @@ export default function SolicitudDetallePage({
               <div>
                 <p className="font-medium">{item.expand?.product_id?.name ?? "—"}</p>
                 <p className="text-sm text-(--muted)">
-                  {item.quantity_requested}{" "}
+                  {formatQuantity(item.quantity_requested)}{" "}
                   {item.expand?.unit_id?.code ?? item.expand?.unit_id?.name ?? ""}
                   {" · "}
                   {item.status}
@@ -309,7 +310,7 @@ export default function SolicitudDetallePage({
                   >
                     {availabilityRow.sufficient
                       ? "Disponible"
-                      : `Faltan ${availabilityRow.shortage}`}
+                      : `Faltan ${formatQuantity(availabilityRow.shortage ?? 0)}`}
                   </span>
                 ) : null}
                 {canManageRecords && item.status === "pendiente" ? (

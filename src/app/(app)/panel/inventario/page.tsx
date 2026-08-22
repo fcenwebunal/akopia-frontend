@@ -9,6 +9,7 @@ import { hasAnyRole } from "@/lib/roles";
 import { loadCatalog, normalize } from "@/lib/catalog";
 import { loadLocations, locationLabel, type Location } from "@/lib/locations";
 import { useAsyncData } from "@/lib/use-async-data";
+import { formatQuantity } from "@/lib/format";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { DecimalInput } from "@/components/ui/decimal-input";
@@ -328,7 +329,7 @@ export default function InventarioPage() {
                     >
                       <span className="font-bold">{row.expand?.product_id?.name ?? "—"}</span>
                       <span className="ml-2 text-sm text-unal-red">
-                        {row.quarantine_qty} {row.expand?.unit_id?.code ?? row.expand?.unit_id?.name ?? ""}
+                        {formatQuantity(row.quarantine_qty)} {row.expand?.unit_id?.code ?? row.expand?.unit_id?.name ?? ""}
                       </span>
                       <span className="block text-xs text-(--muted)">
                         {locationLabel(locationById.get(row.location_id))}
@@ -423,7 +424,7 @@ export default function InventarioPage() {
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="font-medium">{movement.expand?.product_id?.name ?? "—"}</span>
                   <span className="text-sm text-(--muted)">
-                    {movement.quantity} {movement.expand?.unit_id?.code ?? movement.expand?.unit_id?.name ?? ""}
+                    {formatQuantity(movement.quantity)} {movement.expand?.unit_id?.code ?? movement.expand?.unit_id?.name ?? ""}
                   </span>
                   <span className="ml-auto text-xs text-(--muted)">
                     {new Date(movement.created).toLocaleDateString("es-CO", {
@@ -506,13 +507,13 @@ function ProductRow({
       </button>
 
       <span className="text-sm tabular-nums font-bold text-unal-green-dark">
-        {row.available_qty} <span className="font-normal text-(--muted)">{unit} disp.</span>
+        {formatQuantity(row.available_qty)} <span className="font-normal text-(--muted)">{unit} disp.</span>
       </span>
       {row.reserved_qty > 0 ? (
-        <span className="text-sm tabular-nums text-(--muted)">{row.reserved_qty} reserv.</span>
+        <span className="text-sm tabular-nums text-(--muted)">{formatQuantity(row.reserved_qty)} reserv.</span>
       ) : null}
       {row.quarantine_qty > 0 ? (
-        <span className="text-sm tabular-nums text-unal-red">{row.quarantine_qty} cuarent.</span>
+        <span className="text-sm tabular-nums text-unal-red">{formatQuantity(row.quarantine_qty)} cuarent.</span>
       ) : null}
 
       {row.available_qty > 0 && canRelocate ? (
@@ -544,7 +545,7 @@ function RelocateDialog({
     setError(null);
 
     if (!(quantity > 0) || quantity > row.available_qty) {
-      setError(`La cantidad debe estar entre 1 y ${row.available_qty}.`);
+      setError(`La cantidad debe estar entre 1 y ${formatQuantity(row.available_qty)}.`);
       return;
     }
     if (locationId === row.location_id) {
@@ -571,7 +572,7 @@ function RelocateDialog({
       <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-lg bg-(--surface) p-5 sm:max-w-md sm:rounded-lg">
         <h2 className="text-lg font-bold">Reubicar {row.expand?.product_id?.name}</h2>
         <p className="text-sm text-(--muted)">
-          Actualmente en {row.location_id ? "una ubicación" : "Por Ubicar"} · {row.available_qty} disponible
+          Actualmente en {row.location_id ? "una ubicación" : "Por Ubicar"} · {formatQuantity(row.available_qty)} disponible
         </p>
 
         <div className="mt-4">
@@ -645,7 +646,7 @@ function RejectDialog({
     setError(null);
 
     if (!(quantity > 0) || quantity > row.quarantine_qty) {
-      setError(`La cantidad debe estar entre 1 y ${row.quarantine_qty}.`);
+      setError(`La cantidad debe estar entre 1 y ${formatQuantity(row.quarantine_qty)}.`);
       return;
     }
     if (!reason.trim()) {
@@ -672,7 +673,7 @@ function RejectDialog({
       <div className="w-full rounded-t-lg bg-(--surface) p-5 sm:max-w-sm sm:rounded-lg">
         <h2 className="text-lg font-bold">Rechazar {row.expand?.product_id?.name}</h2>
         <p className="text-sm text-(--muted)">
-          {row.quarantine_qty} en revisión · esto da de baja el inventario, no tiene deshacer
+          {formatQuantity(row.quarantine_qty)} en revisión · esto da de baja el inventario, no tiene deshacer
         </p>
 
         <div className="mt-4">
@@ -864,7 +865,7 @@ function ProductLocationDetail({
             ) : (
               <div className="rounded border border-(--rule) p-3">
                 <p className="text-sm">
-                  Disponible ahora: <strong>{row.available_qty}</strong>
+                  Disponible ahora: <strong>{formatQuantity(row.available_qty)}</strong>
                 </p>
                 <label htmlFor="ajuste-cant" className="mb-1 mt-2 block text-sm font-bold">
                   Cantidad correcta
@@ -941,7 +942,7 @@ function ProductLocationDetail({
                     {item.expand?.donation_id?.code ?? "Ver remesa"}
                   </Link>
                   <span className="text-(--muted)">
-                    {item.quantity} {item.expand?.unit_id?.code ?? item.expand?.unit_id?.name ?? ""}
+                    {formatQuantity(item.quantity)} {item.expand?.unit_id?.code ?? item.expand?.unit_id?.name ?? ""}
                   </span>
                   <span
                     className={`ml-auto rounded px-2 py-0.5 text-xs font-bold ${
