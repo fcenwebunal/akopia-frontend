@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { ancizarSans, ancizarSerif } from "@/lib/fonts";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { TemplateScripts } from "@/components/unal-template/template-scripts";
@@ -18,9 +19,15 @@ export const metadata: Metadata = {
   authors: [{ name: "Universidad Nacional de Colombia, sede Manizales" }],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // El nonce lo genera el middleware (src/middleware.ts) en cada
+  // petición y lo reenvía como cabecera de solicitud. Sin él aquí, este
+  // script quedaría bloqueado por la CSP en cuanto se quitó
+  // 'unsafe-inline' de script-src.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html
       lang="es"
@@ -28,7 +35,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
         <TemplateStyles />
       </head>
       <body className="antialiased">
