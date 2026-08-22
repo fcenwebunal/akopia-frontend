@@ -287,7 +287,7 @@ export default async function HomePage() {
 
           <div className="relative overflow-hidden rounded-[22px] bg-gradient-to-br from-[#6a5aa8] to-[#453a7a] p-8 text-white">
             <a
-              href="https://maps.app.goo.gl/1MUqEY62myCBgut4A"
+              href="https://maps.app.goo.gl/MtoRGGaPCNxBgMNMA"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Cómo llegar en Google Maps"
