@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Truck } from "lucide-react";
 import { currentUser, pb } from "@/lib/pb";
 import { hasAnyRole } from "@/lib/roles";
+import { normalize } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
 import { LinkButton } from "@/components/ui/button";
@@ -46,6 +47,25 @@ export default function DespachosPage() {
 
   const { data: dispatches, error } = useAsyncData(fetchDispatches);
 
+  const [query, setQuery] = useState("");
+
+  const filteredDispatches = useMemo(() => {
+    if (!dispatches) return dispatches;
+    const needle = normalize(query.trim());
+    if (!needle) return dispatches;
+    return dispatches.filter((dispatch) => {
+      const haystack = [
+        dispatch.code,
+        dispatch.destination,
+        dispatch.driver_name,
+        dispatch.expand?.request_id?.code,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return normalize(haystack).includes(needle);
+    });
+  }, [dispatches, query]);
+
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -84,8 +104,29 @@ export default function DespachosPage() {
       ) : null}
 
       {dispatches !== null && dispatches.length > 0 ? (
+        <div className="mt-6">
+          <label className="sr-only" htmlFor="buscar-despachos">
+            Buscar despacho
+          </label>
+          <input
+            id="buscar-despachos"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por destino, conductor o código…"
+            autoComplete="off"
+            className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5 sm:max-w-sm"
+          />
+        </div>
+      ) : null}
+
+      {filteredDispatches !== null && dispatches && dispatches.length > 0 && filteredDispatches.length === 0 ? (
+        <p className="mt-6 text-(--muted)">Ningún despacho coincide con la búsqueda.</p>
+      ) : null}
+
+      {filteredDispatches !== null && filteredDispatches.length > 0 ? (
         <ul className="mt-6 space-y-2">
-          {dispatches.map((dispatch) => {
+          {filteredDispatches.map((dispatch) => {
             const status = dispatch.expand?.request_id?.status ?? "despachada";
             return (
               <li key={dispatch.id}>

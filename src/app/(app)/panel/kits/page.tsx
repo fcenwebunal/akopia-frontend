@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Layers, Plus } from "lucide-react";
 import { currentUser, errorMessage, pb } from "@/lib/pb";
 import type { Kit } from "@/lib/kits";
 import { hasAnyRole } from "@/lib/roles";
+import { normalize } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
 import { useRouter } from "next/navigation";
 import { LoadingLine, Spinner } from "@/components/ui/spinner";
@@ -36,6 +37,18 @@ export default function KitsPage() {
   }, []);
 
   const { data: kits, error: loadError, reload } = useAsyncData(fetchKits);
+
+  const [query, setQuery] = useState("");
+
+  const filteredKits = useMemo(() => {
+    if (!kits) return kits;
+    const needle = normalize(query.trim());
+    if (!needle) return kits;
+    return kits.filter((kit) => {
+      const haystack = [kit.name, kit.description].filter(Boolean).join(" ");
+      return normalize(haystack).includes(needle);
+    });
+  }, [kits, query]);
 
   async function toggleActive(kit: Kit) {
     setBusyId(kit.id);
@@ -98,8 +111,29 @@ export default function KitsPage() {
           </p>
         </div>
       ) : (
-        <ul className="mt-6 divide-y divide-(--rule) overflow-hidden rounded border border-(--rule) bg-(--surface)">
-          {kits.map((kit) => (
+        <>
+          <div className="mt-6">
+            <label className="sr-only" htmlFor="buscar-kits">
+              Buscar kit
+            </label>
+            <input
+              id="buscar-kits"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nombre o descripción…"
+              autoComplete="off"
+              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5 sm:max-w-sm"
+            />
+          </div>
+
+          {filteredKits && filteredKits.length === 0 ? (
+            <p className="mt-4 text-(--muted)">Ningún kit coincide con la búsqueda.</p>
+          ) : null}
+
+          {filteredKits && filteredKits.length > 0 ? (
+        <ul className="mt-4 divide-y divide-(--rule) overflow-hidden rounded border border-(--rule) bg-(--surface)">
+          {filteredKits.map((kit) => (
             <li key={kit.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
               <button
                 type="button"
@@ -137,6 +171,8 @@ export default function KitsPage() {
             </li>
           ))}
         </ul>
+          ) : null}
+        </>
       )}
     </div>
   );

@@ -989,4 +989,19 @@ Pedido explícito de Juan Manuel: subir "Acciones" antes de "Resumen" (mismo tam
 
 **Dos bugs de lint reales, atrapados antes de terminar, no después:** el `useEffect` que ya traía esta pantalla desde el 18 de agosto para `setLastUpdated` (nunca antes se había corrido `eslint` sobre este archivo en una sesión que también lo tocara) se corrigió con el mismo patrón ya documentado para `DecimalInput` — comparar contra el dashboard anterior y ajustar el estado durante el render, no en un efecto. Y el `DonutChart` nuevo mutaba una variable `cumulative` capturada desde fuera de un `.map()` — el compilador de React lo rechaza porque no puede garantizar que ese `.map()` sea puro; se resolvió con un `for` simple que construye el array sin depender de una variable externa mutada dentro de un callback.
 
+**Mismo día, cierre:** Juan Manuel trajo una lista externa ("me recomendaron poner estos dashboards") organizada en dos páginas — "Panorama General" (con un filtro de categoría que no existía) y "Donantes y Tendencia" — para comprobar si ya estaba todo. Confirmado punto por punto contra lo recién entregado: faltaban dos cosas reales, no solo de nombre — el filtro de categoría, y que "Donaciones por día"/"Despachos por día" aparecían como dos gráficos separados en vez del combinado que se construyó hoy. Resuelto con tres preguntas (`AskUserQuestion`) antes de tocar nada más: **una sola página, en secciones** (no dos rutas — que es justo como ya está armado, con los widgets agrupados en parejas), **se queda el gráfico combinado** (no se separa en dos), y **el filtro de categoría no se agrega** — Juan Manuel señaló que ya existe en `/panel/inventario` vía el catálogo, así que repetirlo en el panel principal sería redundante. Sin cambios de código: los tres puntos confirman que lo entregado ya cumple lo pedido, tal cual quedó.
+
 **Sin `chromium-cli` ni Playwright disponibles en este entorno** (se intentó explícitamente antes de dar el trabajo por terminado, siguiendo la skill de `run`) — verificado con `npx tsc --noEmit`, `eslint` y `npm run build` (30 rutas), los tres limpios, más una revisión manual línea por línea del archivo completo. **No se vio la cuadrícula real en un navegador**, ni en escritorio ni en móvil — queda pendiente que Juan Manuel lo confirme visualmente antes de darlo por cerrado del todo.
+
+### 2026-08-22 (noche) — Buscador en las cuatro secciones de Operación
+
+Pedido explícito de Juan Manuel: un buscador por los atributos más clave de los registros en cada sección del menú "Operación" (`menu-config.ts`: Donaciones, Solicitudes, Despachos, Kits). Ninguna de las cuatro tenía filtro propio — a diferencia de Inventario, que ya lo tiene desde el 17 de agosto.
+
+Mismo patrón ya usado en `/panel/inventario`: un `<input type="search">` (estilo idéntico) que filtra en memoria la lista ya cargada con `getList`/`getFullList` (no un query nuevo al backend — listas de hasta 50 registros, filtrar en memoria es instantáneo y no complica la carga), usando `normalize()` (`@/lib/catalog`, ya existente — sin acentos ni mayúsculas, pensado para quien captura de pie sin tildes) contra los campos que de verdad identifican cada registro:
+
+- **Donaciones** — donante, código, quién recibió.
+- **Solicitudes** — solicitante, destino, código.
+- **Despachos** — destino, conductor, código, código de la solicitud asociada.
+- **Kits** — nombre, descripción.
+
+El buscador solo aparece si ya hay registros que buscar (no cuando la lista está vacía de por sí), y un mensaje aparte distingue "no hay nada" de "nada coincide con la búsqueda". `npx tsc --noEmit` y `npm run build` limpios (30 rutas). **Sin Playwright en esta sesión** — no se probó el filtrado en un navegador real.

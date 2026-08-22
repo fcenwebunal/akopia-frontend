@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { PackageSearch, ClipboardList } from "lucide-react";
 import { currentUser, pb } from "@/lib/pb";
 import { hasAnyRole } from "@/lib/roles";
+import { normalize } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LinkButton } from "@/components/ui/button";
 
@@ -65,6 +66,20 @@ export default function SolicitudesPage() {
 
   const { data: requests, error } = useAsyncData(fetchRequests);
 
+  const [query, setQuery] = useState("");
+
+  const filteredRequests = useMemo(() => {
+    if (!requests) return requests;
+    const needle = normalize(query.trim());
+    if (!needle) return requests;
+    return requests.filter((request) => {
+      const haystack = [request.code, request.requester_name, request.destination]
+        .filter(Boolean)
+        .join(" ");
+      return normalize(haystack).includes(needle);
+    });
+  }, [requests, query]);
+
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -106,8 +121,29 @@ export default function SolicitudesPage() {
       ) : null}
 
       {requests !== null && requests.length > 0 ? (
+        <div className="mt-6">
+          <label className="sr-only" htmlFor="buscar-solicitudes">
+            Buscar solicitud
+          </label>
+          <input
+            id="buscar-solicitudes"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por solicitante, destino o código…"
+            autoComplete="off"
+            className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5 sm:max-w-sm"
+          />
+        </div>
+      ) : null}
+
+      {filteredRequests !== null && requests && requests.length > 0 && filteredRequests.length === 0 ? (
+        <p className="mt-6 text-(--muted)">Ninguna solicitud coincide con la búsqueda.</p>
+      ) : null}
+
+      {filteredRequests !== null && filteredRequests.length > 0 ? (
         <ul className="mt-6 space-y-2">
-          {requests.map((request) => (
+          {filteredRequests.map((request) => (
             <li key={request.id}>
               <Link
                 href={`/panel/solicitudes/${request.id}`}

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Gift } from "lucide-react";
 import { currentUser, pb } from "@/lib/pb";
 import { hasAnyRole } from "@/lib/roles";
+import { normalize } from "@/lib/catalog";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
 import { LinkButton } from "@/components/ui/button";
@@ -38,6 +39,24 @@ export default function DonacionesPage() {
   }, []);
 
   const { data: donations, error } = useAsyncData(fetchDonations);
+
+  const [query, setQuery] = useState("");
+
+  const filteredDonations = useMemo(() => {
+    if (!donations) return donations;
+    const needle = normalize(query.trim());
+    if (!needle) return donations;
+    return donations.filter((donation) => {
+      const haystack = [
+        donation.code,
+        donation.donor_name,
+        donation.expand?.operator_id?.full_name,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return normalize(haystack).includes(needle);
+    });
+  }, [donations, query]);
 
   return (
     <div>
@@ -80,8 +99,29 @@ export default function DonacionesPage() {
       ) : null}
 
       {donations !== null && donations.length > 0 ? (
+        <div className="mt-6">
+          <label className="sr-only" htmlFor="buscar-donaciones">
+            Buscar donación
+          </label>
+          <input
+            id="buscar-donaciones"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por donante, código o quién recibió…"
+            autoComplete="off"
+            className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5 sm:max-w-sm"
+          />
+        </div>
+      ) : null}
+
+      {filteredDonations !== null && donations && donations.length > 0 && filteredDonations.length === 0 ? (
+        <p className="mt-6 text-(--muted)">Ninguna donación coincide con la búsqueda.</p>
+      ) : null}
+
+      {filteredDonations !== null && filteredDonations.length > 0 ? (
         <ul className="mt-6 space-y-2">
-          {donations.map((donation) => (
+          {filteredDonations.map((donation) => (
             <li key={donation.id}>
               <Link
                 href={`/panel/donaciones/${donation.id}`}
