@@ -7,9 +7,17 @@ import { Gift, ClipboardList, Package, Truck, type LucideIcon } from "lucide-rea
 import { pb } from "@/lib/pb";
 import { CutIcon } from "@/components/ui/cut-icon";
 import { loadCatalog } from "@/lib/catalog";
+import { loadLocations, locationLabel } from "@/lib/locations";
 import { useAsyncData } from "@/lib/use-async-data";
 import { LoadingLine } from "@/components/ui/spinner";
-import { StatTile, DistributionBar, HorizontalBarChart, DailyBarChart } from "@/components/panel/charts";
+import {
+  StatTile,
+  DistributionBar,
+  HorizontalBarChart,
+  DailyBarChart,
+  DonutChart,
+  NumberTable,
+} from "@/components/panel/charts";
 import { fetchMissingProducts, type MissingProduct } from "@/lib/missing-products";
 import { MissingProductsList } from "@/components/inventory/missing-products-list";
 import { fetchDispatchLocations, type DispatchLocation } from "@/lib/dispatch-locations";
@@ -23,21 +31,52 @@ const HelpMap = dynamic(() => import("@/components/panel/help-map").then((m) => 
 
 interface InventoryRow {
   product_id: string;
+  location_id: string;
   available_qty: number;
   reserved_qty: number;
   quarantine_qty: number;
 }
+
+interface LocationStock {
+  label: string;
+  available: number;
+  reserved: number;
+  quarantine: number;
+}
+
+const DONOR_TYPE_LABELS: Record<string, string> = {
+  individual: "Persona",
+  empresa: "Empresa",
+  institucion: "Institución",
+  anonimo: "Anónimo",
+};
+
+// Mismo orden fijo en el que se validó la paleta (ver globals.css) — el
+// color sigue a la identidad del tipo de donante, nunca a su posición.
+const DONOR_TYPE_ORDER = ["individual", "empresa", "institucion", "anonimo"];
+const DONOR_TYPE_COLORS: Record<string, string> = {
+  individual: "var(--viz-donor-individual)",
+  empresa: "var(--viz-donor-empresa)",
+  institucion: "var(--viz-donor-institucion)",
+  anonimo: "var(--viz-donor-anonimo)",
+};
 
 interface Dashboard {
   itemsPending: number;
   requestsPending: number;
   requestsUrgent: number;
   dispatchesAwaitingConfirmation: number;
+  donationsTotal: number;
+  dispatchesRealizedTotal: number;
   missingProducts: MissingProduct[];
   distribution: { available: number; reserved: number; quarantine: number };
   byGroup: { label: string; value: number }[];
-  donationsByDay: { key: string; label: string; value: number; isToday: boolean }[];
-  donationsInPeriod: number;
+  byCategory: { label: string; value: number }[];
+  inventoryByLocation: LocationStock[];
+  donorTypeBreakdown: { label: string; value: number; color: string }[];
+  activityDays: { key: string; label: string; isToday: boolean }[];
+  activitySeries: { label: string; color: string; values: Record<string, number> }[];
+  activityInPeriod: number;
   helpLocations: DispatchLocation[];
 }
 
@@ -53,10 +92,13 @@ const HISTORY_DAYS = 14;
  * Todo lo que se ve aquí sale de una lectura directa de PocketBase, sin
  * recalcular saldos: si un número está mal, está mal en `inventory` y se
  * corrige con un ajuste, no en esta pantalla. Las cantidades sumadas
- * entre productos (distribución, por grupo) mezclan unidades distintas
- * (kg, litros, unidades…) a propósito, como referencia agregada — igual
- * que ya hace `/api/inventory/summary` en el backend — no como una cifra
- * con precisión dimensional.
+ * entre productos (distribución, por grupo, por categoría, por
+ * ubicación) mezclan unidades distintas (kg, litros, unidades…) a
+ * propósito, como referencia agregada — igual que ya hace
+ * `/api/inventory/summary` en el backend — no como una cifra con
+ * precisión dimensional. Donde sí importa contar sin mezclar unidades
+ * (por grupo, por categoría), se cuentan referencias de producto
+ * distintas, no la cantidad.
  */
 export default function PanelPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -65,30 +107,45 @@ export default function PanelPage() {
     const since = new Date();
     since.setDate(since.getDate() - (HISTORY_DAYS - 1));
     since.setHours(0, 0, 0, 0);
+    const sinceFilter = since.toISOString().replace("T", " ");
 
     const [
       catalog,
       inventoryRows,
+      locations,
       donations,
+      dispatchesRecent,
       itemsPending,
       requestsPending,
       requestsUrgent,
       dispatchesAwaitingConfirmation,
+      dispatchesRealizedTotal,
       missingProducts,
       helpLocations,
     ] = await Promise.all([
       loadCatalog(),
       pb.collection("inventory").getFullList<InventoryRow>({
-        fields: "product_id,available_qty,reserved_qty,quarantine_qty",
+        fields: "product_id,location_id,available_qty,reserved_qty,quarantine_qty",
       }),
-      pb.collection("donations").getFullList<{ created: string }>({
-        filter: `created >= "${since.toISOString().replace("T", " ")}"`,
-        fields: "created",
+      loadLocations(),
+      // Todas las donaciones, no solo las del período: alimenta el
+      // total de la tarjeta, el desglose por tipo de donante Y el
+      // conteo por día — una sola lectura en vez de tres.
+      pb.collection("donations").getFullList<{ created: string; donor_type: string }>({
+        fields: "created,donor_type",
+      }),
+      pb.collection("dispatches").getFullList<{ dispatch_date: string }>({
+        filter: `dispatch_date >= "${sinceFilter}"`,
+        fields: "dispatch_date",
       }),
       count("donation_items", 'classification_status = "pending"'),
       count("requests", 'status = "pendiente"'),
       count("requests", 'status = "pendiente" && (priority = "alta" || priority = "critica")'),
       count("dispatches", 'request_id.status = "despachada"'),
+      // Un despacho "realizado" es uno con entrega confirmada — la
+      // colección `deliveries` solo tiene un registro cuando eso ya
+      // pasó (`confirm-delivery`, ruta propia del backend).
+      count("deliveries", ""),
       fetchMissingProducts(),
       fetchDispatchLocations(),
     ]);
@@ -96,18 +153,38 @@ export default function PanelPage() {
     const productById = new Map(catalog.products.map((p) => [p.id, p]));
     const categoryById = new Map(catalog.categories.map((c) => [c.id, c]));
     const groupById = new Map(catalog.groups.map((g) => [g.id, g]));
+    const locationById = new Map(locations.map((l) => [l.id, l]));
 
     // Distribución de las tres cubetas, tal como las define el backend.
     const distribution = { available: 0, reserved: 0, quarantine: 0 };
 
-    // Cuántos productos con saldo disponible tiene cada grupo — no la
-    // cantidad sumada, que mezclaría kilos con litros con unidades.
+    // Cuántos productos con saldo disponible tiene cada grupo/categoría
+    // — no la cantidad sumada, que mezclaría kilos con litros con
+    // unidades.
     const productsByGroup = new Map<string, Set<string>>();
+    const productsByCategory = new Map<string, Set<string>>();
+
+    // Saldo por ubicación, sumado en las mismas tres cubetas — la
+    // ubicación vacía ("Por Ubicar") es su propio renglón, como en
+    // /panel/inventario.
+    const stockByLocationId = new Map<string, LocationStock>();
 
     for (const row of inventoryRows) {
       distribution.available += row.available_qty || 0;
       distribution.reserved += row.reserved_qty || 0;
       distribution.quarantine += row.quarantine_qty || 0;
+
+      const locationKey = row.location_id || "";
+      const bucket = stockByLocationId.get(locationKey) ?? {
+        label: locationKey ? locationLabel(locationById.get(locationKey)) : "Por Ubicar",
+        available: 0,
+        reserved: 0,
+        quarantine: 0,
+      };
+      bucket.available += row.available_qty || 0;
+      bucket.reserved += row.reserved_qty || 0;
+      bucket.quarantine += row.quarantine_qty || 0;
+      stockByLocationId.set(locationKey, bucket);
 
       if (row.available_qty > 0) {
         const product = productById.get(row.product_id);
@@ -117,6 +194,10 @@ export default function PanelPage() {
           if (!productsByGroup.has(group.name)) productsByGroup.set(group.name, new Set());
           productsByGroup.get(group.name)!.add(row.product_id);
         }
+        if (category) {
+          if (!productsByCategory.has(category.name)) productsByCategory.set(category.name, new Set());
+          productsByCategory.get(category.name)!.add(row.product_id);
+        }
       }
     }
 
@@ -124,49 +205,83 @@ export default function PanelPage() {
       .map(([label, products]) => ({ label, value: products.size }))
       .sort((a, b) => b.value - a.value);
 
-    const byGroupTop = byGroup.slice(0, 7);
-    const otherCount = byGroup.slice(7).reduce((sum, g) => sum + g.value, 0);
-    if (otherCount > 0) byGroupTop.push({ label: "Otros grupos", value: otherCount });
+    const byCategory = Array.from(productsByCategory.entries())
+      .map(([label, products]) => ({ label, value: products.size }))
+      .sort((a, b) => b.value - a.value);
 
-    const dayBuckets = new Map<string, number>();
+    const inventoryByLocation = Array.from(stockByLocationId.values())
+      .filter((row) => row.available > 0 || row.reserved > 0 || row.quarantine > 0)
+      .sort((a, b) => b.available + b.reserved + b.quarantine - (a.available + a.reserved + a.quarantine));
+
+    const donorCounts = new Map<string, number>();
+    for (const donation of donations) {
+      const key = DONOR_TYPE_LABELS[donation.donor_type] ? donation.donor_type : "anonimo";
+      donorCounts.set(key, (donorCounts.get(key) ?? 0) + 1);
+    }
+    const donorTypeBreakdown = DONOR_TYPE_ORDER.map((key) => ({
+      label: DONOR_TYPE_LABELS[key],
+      value: donorCounts.get(key) ?? 0,
+      color: DONOR_TYPE_COLORS[key],
+    }));
+
+    const donationsByDay = new Map<string, number>();
     for (const donation of donations) {
       const day = donation.created.slice(0, 10);
-      dayBuckets.set(day, (dayBuckets.get(day) ?? 0) + 1);
+      donationsByDay.set(day, (donationsByDay.get(day) ?? 0) + 1);
+    }
+    const dispatchesByDay = new Map<string, number>();
+    for (const dispatch of dispatchesRecent) {
+      const day = dispatch.dispatch_date.slice(0, 10);
+      dispatchesByDay.set(day, (dispatchesByDay.get(day) ?? 0) + 1);
     }
 
-    const donationsByDay: Dashboard["donationsByDay"] = [];
+    const activityDays: Dashboard["activityDays"] = [];
     const todayKey = new Date().toISOString().slice(0, 10);
     for (let i = HISTORY_DAYS - 1; i >= 0; i--) {
       const day = new Date();
       day.setDate(day.getDate() - i);
       const key = day.toISOString().slice(0, 10);
-      donationsByDay.push({
-        key,
-        label: DAY_LABELS[day.getDay()],
-        value: dayBuckets.get(key) ?? 0,
-        isToday: key === todayKey,
-      });
+      activityDays.push({ key, label: DAY_LABELS[day.getDay()], isToday: key === todayKey });
     }
+
+    const activityInPeriod =
+      activityDays.reduce((sum, d) => sum + (donationsByDay.get(d.key) ?? 0), 0) +
+      Array.from(dispatchesByDay.values()).reduce((sum, v) => sum + v, 0);
 
     return {
       itemsPending,
       requestsPending,
       requestsUrgent,
       dispatchesAwaitingConfirmation,
+      donationsTotal: donations.length,
+      dispatchesRealizedTotal,
       missingProducts,
       distribution,
-      byGroup: byGroupTop,
-      donationsByDay,
-      donationsInPeriod: donations.length,
+      byGroup,
+      byCategory,
+      inventoryByLocation,
+      donorTypeBreakdown,
+      activityDays,
+      activitySeries: [
+        { label: "Donaciones", color: "var(--viz-available)", values: Object.fromEntries(donationsByDay) },
+        { label: "Despachos", color: "var(--viz-reserved)", values: Object.fromEntries(dispatchesByDay) },
+      ],
+      activityInPeriod,
       helpLocations,
     };
   }, []);
 
   const { data: dashboard, error, reload } = useAsyncData(fetchDashboard);
 
-  useEffect(() => {
-    if (dashboard) setLastUpdated(new Date());
-  }, [dashboard]);
+  // Ajuste de estado derivado de una prop-como-valor durante el propio
+  // render (patrón que ya documenta este proyecto para este caso, ver
+  // `DecimalInput`), en vez de un `useEffect` que dispara un
+  // renderizado en cascada.
+  const [lastSeenDashboard, setLastSeenDashboard] = useState<Dashboard | null>(null);
+  if (dashboard && dashboard !== lastSeenDashboard) {
+    setLastSeenDashboard(dashboard);
+    setLastUpdated(new Date());
+  }
 
   // Se refresca solo cada 45s — sin llegar a una suscripción en tiempo
   // real por cada colección, que es mucha complejidad para un panel de
@@ -199,9 +314,22 @@ export default function PanelPage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <h1 className="text-2xl font-black tracking-tight">Acciones</h1>
+      <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Action href="/panel/donaciones/nueva" title="Registrar donación" body="Lo que acaba de llegar." icon={Gift} />
+        <Action href="/panel/solicitudes/nueva" title="Nueva solicitud" body="Un pedido para alguien." icon={ClipboardList} />
+        <Action
+          href="/panel/inventario"
+          title="Consultar inventario"
+          body="Qué hay, qué está reservado, qué está retenido."
+          icon={Package}
+        />
+        <Action href="/panel/despachos" title="Ver despachos" body="Lo que va saliendo hacia su destino." icon={Truck} />
+      </div>
+
+      <div className="mt-8 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Resumen</h1>
+          <h2 className="text-2xl font-black tracking-tight">Resumen</h2>
           <p className="mt-1 text-(--muted)">
             {new Date().toLocaleDateString("es-CO", {
               weekday: "long",
@@ -221,7 +349,7 @@ export default function PanelPage() {
         </button>
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <StatTile
           label="Artículos por clasificar"
           value={dashboard.itemsPending}
@@ -252,14 +380,30 @@ export default function PanelPage() {
           href="/panel/solicitudes/faltantes"
           icon={Package}
         />
+        <StatTile
+          label="Donaciones recibidas"
+          value={dashboard.donationsTotal}
+          hint="Histórico"
+          tone="good"
+          href="/panel/donaciones"
+          icon={Gift}
+        />
+        <StatTile
+          label="Despachos realizados"
+          value={dashboard.dispatchesRealizedTotal}
+          hint="Histórico"
+          tone="good"
+          href="/panel/despachos"
+          icon={Truck}
+        />
       </div>
 
       {dashboard.missingProducts.length > 0 ? (
         <section className="mt-4 rounded border border-unal-red bg-(--surface) p-4">
           <div className="flex items-baseline justify-between gap-2">
-            <h2 className="text-sm font-bold text-unal-red">
+            <h3 className="text-sm font-bold text-unal-red">
               Solicitado sin stock suficiente
-            </h2>
+            </h3>
             <Link
               href="/panel/solicitudes/faltantes"
               className="text-xs font-bold text-unal-green-dark hover:underline"
@@ -273,9 +417,9 @@ export default function PanelPage() {
         </section>
       ) : null}
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-2">
-        <section className="rounded border border-(--rule) bg-(--surface) p-4">
-          <h2 className="text-sm font-bold">Distribución del inventario</h2>
+      <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4">
+        <section className="rounded border border-(--rule) bg-(--surface) p-3 sm:p-4">
+          <h3 className="text-sm font-bold">Distribución del inventario</h3>
           <p className="mt-0.5 text-xs text-(--muted)">
             Cada producto en su propia unidad, sumado como referencia agregada.
           </p>
@@ -290,14 +434,42 @@ export default function PanelPage() {
           </div>
         </section>
 
-        <section className="rounded border border-(--rule) bg-(--surface) p-4">
-          <h2 className="text-sm font-bold">Productos con existencia por grupo</h2>
+        <section className="rounded border border-(--rule) bg-(--surface) p-3 sm:p-4">
+          <h3 className="text-sm font-bold">Tipo de donante</h3>
+          <p className="mt-0.5 text-xs text-(--muted)">Donaciones recibidas, histórico.</p>
+          <div className="mt-4">
+            {dashboard.donationsTotal > 0 ? (
+              <DonutChart segments={dashboard.donorTypeBreakdown} centerLabel="donaciones" />
+            ) : (
+              <p className="text-sm text-(--muted)">Sin donaciones todavía.</p>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4">
+        <section className="rounded border border-(--rule) bg-(--surface) p-3 sm:p-4">
+          <h3 className="text-sm font-bold">Productos con existencia por grupo</h3>
           <p className="mt-0.5 text-xs text-(--muted)">
-            Cuántas referencias distintas tienen saldo disponible hoy.
+            Referencias distintas con saldo disponible hoy.
           </p>
           <div className="mt-4">
             {dashboard.byGroup.length > 0 ? (
-              <HorizontalBarChart rows={dashboard.byGroup} unitLabel="productos" />
+              <HorizontalBarChart rows={dashboard.byGroup} unitLabel="prod." maxVisibleRows={5} />
+            ) : (
+              <p className="text-sm text-(--muted)">Sin existencias todavía.</p>
+            )}
+          </div>
+        </section>
+
+        <section className="rounded border border-(--rule) bg-(--surface) p-3 sm:p-4">
+          <h3 className="text-sm font-bold">Stock por categoría</h3>
+          <p className="mt-0.5 text-xs text-(--muted)">
+            Referencias distintas con saldo disponible hoy.
+          </p>
+          <div className="mt-4">
+            {dashboard.byCategory.length > 0 ? (
+              <HorizontalBarChart rows={dashboard.byCategory} unitLabel="prod." maxVisibleRows={5} />
             ) : (
               <p className="text-sm text-(--muted)">Sin existencias todavía.</p>
             )}
@@ -305,19 +477,37 @@ export default function PanelPage() {
         </section>
       </div>
 
-      <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
+      <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-3 sm:p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-sm font-bold">Donaciones — últimos 14 días</h2>
-          <p className="text-xs text-(--muted)">{dashboard.donationsInPeriod} en el período</p>
+          <h3 className="text-sm font-bold">Donaciones y despachos — últimos 14 días</h3>
+          <p className="text-xs text-(--muted)">{dashboard.activityInPeriod} en el período</p>
         </div>
         <div className="mt-4">
-          <DailyBarChart days={dashboard.donationsByDay} />
+          <DailyBarChart days={dashboard.activityDays} series={dashboard.activitySeries} />
         </div>
       </section>
 
-      <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
+      <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-3 sm:p-4">
+        <h3 className="text-sm font-bold">Detalle de inventario por ubicación</h3>
+        <p className="mt-0.5 text-xs text-(--muted)">Saldo actual, sumado por ubicación.</p>
+        <div className="mt-4">
+          {dashboard.inventoryByLocation.length > 0 ? (
+            <NumberTable
+              columns={["Ubicación", "Disponible", "Reservado", "En Revisión"]}
+              rows={dashboard.inventoryByLocation.map((row) => ({
+                label: row.label,
+                values: [row.available, row.reserved, row.quarantine],
+              }))}
+            />
+          ) : (
+            <p className="text-sm text-(--muted)">Sin existencias todavía.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-3 sm:p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-sm font-bold">Dónde ha llegado la ayuda</h2>
+          <h3 className="text-sm font-bold">Dónde ha llegado la ayuda</h3>
           <p className="text-xs text-(--muted)">
             {dashboard.helpLocations.length} despacho{dashboard.helpLocations.length === 1 ? "" : "s"} con ubicación marcada
           </p>
@@ -332,19 +522,6 @@ export default function PanelPage() {
           )}
         </div>
       </section>
-
-      <h2 className="mt-8 text-lg font-bold">Acciones</h2>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Action href="/panel/donaciones/nueva" title="Registrar donación" body="Lo que acaba de llegar." icon={Gift} />
-        <Action href="/panel/solicitudes/nueva" title="Nueva solicitud" body="Un pedido para alguien." icon={ClipboardList} />
-        <Action
-          href="/panel/inventario"
-          title="Consultar inventario"
-          body="Qué hay, qué está reservado, qué está retenido."
-          icon={Package}
-        />
-        <Action href="/panel/despachos" title="Ver despachos" body="Lo que va saliendo hacia su destino." icon={Truck} />
-      </div>
     </div>
   );
 }
@@ -353,7 +530,7 @@ function Action({ href, title, body, icon }: { href: string; title: string; body
   return (
     <Link
       href={href}
-      className="relative isolate block overflow-hidden rounded border border-(--rule) bg-(--surface) p-4 hover:border-unal-green"
+      className="relative isolate block h-full overflow-hidden rounded border border-(--rule) bg-(--surface) p-3 hover:border-unal-green sm:p-4"
     >
       <CutIcon icon={icon} sizeClass="h-14 w-14" className="text-unal-green opacity-[0.12]" />
       <div className="relative z-1">

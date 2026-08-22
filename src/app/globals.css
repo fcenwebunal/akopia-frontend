@@ -59,6 +59,20 @@
   --viz-magnitude: #6f8a24;
 
   /*
+   * Paleta categórica para "Tipo de donante" (4 series fijas, un color
+   * por tipo, nunca por rango). Validada con el mismo script contra el
+   * fondo real de la app: separación CVD y de visión normal en todos
+   * los pares adyacentes del anillo (incluida la vuelta del último al
+   * primero), banda de luminosidad. `institucion`/`anonimo` quedan
+   * sub-3:1 de contraste contra la superficie clara — por eso el
+   * gráfico lleva siempre leyenda y valores directos, nunca solo color.
+   */
+  --viz-donor-individual: #2a78d6;
+  --viz-donor-empresa: #eb6834;
+  --viz-donor-institucion: #1baf7a;
+  --viz-donor-anonimo: #eda100;
+
+  /*
    * `escudo-unal.svg` viene con relleno blanco fijo (pensado para un
    * fondo oscuro que nunca se usó) — invisible sobre `--surface` claro.
    * Se invierte solo en tema claro para que se vea negro; en oscuro
@@ -85,6 +99,11 @@
     --viz-quarantine: #d1583d;
     --viz-magnitude: #8bad4a;
 
+    --viz-donor-individual: #3987e5;
+    --viz-donor-empresa: #d95926;
+    --viz-donor-institucion: #199e70;
+    --viz-donor-anonimo: #c98500;
+
     --unal-shield-filter: none;
   }
 }
@@ -103,6 +122,11 @@
   --viz-reserved: #0f9aa8;
   --viz-quarantine: #d1583d;
   --viz-magnitude: #8bad4a;
+
+  --viz-donor-individual: #3987e5;
+  --viz-donor-empresa: #d95926;
+  --viz-donor-institucion: #199e70;
+  --viz-donor-anonimo: #c98500;
 
   --unal-shield-filter: none;
 }
