@@ -933,3 +933,15 @@ Reportado con captura: `/panel/inventario` mostraba "50.900000000000006 PAQUETE 
 **`DecimalInput` también se corrigió** (`formatDecimal()` ahora usa `formatQuantity()` en vez de `String(value)`): sin esto, un campo editable que arranca con un valor ya contaminado (por ejemplo, "Cantidad correcta" al ajustar inventario, precargado con `row.available_qty`) habría mostrado el mismo residuo dentro del propio input, no solo en las etiquetas de solo lectura.
 
 Verificado con `npx tsc --noEmit` y `npm run build` limpios. Sin Playwright en esta sesión — no se vio el número corregido en pantalla.
+
+### 2026-08-21 (noche) — Enlace de Google Maps actualizado, y fotos de producto en Inventario
+
+**Enlace de "Cómo llegar"** en la tarjeta "Punto de recepción" de la portada: reemplazado por el que dio Juan Manuel (`https://maps.app.goo.gl/MtoRGGaPCNxBgMNMA`) — el anterior había dejado de apuntar al pin correcto.
+
+**Fotos de producto en `/panel/inventario`**, pedido explícito con captura: cada renglón mostraba solo el nombre, sin la miniatura que sí tiene el explorador de catálogo (`PhotoTile`) desde el 18 de agosto. `products.photo_url` ya viaja en cada fila (`expand: "product_id,unit_id"` ya lo traía completo; solo faltaba declararlo en el tipo `InventoryRow` de esta pantalla) — no hizo falta ninguna petición nueva.
+
+`ProductThumb` (nuevo, local a este archivo) reutiliza el mismo criterio que ya usa `PhotoTile`: miniatura si hay `photo_url`, si no una inicial de color determinística por nombre (mismo algoritmo de hash, para que la miniatura no "parpadee" entre recargas mientras un producto no tiene foto todavía). No se reutilizó `PhotoTile` tal cual porque está pensado para una casilla cuadrada de cuadrícula con botón de cámara — aquí hace falta un círculo/cuadro pequeño dentro de un renglón horizontal, sin subida de foto de por medio.
+
+Aplicado en las cinco vistas de producto de la pantalla: `ProductRow` (Por Ubicar y las tarjetas por ubicación), la lista "En Revisión", "Rechazados" (miniatura más chica, 32px, es un libro histórico no una acción), y el encabezado del panel de detalle por remesa (`ProductLocationDetail`, 48px).
+
+Verificado con `npx tsc --noEmit` y `npm run build` (30 rutas) limpios. Sin Playwright en esta sesión — no se vieron las miniaturas reales en pantalla.

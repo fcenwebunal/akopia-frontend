@@ -24,7 +24,7 @@ interface InventoryRow {
   quarantine_qty: number;
   total_qty: number;
   expand?: {
-    product_id?: { name?: string; category_id?: string };
+    product_id?: { name?: string; category_id?: string; photo_url?: string };
     unit_id?: { code?: string; name?: string };
   };
 }
@@ -35,9 +35,56 @@ interface RejectionMovement {
   notes: string;
   created: string;
   expand?: {
-    product_id?: { name?: string };
+    product_id?: { name?: string; photo_url?: string };
     unit_id?: { code?: string; name?: string };
   };
+}
+
+// Mismo patrón que ya usa la foto de ubicación en esta pantalla: miniatura
+// si hay `photo_url`, si no una inicial de color determinística por
+// nombre — nunca un ícono genérico, para que la lista se reconozca de un
+// vistazo igual que el explorador de catálogo (`PhotoTile`).
+const THUMB_PALETTE = [
+  "bg-unal-green-soft text-unal-green-dark",
+  "bg-unal-aqua/15 text-unal-aqua",
+  "bg-unal-orange/15 text-unal-orange",
+  "bg-unal-yellow/20 text-[#8a6d00]",
+  "bg-unal-red/10 text-unal-red",
+];
+
+function thumbColorFor(text: string): string {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+  }
+  return THUMB_PALETTE[hash % THUMB_PALETTE.length];
+}
+
+function ProductThumb({ name, photoUrl, size = 40 }: { name: string; photoUrl?: string; size?: number }) {
+  return (
+    <div
+      style={{ width: size, height: size }}
+      className="shrink-0 overflow-hidden rounded-lg border border-(--rule) bg-(--surface)"
+    >
+      {photoUrl ? (
+        <Image
+          src={photoUrl}
+          alt=""
+          width={size}
+          height={size}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div
+          className={`flex h-full w-full items-center justify-center font-black ${thumbColorFor(name)}`}
+          style={{ fontSize: size * 0.4 }}
+          aria-hidden="true"
+        >
+          {name.charAt(0).toUpperCase()}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /*
@@ -325,14 +372,20 @@ export default function InventarioPage() {
                     <button
                       type="button"
                       onClick={() => setDetail({ row, location: locationById.get(row.location_id) })}
-                      className="min-w-0 flex-1 text-left"
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
                     >
-                      <span className="font-bold">{row.expand?.product_id?.name ?? "—"}</span>
-                      <span className="ml-2 text-sm text-unal-red">
-                        {formatQuantity(row.quarantine_qty)} {row.expand?.unit_id?.code ?? row.expand?.unit_id?.name ?? ""}
-                      </span>
-                      <span className="block text-xs text-(--muted)">
-                        {locationLabel(locationById.get(row.location_id))}
+                      <ProductThumb
+                        name={row.expand?.product_id?.name ?? "—"}
+                        photoUrl={row.expand?.product_id?.photo_url}
+                      />
+                      <span className="min-w-0">
+                        <span className="font-bold">{row.expand?.product_id?.name ?? "—"}</span>
+                        <span className="ml-2 text-sm text-unal-red">
+                          {formatQuantity(row.quarantine_qty)} {row.expand?.unit_id?.code ?? row.expand?.unit_id?.name ?? ""}
+                        </span>
+                        <span className="block text-xs text-(--muted)">
+                          {locationLabel(locationById.get(row.location_id))}
+                        </span>
                       </span>
                     </button>
                     {canReleaseQuarantine ? (
@@ -420,7 +473,13 @@ export default function InventarioPage() {
           </p>
           <ul className="mt-3 divide-y divide-(--rule)">
             {data.rejections.map((movement) => (
-              <li key={movement.id} className="py-2.5">
+              <li key={movement.id} className="flex items-start gap-3 py-2.5">
+                <ProductThumb
+                  name={movement.expand?.product_id?.name ?? "—"}
+                  photoUrl={movement.expand?.product_id?.photo_url}
+                  size={32}
+                />
+                <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="font-medium">{movement.expand?.product_id?.name ?? "—"}</span>
                   <span className="text-sm text-(--muted)">
@@ -437,6 +496,7 @@ export default function InventarioPage() {
                 {movement.notes ? (
                   <p className="mt-0.5 text-xs text-(--muted)">{movement.notes}</p>
                 ) : null}
+                </div>
               </li>
             ))}
           </ul>
@@ -492,17 +552,17 @@ function ProductRow({
   onRelocate: () => void;
 }) {
   const unit = row.expand?.unit_id?.code ?? row.expand?.unit_id?.name ?? "";
+  const productName = row.expand?.product_id?.name ?? "—";
 
   return (
     <li className="flex flex-wrap items-center gap-3 py-2.5">
       <button
         type="button"
         onClick={onOpen}
-        className="flex min-w-0 flex-1 items-center gap-2 text-left hover:text-unal-green-dark"
+        className="flex min-w-0 flex-1 items-center gap-3 text-left hover:text-unal-green-dark"
       >
-        <span className="min-w-0 truncate font-medium">
-          {row.expand?.product_id?.name ?? "—"}
-        </span>
+        <ProductThumb name={productName} photoUrl={row.expand?.product_id?.photo_url} />
+        <span className="min-w-0 truncate font-medium">{productName}</span>
         <ArrowRight size={14} className="shrink-0 opacity-50" aria-hidden="true" />
       </button>
 
@@ -847,11 +907,18 @@ function ProductLocationDetail({
     <div className="fixed inset-0 z-30 flex items-end bg-black/40 sm:items-center sm:justify-center">
       <div className="max-h-[85vh] w-full overflow-y-auto rounded-t-lg bg-(--surface) p-5 sm:max-w-lg sm:rounded-lg">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-bold">{row.expand?.product_id?.name}</h2>
-            <p className="text-sm text-(--muted)">{locationLabel(location)}</p>
+          <div className="flex min-w-0 items-center gap-3">
+            <ProductThumb
+              name={row.expand?.product_id?.name ?? "—"}
+              photoUrl={row.expand?.product_id?.photo_url}
+              size={48}
+            />
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold">{row.expand?.product_id?.name}</h2>
+              <p className="text-sm text-(--muted)">{locationLabel(location)}</p>
+            </div>
           </div>
-          <button type="button" onClick={onClose} className="text-sm font-bold text-(--muted) hover:text-(--ink)">
+          <button type="button" onClick={onClose} className="shrink-0 text-sm font-bold text-(--muted) hover:text-(--ink)">
             Cerrar
           </button>
         </div>
