@@ -25,6 +25,21 @@ import { NextRequest, NextResponse } from "next/server";
  * calculados en tiempo de ejecución.
  */
 export function proxy(request: NextRequest) {
+  /*
+   * Sin este corte, `npm run dev` queda con la misma CSP estricta de
+   * producción — encontrado probando el login local: bloquea tanto el
+   * `eval()` que React necesita para Fast Refresh como la llamada
+   * directa del navegador al PocketBase local (`http://127.0.0.1:8090`,
+   * un origen que `connect-src` nunca tuvo por qué contemplar, pensado
+   * para el `'self'` de producción donde nginx expone `/api/` bajo el
+   * mismo dominio). Antes de hoy `dev` nunca tuvo CSP: la ponía solo
+   * nginx, y nginx no corre en desarrollo local. CSP es una protección
+   * de producción; en la máquina de cada quien no hace falta.
+   */
+  if (process.env.NODE_ENV !== "production") {
+    return NextResponse.next();
+  }
+
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
 
   const csp = [

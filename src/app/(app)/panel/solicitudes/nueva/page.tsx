@@ -11,6 +11,7 @@ import { formatQuantity } from "@/lib/format";
 import { ProductPicker } from "@/components/app/product-picker";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Toggle } from "@/components/ui/toggle";
+import { PriorityToggle } from "@/components/ui/priority-toggle";
 import { Button } from "@/components/ui/button";
 import { AddressMapField, EMPTY_ADDRESS_VALUE, type AddressValue } from "@/components/app/address-map-field";
 import { ClipboardList, Layers, Minus, Plus } from "lucide-react";
@@ -19,13 +20,6 @@ interface InventorySummaryRow {
   product_id: string;
   available_qty: number;
 }
-
-const PRIORITIES = [
-  { value: "baja", label: "Baja" },
-  { value: "media", label: "Media" },
-  { value: "alta", label: "Alta" },
-  { value: "critica", label: "Crítica" },
-];
 
 interface DraftLine {
   key: string;
@@ -344,6 +338,11 @@ export default function NuevaSolicitudPage() {
           </div>
 
           <div className="sm:col-span-2">
+            <span className="mb-1 block text-sm font-bold">Prioridad</span>
+            <PriorityToggle value={priority} onChange={setPriority} />
+          </div>
+
+          <div className="sm:col-span-2">
             <span className="mb-1 block text-sm font-bold">
               Destino <span className="text-unal-red">*</span>
             </span>
@@ -352,24 +351,6 @@ export default function NuevaSolicitudPage() {
               despacho parte de aquí — se puede ajustar después si hace falta.
             </p>
             <AddressMapField value={address} onChange={setAddress} />
-          </div>
-
-          <div>
-            <label htmlFor="prioridad" className="mb-1 block text-sm font-bold">
-              Prioridad
-            </label>
-            <select
-              id="prioridad"
-              value={priority}
-              onChange={(event) => setPriority(event.target.value)}
-              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
-            >
-              {PRIORITIES.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
           </div>
 
           <div className="sm:col-span-2">
