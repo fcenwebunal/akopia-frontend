@@ -74,25 +74,58 @@ const STREET_TYPE_PATTERNS: [RegExp, StreetType][] = [
  * intento razonable de descomponerlo por expresión regular, no una
  * garantía: siempre queda como valor de partida editable en el
  * formulario, nunca como el dato final sin que alguien lo confirme.
+ *
+ * Revisa TODOS los segmentos separados por coma, no solo el primero:
+ * el `display_name` de Nominatim antepone el nombre del sitio/POI antes
+ * de la vía cuando el resultado tiene uno ("Casa, 85-32, Carrera 13,
+ * ...") — quedarse solo con el primer segmento perdía la vía entera en
+ * ese caso, justo cuando sí traía un número de placa aprovechable.
  */
 export function parseAddress(raw: string): Partial<StructuredAddress> {
-  const firstSegment = raw.split(",")[0]?.trim() ?? "";
-  if (!firstSegment) return {};
+  const segments = raw
+    .split(",")
+    .map((segment) => segment.trim())
+    .filter(Boolean);
 
-  for (const [pattern, type] of STREET_TYPE_PATTERNS) {
-    const match = pattern.exec(firstSegment);
-    if (!match) continue;
+  for (const segment of segments) {
+    for (const [pattern, type] of STREET_TYPE_PATTERNS) {
+      const match = pattern.exec(segment);
+      if (!match) continue;
 
-    const rest = firstSegment.slice(match[0].length).trim();
-    const numberMatch = /^(\d+\w*)\s*(?:#|n[uú]mero|no\.?)?\s*([\d\w]+(?:\s*-\s*[\d\w]+)?)?/i.exec(rest);
-    if (!numberMatch) return { streetType: type };
+      const rest = segment.slice(match[0].length).trim();
+      const numberMatch = /^(\d+\w*)\s*(?:#|n[uú]mero|no\.?)?\s*([\d\w]+(?:\s*-\s*[\d\w]+)?)?/i.exec(rest);
+      if (!numberMatch) return { streetType: type };
 
-    return {
-      streetType: type,
-      streetNumber: numberMatch[1] ?? "",
-      streetPlate: (numberMatch[2] ?? "").replace(/\s+/g, ""),
-    };
+      return {
+        streetType: type,
+        streetNumber: numberMatch[1] ?? "",
+        streetPlate: (numberMatch[2] ?? "").replace(/\s+/g, ""),
+      };
+    }
   }
 
   return {};
+}
+
+/*
+ * Cuando el geocodificador sí trae la vía y el número de casa por
+ * separado (`address.road` / `address.house_number` de Nominatim), es
+ * más confiable que volver a parsear el `display_name` completo: se usa
+ * `house_number` directo como placa (el dato real, no una reconstrucción
+ * por regex) y solo se aplica `parseAddress` sobre el nombre de la vía
+ * —mucho más corto y predecible que el `display_name` entero— para
+ * separar tipo y número.
+ */
+export function structuredFromParts(
+  road: string | undefined,
+  houseNumber: string | undefined
+): Partial<StructuredAddress> {
+  if (!road) return {};
+  const parsed = parseAddress(road);
+  if (!parsed.streetType) return {};
+
+  return {
+    ...parsed,
+    streetPlate: houseNumber ? houseNumber.replace(/\s+/g, "") : parsed.streetPlate,
+  };
 }

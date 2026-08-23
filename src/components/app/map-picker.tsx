@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { useEffect, useMemo, useRef } from "react";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import L, { type LeafletMouseEvent } from "leaflet";
 import { MANIZALES_CENTER } from "@/lib/coordinates";
 
@@ -35,16 +35,53 @@ function ClickToMove({ onMove }: { onMove: (lat: number, lng: number) => void })
   return null;
 }
 
+/*
+ * `MapContainer` solo aplica sus props `center`/`zoom` una vez, al
+ * montar (comportamiento documentado de react-leaflet) — por eso
+ * buscar una dirección movía el pin pero nunca centraba el mapa ahí.
+ * `focusToken` es un contador que el padre (`AddressMapField`) sube
+ * solo cuando el punto cambió por búsqueda, por los cuatro campos
+ * tecleados, o por un valor heredado (nunca al arrastrar o tocar el
+ * mapa: ahí el punto ya está donde el operador lo dejó, forzar la
+ * cámara ahí encima del propio gesto se sentiría mal).
+ */
+function RecenterOnFocus({
+  lat,
+  lng,
+  focusToken,
+}: {
+  lat: number | null;
+  lng: number | null;
+  focusToken: number;
+}) {
+  const map = useMap();
+  const lastToken = useRef(focusToken);
+
+  useEffect(() => {
+    if (focusToken === lastToken.current) return;
+    lastToken.current = focusToken;
+    if (lat === null || lng === null) return;
+    map.setView([lat, lng], Math.max(map.getZoom(), 16));
+  }, [focusToken, lat, lng, map]);
+
+  return null;
+}
+
 export function MapPicker({
   lat,
   lng,
   onChange,
   heightClassName = "h-64",
+  focusToken = 0,
 }: {
   lat: number | null;
   lng: number | null;
   onChange: (lat: number, lng: number) => void;
   heightClassName?: string;
+  // Sube cada vez que el punto cambió por búsqueda/campos/valor heredado
+  // — ver `RecenterOnFocus` arriba. 0 por defecto: sin él, el mapa se
+  // comporta como antes (solo se centra al montar).
+  focusToken?: number;
 }) {
   const position = useMemo<[number, number]>(
     () => (lat !== null && lng !== null ? [lat, lng] : MANIZALES_CENTER),
@@ -67,6 +104,7 @@ export function MapPicker({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
         <ClickToMove onMove={onChange} />
+        <RecenterOnFocus lat={lat} lng={lng} focusToken={focusToken} />
         <Marker
           position={position}
           draggable

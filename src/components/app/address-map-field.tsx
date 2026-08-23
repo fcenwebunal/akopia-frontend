@@ -10,6 +10,7 @@ import {
   STREET_TYPES,
   composeAddress,
   parseAddress,
+  structuredFromParts,
   EMPTY_STRUCTURED_ADDRESS,
   type StructuredAddress,
 } from "@/lib/address";
@@ -88,6 +89,12 @@ export function AddressMapField({
   const [lat, setLat] = useState(value.lat);
   const [lng, setLng] = useState(value.lng);
   const [destination, setDestination] = useState(value.destination);
+  // Sube cada vez que el punto cambia por búsqueda, por los cuatro
+  // campos tecleados, o por un valor heredado del padre — nunca al
+  // arrastrar o tocar el mapa. `MapPicker` lo usa para recentrar la
+  // cámara ahí; sin esto el pin se movía pero la vista del mapa se
+  // quedaba donde estaba (ver map-picker.tsx, `RecenterOnFocus`).
+  const [focusToken, setFocusToken] = useState(0);
   const destinationRef = useRef(destination);
   useEffect(() => {
     destinationRef.current = destination;
@@ -123,6 +130,7 @@ export function AddressMapField({
     setLat(value.lat);
     setLng(value.lng);
     setDestination(value.destination);
+    setFocusToken((t) => t + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo reacciona a `value`, el resto son setters estables.
   }, [value]);
 
@@ -167,6 +175,7 @@ export function AddressMapField({
         if (result) {
           setLat(result.lat);
           setLng(result.lng);
+          setFocusToken((t) => t + 1);
           emit({ ...fields, destination: nextDestination, lat: result.lat, lng: result.lng });
         } else {
           setNotice("No se encontró esa dirección en el mapa — ajusta el pin a mano.");
@@ -204,7 +213,13 @@ export function AddressMapField({
   }, [query]);
 
   function selectSuggestion(suggestion: GeocodeSuggestion) {
-    const parsed = parseAddress(suggestion.placeName);
+    // Preferir los campos ya estructurados de Nominatim (`road`/`houseNumber`)
+    // sobre re-parsear `placeName` (el `display_name` completo): ese texto
+    // antepone el nombre del sitio cuando el resultado tiene uno ("Casa,
+    // 85-32, Carrera 13, ..."), y `houseNumber` es la placa real, no una
+    // reconstrucción por expresión regular.
+    const structured = structuredFromParts(suggestion.road, suggestion.houseNumber);
+    const parsed = structured.streetType ? structured : parseAddress(suggestion.placeName);
     const next: StructuredAddress = {
       streetType: parsed.streetType ?? "",
       streetNumber: parsed.streetNumber ?? "",
@@ -220,6 +235,7 @@ export function AddressMapField({
     setNotice("Dirección detectada automáticamente — revisa los campos.");
     setQuery("");
     setSuggestions([]);
+    setFocusToken((t) => t + 1);
     emit({ ...next, destination: suggestion.placeName, lat: suggestion.lat, lng: suggestion.lng });
   }
 
@@ -230,9 +246,10 @@ export function AddressMapField({
       emit({ ...fields, destination: destinationRef.current, lat: newLat, lng: newLng });
 
       reverseGeocode(newLat, newLng)
-        .then((placeName) => {
-          if (!placeName) return;
-          const parsed = parseAddress(placeName);
+        .then((result) => {
+          if (!result) return;
+          const structured = structuredFromParts(result.road, result.houseNumber);
+          const parsed = structured.streetType ? structured : parseAddress(result.placeName);
           const next: StructuredAddress = {
             streetType: parsed.streetType ?? fields.streetType,
             streetNumber: parsed.streetNumber ?? fields.streetNumber,
@@ -241,9 +258,9 @@ export function AddressMapField({
           };
           skipNextCompose.current = true;
           reset(next);
-          setDestination(placeName);
+          setDestination(result.placeName);
           setNotice("Dirección detectada desde el mapa — revisa los campos.");
-          emit({ ...next, destination: placeName, lat: newLat, lng: newLng });
+          emit({ ...next, destination: result.placeName, lat: newLat, lng: newLng });
         })
         .catch(() => {
           // El pin ya se movió y se emitió con las coordenadas nuevas;
@@ -364,7 +381,13 @@ export function AddressMapField({
         <p className="mb-2 text-xs text-(--muted)">
           Arrastra el punto verde (o toca el mapa) hasta la dirección exacta.
         </p>
-        <MapPicker lat={lat} lng={lng} onChange={handleMapChange} heightClassName={heightClassName} />
+        <MapPicker
+          lat={lat}
+          lng={lng}
+          onChange={handleMapChange}
+          heightClassName={heightClassName}
+          focusToken={focusToken}
+        />
         <p className="mt-1.5 font-mono text-xs text-(--muted)">{formatCoordinates(lat, lng)}</p>
       </div>
     </div>

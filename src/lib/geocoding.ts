@@ -26,6 +26,13 @@ export interface GeocodeSuggestion {
   placeName: string;
   lat: number;
   lng: number;
+  // Nominatim ya viene con `addressdetails=1` — llevar estos dos campos
+  // estructurados hasta el llamador evita tener que re-parsear
+  // `placeName` (el `display_name` completo) por expresión regular, que
+  // falla justo cuando el resultado trae un nombre de sitio antes de la
+  // vía. Ver `structuredFromParts` en src/lib/address.ts.
+  road?: string;
+  houseNumber?: string;
 }
 
 interface NominatimResult {
@@ -60,6 +67,8 @@ function toSuggestion(result: NominatimResult): GeocodeSuggestion | null {
     placeName: result.display_name ?? "",
     lat: Number(result.lat),
     lng: Number(result.lon),
+    road: result.address?.road,
+    houseNumber: result.address?.house_number,
   };
 }
 
@@ -75,17 +84,27 @@ export async function forwardGeocode(query: string): Promise<GeocodeSuggestion[]
   return results.map(toSuggestion).filter((s): s is GeocodeSuggestion => s !== null);
 }
 
+export interface ReverseGeocodeResult {
+  placeName: string;
+  road?: string;
+  houseNumber?: string;
+}
+
 // Geocoding inverso — al arrastrar el pin, qué dirección hay ahí. Cuando
 // Nominatim trae la vía ya separada (`address.road`/`house_number`, lo
 // más común en Colombia), se prefiere ese texto más limpio sobre el
-// `display_name` completo, que arrastra barrio/ciudad/país como ruido.
-export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+// `display_name` completo, que arrastra barrio/ciudad/país como ruido —
+// y se devuelven también por separado, para que el llamador pueda usar
+// `house_number` directo como placa en vez de tener que re-extraerlo del
+// texto ya compuesto (ver `structuredFromParts` en src/lib/address.ts).
+export async function reverseGeocode(lat: number, lng: number): Promise<ReverseGeocodeResult | null> {
   const [result] = await nominatimFetch("/reverse", { lat: String(lat), lon: String(lng) });
   if (!result) return null;
 
   const road = result.address?.road;
-  if (road) {
-    return result.address?.house_number ? `${road} ${result.address.house_number}` : road;
-  }
-  return result.display_name ?? null;
+  const houseNumber = result.address?.house_number;
+  const placeName = road ? (houseNumber ? `${road} ${houseNumber}` : road) : (result.display_name ?? "");
+  if (!placeName) return null;
+
+  return { placeName, road, houseNumber };
 }
