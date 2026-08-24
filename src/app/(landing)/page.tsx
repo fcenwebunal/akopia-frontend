@@ -384,7 +384,7 @@ export default async function HomePage() {
             Inscribirme como voluntario
           </a>
           <p className="mt-4 text-sm text-[#557a4e]">
-            Diligencia el formulario de Google — toma menos de 2 minutos.
+            Diligencia el formulario de Google, te toma menos de 2 minutos.
           </p>
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}

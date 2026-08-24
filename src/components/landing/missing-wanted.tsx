@@ -11,22 +11,7 @@ import { formatQuantity } from "@/lib/format";
  */
 export function MissingWanted({ items }: { items: MissingProduct[] }) {
   if (items.length === 0) {
-    return (
-      <section className="bg-[#f4f1fb] py-16 sm:py-20">
-        <div className="mx-auto max-w-5xl px-6 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#3f7a3e]">
-            Al día
-          </p>
-          <h2 className="mt-2 font-serif text-3xl font-bold italic text-[#1f4d2c] sm:text-4xl">
-            Por ahora, ninguna solicitud está sin cubrir
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-[#33452f]">
-            Gracias a lo que ya ha llegado, el inventario alcanza para lo que se ha pedido.
-            Vuelve pronto — esta lista se actualiza sola con cada solicitud nueva.
-          </p>
-        </div>
-      </section>
-    );
+    return null;
   }
 
   return (
