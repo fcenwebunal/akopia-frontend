@@ -156,4 +156,177 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+
+  /*
+   * La regla de arriba acorta la duración, no la quita — para una
+   * animación `infinite` (el giro del destello de la portada) eso deja
+   * un parpadeo rapidísimo en vez de quietud. Se anula aparte.
+   */
+  .akopia-sunburst {
+    animation: none !important;
+  }
+}
+
+/*
+ * Portada pública ("Unidos por Manizales") — dos animaciones puramente
+ * decorativas:
+ *
+ * 1. El destello (`repeating-conic-gradient` del hero) gira muy
+ *    despacio sobre el mismo punto en el que ya nace el degradado
+ *    (`at 50% -20%`) — `transform-origin` usa las mismas coordenadas
+ *    porcentuales para que el giro no se note descentrado.
+ * 2. Las tarjetas de "¿Qué estamos recibiendo?" y de "Horario/Punto de
+ *    recepción" aparecen animadas al hacer scroll, activadas por
+ *    `<ScrollReveal>` (IntersectionObserver) agregando
+ *    `.akopia-reveal-visible` — el estado `.akopia-reveal-hidden` es
+ *    el que ya pinta el propio SSR antes de que dispare el observer.
+ */
+.akopia-sunburst {
+  animation: akopia-sunburst-spin 260s linear infinite;
+}
+
+@keyframes akopia-sunburst-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.akopia-reveal-hidden {
+  opacity: 0;
+}
+
+/* "¿Qué estamos recibiendo?" — caen como regalos, con un leve rebote al aterrizar. */
+.akopia-drop-in.akopia-reveal-hidden {
+  transform: translateY(-160%) rotate(-8deg);
+}
+.akopia-drop-in.akopia-reveal-visible {
+  animation: akopia-drop-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes akopia-drop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-160%) rotate(-8deg);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(6%) rotate(3deg);
+  }
+  78% {
+    transform: translateY(-2%) rotate(-1.5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+/* "Horario"/"Punto de recepción" — entran de los lados y chocan en el centro. */
+.akopia-slide-left.akopia-reveal-hidden {
+  transform: translateX(-60%);
+}
+.akopia-slide-right.akopia-reveal-hidden {
+  transform: translateX(60%);
+}
+.akopia-slide-left.akopia-reveal-visible {
+  animation: akopia-slide-left-collide 850ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.akopia-slide-right.akopia-reveal-visible {
+  animation: akopia-slide-right-collide 850ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes akopia-slide-left-collide {
+  0% {
+    opacity: 0;
+    transform: translateX(-60%);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(6%);
+  }
+  80% {
+    transform: translateX(-3%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+@keyframes akopia-slide-right-collide {
+  0% {
+    opacity: 0;
+    transform: translateX(60%);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(-6%);
+  }
+  80% {
+    transform: translateX(3%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/*
+ * En móvil las dos tarjetas quedan apiladas en una sola columna, así
+ * que "chocar en el centro" entre ellas ya no aplica — pedido
+ * explícito: cada una entra por su lado, golpea contra el borde
+ * opuesto de la pantalla y rebota de vuelta al centro, para que el
+ * gesto de choque se sienta igual aunque ya no compartan fila.
+ */
+@media (max-width: 767px) {
+  .akopia-slide-left.akopia-reveal-hidden {
+    transform: translateX(-115%);
+  }
+  .akopia-slide-right.akopia-reveal-hidden {
+    transform: translateX(115%);
+  }
+  .akopia-slide-left.akopia-reveal-visible {
+    animation-name: akopia-slide-left-bounce-mobile;
+    animation-duration: 1000ms;
+  }
+  .akopia-slide-right.akopia-reveal-visible {
+    animation-name: akopia-slide-right-bounce-mobile;
+    animation-duration: 1000ms;
+  }
+}
+@keyframes akopia-slide-left-bounce-mobile {
+  0% {
+    opacity: 0;
+    transform: translateX(-115%);
+  }
+  45% {
+    opacity: 1;
+    transform: translateX(60%);
+  }
+  70% {
+    transform: translateX(-18%);
+  }
+  88% {
+    transform: translateX(6%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+@keyframes akopia-slide-right-bounce-mobile {
+  0% {
+    opacity: 0;
+    transform: translateX(115%);
+  }
+  45% {
+    opacity: 1;
+    transform: translateX(-60%);
+  }
+  70% {
+    transform: translateX(18%);
+  }
+  88% {
+    transform: translateX(-6%);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
