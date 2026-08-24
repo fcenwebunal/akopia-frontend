@@ -5,22 +5,24 @@
  * extrajo ese grupo (el blob grande + las burbujas que ya traía el
  * arte) a estos dos componentes, que se dibujan como SVG en línea
  * DETRÁS de la misma imagen de hojas (ahora sin el grupo verde, ver
- * `public/landing/flowers_corner_bottom_left.svg` y `_rigth.svg`) —
- * mismo viewBox, mismo ancho, así que calzan exactas en el mismo
- * lugar. Solo lo que está aquí adentro se puede animar con CSS
- * (`.akopia-cloud-blob`/`.akopia-cloud-bubble`, definidas en
- * globals.css); las hojas siguen siendo una imagen estática simple.
+ * `public/landing/flowers_corner_bottom_left.svg` y `_rigth.svg`).
+ *
+ * Cada componente solo dibuja el `<svg viewBox>` — NO fija su propio
+ * tamaño ni posición. Quien lo usa (`(landing)/page.tsx`) lo mete en
+ * un envoltorio junto con el `<img>` de las hojas, y estira a los dos
+ * a exactamente 100%×100% de esa misma caja (con `aspect-ratio`
+ * fijado al mismo viewBox). Es a propósito: si cada capa calculara su
+ * alto "auto" por su cuenta (una como `<img>`, otra como `<svg>` en
+ * línea), un redondeo de un solo píxel entre ambas ya se nota como un
+ * borde cortado justo donde el arte toca la esquina — forzarlas a la
+ * MISMA caja explícita lo hace imposible.
  */
 
 const CLOUD_FILL = "#84cab7";
 
 export function VolunteerCloudLeft() {
   return (
-    <svg
-      viewBox="0 0 1183 690"
-      aria-hidden="true"
-      className="pointer-events-none absolute bottom-0 left-0 h-auto w-[min(420px,38vw)]"
-    >
+    <svg viewBox="0 0 1183 690" aria-hidden="true" className="block h-full w-full">
       <path
         className="akopia-cloud-blob"
         fill={CLOUD_FILL}
@@ -72,11 +74,7 @@ export function VolunteerCloudLeft() {
 
 export function VolunteerCloudRight() {
   return (
-    <svg
-      viewBox="0 0 1067 768"
-      aria-hidden="true"
-      className="pointer-events-none absolute bottom-0 right-0 h-auto w-[min(380px,34vw)]"
-    >
+    <svg viewBox="0 0 1067 768" aria-hidden="true" className="block h-full w-full">
       <path
         className="akopia-cloud-blob"
         fill={CLOUD_FILL}

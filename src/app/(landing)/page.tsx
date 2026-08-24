@@ -423,22 +423,37 @@ export default async function HomePage() {
             Diligencia el formulario de Google, te toma menos de 2 minutos.
           </p>
         </div>
-        <VolunteerCloudLeft />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/landing/flowers_corner_bottom_left.svg"
-          alt=""
-          aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 left-0 w-[min(420px,38vw)]"
-        />
-        <VolunteerCloudRight />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/landing/flowers_corner_bottom_rigth.svg"
-          alt=""
-          aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 right-0 w-[min(380px,34vw)]"
-        />
+        {/*
+          Las dos capas (nube animada + hojas) van forzadas a la MISMA
+          caja explícita — `aspect-[1183/690]` fija el alto exacto que
+          le corresponde al ancho según el propio viewBox del arte, y
+          cada hijo se estira a 100%×100% de esa caja (ver el
+          comentario en animated-cloud.tsx). Antes cada capa calculaba
+          su alto "auto" por su cuenta — una como `<img>`, la otra
+          como `<svg>` en línea — y un redondeo de un solo píxel entre
+          ambas ya se notaba como un borde cortado justo donde el arte
+          toca la esquina.
+        */}
+        <div className="pointer-events-none absolute bottom-0 left-0 aspect-[1183/690] w-[min(440px,40vw)]">
+          <VolunteerCloudLeft />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/landing/flowers_corner_bottom_left.svg"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full"
+          />
+        </div>
+        <div className="pointer-events-none absolute bottom-0 right-0 aspect-[1067/768] w-[min(400px,36vw)]">
+          <VolunteerCloudRight />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/landing/flowers_corner_bottom_rigth.svg"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full"
+          />
+        </div>
       </section>
     </div>
   );
