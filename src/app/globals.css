@@ -332,3 +332,63 @@ body {
     transform: translateX(0);
   }
 }
+
+/*
+ * Nube de "Inscríbete como voluntario" (ver
+ * src/components/landing/animated-cloud.tsx) — el blob grande respira
+ * muy despacio, sin desplazarse, y las burbujas que ya traía el arte
+ * suben, crecen y se desvanecen en bucle, dando la sensación de que
+ * la nube las genera al moverse. `transform-box: fill-box` es
+ * obligatorio aquí: un `<path>`/`<circle>` de SVG por defecto
+ * transforma relativo al origen del viewport (0,0), no a su propia
+ * caja — sin esto, "respirar" se vería como saltar hacia una esquina.
+ */
+.akopia-cloud-blob {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: akopia-cloud-breathe 16s ease-in-out infinite;
+}
+@keyframes akopia-cloud-breathe {
+  0%,
+  100% {
+    transform: scale(1, 1) skew(0deg, 0deg);
+  }
+  33% {
+    transform: scale(1.025, 0.98) skew(0.6deg, 0deg);
+  }
+  66% {
+    transform: scale(0.982, 1.022) skew(-0.5deg, 0deg);
+  }
+}
+
+.akopia-cloud-bubble {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: akopia-cloud-bubble-rise;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+}
+@keyframes akopia-cloud-bubble-rise {
+  0% {
+    opacity: 0.05;
+    transform: translateY(0) scale(0.55);
+  }
+  15% {
+    opacity: 0.9;
+  }
+  70% {
+    opacity: 0.75;
+    transform: translateY(-42px) scale(1.05);
+  }
+  100% {
+    opacity: 0.05;
+    transform: translateY(-70px) scale(1.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .akopia-cloud-blob,
+  .akopia-cloud-bubble {
+    animation: none !important;
+  }
+}

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { Metadata } from "next";
+import { VolunteerCloudLeft, VolunteerCloudRight } from "@/components/landing/animated-cloud";
 import { MissingWanted } from "@/components/landing/missing-wanted";
 import { ScrollReveal } from "@/components/landing/scroll-reveal";
 import { fetchPublicMissingProducts } from "@/lib/public-missing-products";
@@ -422,6 +423,7 @@ export default async function HomePage() {
             Diligencia el formulario de Google, te toma menos de 2 minutos.
           </p>
         </div>
+        <VolunteerCloudLeft />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/landing/flowers_corner_bottom_left.svg"
@@ -429,6 +431,7 @@ export default async function HomePage() {
           aria-hidden="true"
           className="pointer-events-none absolute bottom-0 left-0 w-[min(420px,38vw)]"
         />
+        <VolunteerCloudRight />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/landing/flowers_corner_bottom_rigth.svg"
