@@ -1,0 +1,272 @@
+[
+ {
+  "parada": "1",
+  "doc": "1086418493",
+  "name": "Brenda Sofía delgado mora",
+  "phone": "3178563385",
+  "address": "Carrera 35 C # 95 C-18",
+  "barrio": "La Enea",
+  "email": "Brdelgadom@unal.edu.co"
+ },
+ {
+  "parada": "2",
+  "doc": "1002673037",
+  "name": "Carlos Alberto Flórez cañas",
+  "phone": "3207122137",
+  "address": "Carrera 33 B # 102 B-25",
+  "barrio": "La Enea",
+  "email": "caflorezca@unal.edu.co"
+ },
+ {
+  "parada": "3",
+  "doc": "1020830167",
+  "name": "David Alejandro Pérez Rodríguez",
+  "phone": "3016926689",
+  "address": "Cra. 5 # 64-20, Casa 14, Los Guaduales",
+  "barrio": "La Florida",
+  "email": "Dperezrod@unal.edu.co"
+ },
+ {
+  "parada": "4",
+  "doc": "1055360793",
+  "name": "María José Gaitán Hernández",
+  "phone": "3216044548",
+  "address": "Carrera 10 # 6-62, apto. 201",
+  "barrio": "Villamaría",
+  "email": "mgaitanh@unal.edu.co"
+ },
+ {
+  "parada": "5",
+  "doc": "10026555157",
+  "name": "Santiago Gutiérrez",
+  "phone": "3005411469",
+  "address": "Carrera 2A # 10A-09",
+  "barrio": "Urapanes, Villamaría",
+  "email": "Sgutierrezgu@unal.edu.co"
+ },
+ {
+  "parada": "6",
+  "doc": "1056121147",
+  "name": "María José Ayala Valencia",
+  "phone": "3114029792",
+  "address": "Calle 30A – Carrera 15, Sede Comunal",
+  "barrio": "San José – La Pelusa",
+  "email": "Mayalav@unal.edu.co"
+ },
+ {
+  "parada": "7",
+  "doc": "1054867866",
+  "name": "Xiomara Florez Tabares",
+  "phone": "3243052214",
+  "address": "Calle 17 – Cra. 19-14",
+  "barrio": "Los Agustinos",
+  "email": "Xflorez@unal.edu.co"
+ },
+ {
+  "parada": "8",
+  "doc": "1053828101",
+  "name": "Laddy Viviana Parra Echeverry",
+  "phone": "3148614390",
+  "address": "Carrera 28 # 19-54",
+  "barrio": "El Carmen",
+  "email": "lvparrae@unal.edu.co"
+ },
+ {
+  "parada": "9",
+  "doc": "1002592323",
+  "name": "Brandon Velasquez Jaramillo",
+  "phone": "3113130751",
+  "address": "Carrera 29 # 38-18",
+  "barrio": "Villanueva",
+  "email": "bvelasquezj@unal.edu.co"
+ },
+ {
+  "parada": "10",
+  "doc": "1000953431",
+  "name": "Leonardo Emilio López pinzón",
+  "phone": "3002645998",
+  "address": "Avenida Kevin Ángel # 38-199",
+  "barrio": "Por confirmar",
+  "email": "leolopezpi@unal.edu.co"
+ },
+ {
+  "parada": "11",
+  "doc": "1004439224",
+  "name": "Sara Alejandra Guerrero Cabrera",
+  "phone": "3137925879",
+  "address": "Calle 15 # 23-34",
+  "barrio": "Centro / por confirmar",
+  "email": "sguerreroca@unal.edu.co"
+ },
+ {
+  "parada": "12",
+  "doc": "1056125504",
+  "name": "Crystal duque idarraga",
+  "phone": "3126583838",
+  "address": "Ondas de Otún",
+  "barrio": "Centro",
+  "email": "Cduquei@unal.edu.co"
+ },
+ {
+  "parada": "14",
+  "doc": "1056120277",
+  "name": "Dulfary Tellez",
+  "phone": "3012809279",
+  "address": "Calle 31 # 10-91",
+  "barrio": "Galán",
+  "email": "paolatellez993lr@gmail.com"
+ },
+ {
+  "parada": "15",
+  "doc": "1005893245",
+  "name": "Daniel Rodriguez Diaz",
+  "phone": "3105634528",
+  "address": "Calle 11 # 4B-30, Célula 2, Núcleo 3, apto. 402",
+  "barrio": "Villa Pilar",
+  "email": "danrodriguezdi@unal.edu.co"
+ },
+ {
+  "parada": "16",
+  "doc": "1053799839",
+  "name": "Luisa Fernanda Agudelo",
+  "phone": "3157359389",
+  "address": "Carrera 13A # 16-21",
+  "barrio": "Campo Hermoso",
+  "email": "fernandaagudelo1123@gmail.com"
+ },
+ {
+  "parada": "17",
+  "doc": null,
+  "name": "Lizeth Paola Pamplona Rojas",
+  "phone": null,
+  "address": "Residencia Policarpa",
+  "barrio": null,
+  "email": null
+ },
+ {
+  "parada": "18",
+  "doc": "1102813414",
+  "name": "Yesid Manuel Díaz Pérez",
+  "phone": "3146689321",
+  "address": "Calle 48 # 18-02",
+  "barrio": "San Jorge",
+  "email": "reyleonyesidmetrix@gmail.com"
+ },
+ {
+  "parada": "19",
+  "doc": "1088026961",
+  "name": "Andrés Felipe Largo Otalvaro",
+  "phone": "3183416497",
+  "address": "Carrera 23 # 53A-55",
+  "barrio": "La Leonora",
+  "email": "alargo@unal.edu.co"
+ },
+ {
+  "parada": "20",
+  "doc": "1026301136",
+  "name": "Luis David klinger castillo",
+  "phone": "3041401395",
+  "address": "Carrera 23 # 55-65",
+  "barrio": "El Triángulo",
+  "email": "lklinger@unal.edu.co"
+ },
+ {
+  "parada": "21",
+  "doc": "1055756597",
+  "name": "Sophia Ocampo Cardona",
+  "phone": "3243331357",
+  "address": "Carrera 31A # 50A-59",
+  "barrio": "Eucaliptos",
+  "email": "Soocampoc@unal.edu.co"
+ },
+ {
+  "parada": "22",
+  "doc": "1054996314",
+  "name": "MIGUEL ANGEL CERQUERA TIBADUIZA",
+  "phone": "3128289305",
+  "address": "Palermo – Residencia Germán Arciniegas",
+  "barrio": "Palermo",
+  "email": "MCERQUERAT@UNAL.EDU.CO"
+ },
+ {
+  "parada": "23",
+  "doc": "1085347630",
+  "name": "Daniel Alejando Acosta Portilla",
+  "phone": "3137879230",
+  "address": "Carrera 21 # 62A-19",
+  "barrio": "La Rambla",
+  "email": "dacostap@unal.edu.co"
+ },
+ {
+  "parada": "24",
+  "doc": "1136565122",
+  "name": "Bamsi Mendez Posada",
+  "phone": "3017030716",
+  "address": "Carrera 11 # 55-12",
+  "barrio": "La Carola",
+  "email": "bamendezp@unal.edu.co"
+ },
+ {
+  "parada": "25",
+  "doc": "1056124246",
+  "name": "Simón Marín castaño",
+  "phone": "3136021940",
+  "address": "Calle 61 # 15B-20",
+  "barrio": "Minitas",
+  "email": "simarinca@unal.edu.co"
+ },
+ {
+  "parada": "26",
+  "doc": "1003248753",
+  "name": "Cristian Manuel Cortes Gutierrez",
+  "phone": "3046143769",
+  "address": "Calle 66A # 23B-27, apto. 201",
+  "barrio": "Guayacanes",
+  "email": "Crcortesg@unal.edu.co"
+ },
+ {
+  "parada": "27",
+  "doc": "1007180221",
+  "name": "Yeison Alexander Rodríguez Ascuntar",
+  "phone": "3153360303",
+  "address": "Cra. 22A # 66-33, Edificio Berlín, apto. 305",
+  "barrio": "Por confirmar / norte",
+  "email": "Yerodrigueza@unal.edu.co"
+ },
+ {
+  "parada": "28",
+  "doc": "1054863667",
+  "name": "Nicol Dayan Gallego Giraldo",
+  "phone": "3113623069",
+  "address": "Carrera 26 # 21-14",
+  "barrio": "San Vicente",
+  "email": "nicolda1125@gmail.com"
+ },
+ {
+  "parada": "29",
+  "doc": "24340614",
+  "name": "Carolina Martínez Orozco",
+  "phone": "3015388572",
+  "address": "Carrera 33 # 10C-16, apto. C301, Multifamiliar Los Nogales",
+  "barrio": "Puerta del Sol",
+  "email": "carmartinezor@unal.edu.co"
+ },
+ {
+  "parada": "30",
+  "doc": "1054551115",
+  "name": "Ian mateo Gacha",
+  "phone": "3206189332",
+  "address": "Altos del Pino",
+  "barrio": null,
+  "email": "igacha@unal.edu.co"
+ },
+ {
+  "parada": "31",
+  "doc": "1006817066",
+  "name": "Yilder Rafael Epiayu González",
+  "phone": "3006576550",
+  "address": "Residencia Camilo Torres",
+  "barrio": null,
+  "email": "yepiayu@unal.edu.co"
+ }
+]
