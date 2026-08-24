@@ -75,12 +75,32 @@ export default async function HomePage() {
             "radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,.4), transparent 55%), linear-gradient(180deg, #eaf6df 0%, #d7ecc4 60%, #fbfaf6 100%)",
         }}
       >
+        {/*
+          `inset-0` + rotar dejaba ver el propio borde recto del
+          rectángulo apenas giraba: un cuadro del tamaño exacto de la
+          sección, al inclinarse, deja sin cubrir las esquinas que su
+          forma original sí llegaba a cubrir. La solución es agrandar
+          la capa muy por encima de cualquier pantalla (300vmax de
+          lado — más del doble de la diagonal de cualquier viewport
+          real) y centrarla, vía posicionamiento, exactamente en el
+          mismo punto del que ya nacía el degradado (50% del ancho de
+          la sección, -20% de su alto) — así el `transform-origin` por
+          defecto (el centro de la propia capa, 50% 50%) coincide solo
+          y el giro nunca deja ver un borde: siempre sobra capa de
+          sobra en cualquier ángulo. `overflow-hidden` de la sección
+          recorta el sobrante.
+        */}
         <div
-          className="akopia-sunburst pointer-events-none absolute inset-0"
+          className="akopia-sunburst pointer-events-none absolute"
           style={{
+            left: "50%",
+            top: "-20%",
+            width: "300vmax",
+            height: "300vmax",
+            marginLeft: "-150vmax",
+            marginTop: "-150vmax",
             background:
-              "repeating-conic-gradient(from 0deg at 50% -20%, rgba(63,122,62,.06) 0deg 6deg, transparent 6deg 12deg)",
-            transformOrigin: "50% -20%",
+              "repeating-conic-gradient(from 0deg at 50% 50%, rgba(63,122,62,.06) 0deg 6deg, transparent 6deg 12deg)",
           }}
           aria-hidden="true"
         />

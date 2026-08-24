@@ -172,9 +172,11 @@ body {
  * decorativas:
  *
  * 1. El destello (`repeating-conic-gradient` del hero) gira muy
- *    despacio sobre el mismo punto en el que ya nace el degradado
- *    (`at 50% -20%`) — `transform-origin` usa las mismas coordenadas
- *    porcentuales para que el giro no se note descentrado.
+ *    despacio. La capa que lo pinta es mucho más grande que cualquier
+ *    pantalla (300vmax) y está centrada exactamente en el punto del
+ *    que ya nace el degradado, para que el giro nunca deje ver el
+ *    borde recto de la capa — detalle completo en el propio JSX,
+ *    junto al `<div className="akopia-sunburst">`.
  * 2. Las tarjetas de "¿Qué estamos recibiendo?" y de "Horario/Punto de
  *    recepción" aparecen animadas al hacer scroll, activadas por
  *    `<ScrollReveal>` (IntersectionObserver) agregando
