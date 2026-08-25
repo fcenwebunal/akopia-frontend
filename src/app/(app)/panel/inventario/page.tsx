@@ -507,6 +507,7 @@ export default function InventarioPage() {
         <RelocateDialog
           row={relocating}
           locations={data.locations}
+          allRows={data.rows}
           onCancel={() => setRelocating(null)}
           onDone={() => {
             setRelocating(null);
@@ -588,11 +589,13 @@ function ProductRow({
 function RelocateDialog({
   row,
   locations,
+  allRows,
   onCancel,
   onDone,
 }: {
   row: InventoryRow;
   locations: Location[];
+  allRows: InventoryRow[];
   onCancel: () => void;
   onDone: () => void;
 }) {
@@ -600,6 +603,50 @@ function RelocateDialog({
   const [quantity, setQuantity] = useState(row.available_qty);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const activeLocationIds = useMemo(() => new Set(locations.map((l) => l.id)), [locations]);
+  const locationById = useMemo(() => new Map(locations.map((l) => [l.id, l])), [locations]);
+
+  // Sugerencias: si el mismo producto ya vive en otro lado, lo más
+  // probable es que ahí también vaya este lote — evita repetir la
+  // búsqueda de ubicación cada vez que llega otro tanto del mismo
+  // producto. Si nunca se ha ubicado, se sugiere por categoría en su
+  // lugar (misma sección de bodega, aunque sea otro producto).
+  const sameProductElsewhere = useMemo(
+    () =>
+      allRows
+        .filter(
+          (r) =>
+            r.product_id === row.product_id &&
+            r.id !== row.id &&
+            r.location_id &&
+            activeLocationIds.has(r.location_id) &&
+            r.available_qty > 0
+        )
+        .sort((a, b) => b.available_qty - a.available_qty),
+    [allRows, row, activeLocationIds]
+  );
+
+  const categoryId = row.expand?.product_id?.category_id;
+  const similarByCategory = useMemo(() => {
+    if (sameProductElsewhere.length > 0 || !categoryId) return [];
+    const counts = new Map<string, number>();
+    for (const r of allRows) {
+      if (
+        r.product_id === row.product_id ||
+        !r.location_id ||
+        !activeLocationIds.has(r.location_id) ||
+        r.expand?.product_id?.category_id !== categoryId
+      ) {
+        continue;
+      }
+      counts.set(r.location_id, (counts.get(r.location_id) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([id, count]) => ({ locationId: id, count }));
+  }, [allRows, row, categoryId, sameProductElsewhere, activeLocationIds]);
 
   async function relocate() {
     setError(null);
@@ -648,6 +695,56 @@ function RelocateDialog({
             className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
           />
         </div>
+
+        {sameProductElsewhere.length > 0 || similarByCategory.length > 0 ? (
+          <div className="mt-4 rounded border border-unal-green-soft bg-unal-green-soft/30 p-3">
+            <p className="text-xs font-bold text-unal-green-dark">Sugerencias</p>
+            {sameProductElsewhere.length > 0 ? (
+              <>
+                <p className="mt-1 text-xs text-(--ink-2)">Este producto ya está en:</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {sameProductElsewhere.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setLocationId(r.location_id)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+                        locationId === r.location_id
+                          ? "border-unal-green-dark bg-unal-green-dark text-white"
+                          : "border-(--rule) bg-(--surface) hover:border-unal-green-dark"
+                      }`}
+                    >
+                      {locationLabel(locationById.get(r.location_id))} · {formatQuantity(r.available_qty)}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-xs text-(--ink-2)">
+                  Nunca se ha ubicado — ubicaciones con productos de la misma categoría:
+                </p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {similarByCategory.map(({ locationId: locId, count }) => (
+                    <button
+                      key={locId}
+                      type="button"
+                      onClick={() => setLocationId(locId)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+                        locationId === locId
+                          ? "border-unal-green-dark bg-unal-green-dark text-white"
+                          : "border-(--rule) bg-(--surface) hover:border-unal-green-dark"
+                      }`}
+                    >
+                      {locationLabel(locationById.get(locId))} · {count} producto{count === 1 ? "" : "s"} similar
+                      {count === 1 ? "" : "es"}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        ) : null}
 
         <div className="mt-4">
           <span className="mb-1 block text-sm font-bold">Ubicación destino</span>
