@@ -24,6 +24,7 @@ import { DecimalInput } from "@/components/ui/decimal-input";
 interface Item {
   id: string;
   product_id: string;
+  location_id: string;
   quantity: number;
   classification_status: "pending" | "available" | "quarantine" | "rejected";
   expiry_date: string;
@@ -136,7 +137,37 @@ export default function DonacionDetallePage({
       }),
       loadCatalog(),
     ]);
-    return { donation, items: items.items, catalog };
+
+    // Rechazar cuarentena es una salida a nivel de `inventory` que a
+    // propósito no toca `donation_items` (ver utils/helpers.js#rejectQuarantine
+    // en el backend) — el artículo se queda marcado "quarantine" para
+    // siempre, aunque el saldo real ya se haya ido. La única forma de
+    // saberlo desde aquí es comparar contra el saldo agregado: si para
+    // el producto+ubicación de este artículo ya no queda nada en
+    // revisión, lo que había se rechazó (nada más lo saca de ahí sin
+    // cambiar el estado del artículo).
+    const quarantinePairs = new Map<string, { product_id: string; location_id: string }>();
+    for (const item of items.items) {
+      if (item.classification_status !== "quarantine") continue;
+      const key = `${item.product_id}|${item.location_id || ""}`;
+      quarantinePairs.set(key, { product_id: item.product_id, location_id: item.location_id || "" });
+    }
+
+    const rejectedPairs = new Set<string>();
+    await Promise.all(
+      Array.from(quarantinePairs.entries()).map(async ([key, { product_id, location_id }]) => {
+        const filter = location_id
+          ? `product_id = "${product_id}" && location_id = "${location_id}"`
+          : `product_id = "${product_id}" && location_id = ""`;
+        const rows = await pb
+          .collection("inventory")
+          .getFullList<{ quarantine_qty: number }>({ filter, fields: "quarantine_qty" });
+        const quarantineQty = rows.reduce((sum, row) => sum + (row.quarantine_qty || 0), 0);
+        if (quarantineQty <= 0) rejectedPairs.add(key);
+      })
+    );
+
+    return { donation, items: items.items, catalog, rejectedPairs };
   }, [id]);
 
   const { data, error: loadError, reload } = useAsyncData(fetchData);
@@ -255,13 +286,28 @@ export default function DonacionDetallePage({
     return <LoadingLine />;
   }
 
-  const { donation, items, catalog } = data;
+  const { donation, items, catalog, rejectedPairs } = data;
   const pending = items.filter((item) => item.classification_status === "pending").length;
   const canManageHeader =
     operator?.id === donation.operator_id || hasAnyRole(operator?.role, ["admin", "coordinacion"]);
   const recent = items
     .map((item) => catalog.products.find((p) => p.id === item.product_id))
     .filter((p): p is Product => Boolean(p));
+
+  function rejectedByInventory(item: Item) {
+    return (
+      item.classification_status === "quarantine" &&
+      rejectedPairs.has(`${item.product_id}|${item.location_id || ""}`)
+    );
+  }
+
+  // Los rechazados (declarados o descubiertos por el saldo) van al
+  // final — ya no son trabajo pendiente, son historia cerrada.
+  const sortedItems = [...items].sort((a, b) => {
+    const aRejected = a.classification_status === "rejected" || rejectedByInventory(a) ? 1 : 0;
+    const bRejected = b.classification_status === "rejected" || rejectedByInventory(b) ? 1 : 0;
+    return aRejected - bRejected;
+  });
 
   return (
     <div>
@@ -409,19 +455,26 @@ export default function DonacionDetallePage({
         </p>
       ) : (
         <ul className="mt-5 space-y-3">
-          {items.map((item) => {
+          {sortedItems.map((item) => {
             const status = item.classification_status;
             const locked = status === "available" || status === "quarantine";
+            const wasRejected = status === "rejected" || rejectedByInventory(item);
+            const displayStatus = wasRejected ? "rejected" : status;
 
             return (
-              <li key={item.id} className="rounded border border-(--rule) bg-(--surface) p-4">
+              <li
+                key={item.id}
+                className={`rounded border border-(--rule) bg-(--surface) p-4 ${
+                  wasRejected ? "opacity-55" : ""
+                }`}
+              >
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="font-bold">{item.expand?.product_id?.name ?? "—"}</span>
                   <span className="text-(--muted)">
                     {formatQuantity(item.quantity)} {item.expand?.unit_id?.code ?? item.expand?.unit_id?.name ?? ""}
                   </span>
-                  <span className={`ml-auto rounded px-2 py-0.5 text-xs font-bold ${STATUS_STYLES[status]}`}>
-                    {STATUS_LABELS[status]}
+                  <span className={`ml-auto rounded px-2 py-0.5 text-xs font-bold ${STATUS_STYLES[displayStatus]}`}>
+                    {STATUS_LABELS[displayStatus]}
                   </span>
                 </div>
 
@@ -441,7 +494,7 @@ export default function DonacionDetallePage({
                 ) : null}
 
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {status !== "available" ? (
+                  {!wasRejected && status !== "available" ? (
                     <Button
                       size="sm"
                       disabled={busy === item.id}
@@ -453,7 +506,7 @@ export default function DonacionDetallePage({
                     </Button>
                   ) : null}
 
-                  {status !== "quarantine" ? (
+                  {!wasRejected && status !== "quarantine" ? (
                     <Button
                       variant="outline"
                       size="sm"
@@ -510,7 +563,16 @@ export default function DonacionDetallePage({
                   ) : null}
                 </div>
 
-                {locked ? (
+                {rejectedByInventory(item) ? (
+                  <p className="mt-2 text-xs text-(--muted)">
+                    Se rechazó a nivel de inventario — ya no queda saldo en revisión para
+                    este producto. Detalle en{" "}
+                    <Link href="/panel/inventario#rechazados" className="font-bold text-unal-green-dark">
+                      Inventario → Rechazados
+                    </Link>
+                    .
+                  </p>
+                ) : locked ? (
                   <p className="mt-2 text-xs text-(--muted)">
                     Ya afectó inventario: para rechazarlo hay que hacer un ajuste.
                   </p>
