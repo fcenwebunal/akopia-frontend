@@ -76,6 +76,7 @@ export function CatalogAddForm({
   const [requiresQuarantine, setRequiresQuarantine] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [minStockAlert, setMinStockAlert] = useState("");
+  const [weightKg, setWeightKg] = useState("");
 
   const [photoUrl, setPhotoUrl] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -183,6 +184,7 @@ export function CatalogAddForm({
           category_id: effectiveCategoryId,
           default_unit_id: unitId,
           description,
+          weight_kg: weightKg ? Number(weightKg) : null,
           min_stock_alert: minStockAlert ? Number(minStockAlert) : null,
           requires_expiry: requiresExpiry,
           requires_batch: requiresBatch,
@@ -413,21 +415,43 @@ export function CatalogAddForm({
             </div>
 
             {kind === "product" ? (
-              <div>
-                <label htmlFor="ca-minimo" className="mb-1 block text-sm font-bold">
-                  Alertar si el disponible baja de{" "}
-                  <span className="font-normal text-(--muted)">(opcional)</span>
-                </label>
-                <input
-                  id="ca-minimo"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  value={minStockAlert}
-                  onChange={(event) => setMinStockAlert(event.target.value)}
-                  className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
-                />
-              </div>
+              <>
+                <div>
+                  <label htmlFor="ca-peso" className="mb-1 block text-sm font-bold">
+                    Peso, en kg, de una unidad de medida{" "}
+                    <span className="font-normal text-(--muted)">(opcional)</span>
+                  </label>
+                  <input
+                    id="ca-peso"
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step="any"
+                    value={weightKg}
+                    onChange={(event) => setWeightKg(event.target.value)}
+                    className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+                  />
+                  <p className="mt-1 text-xs text-(--muted)">
+                    Para que este producto cuente en los gráficos de kilos en inventario del panel.
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="ca-minimo" className="mb-1 block text-sm font-bold">
+                    Alertar si el disponible baja de{" "}
+                    <span className="font-normal text-(--muted)">(opcional)</span>
+                  </label>
+                  <input
+                    id="ca-minimo"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    value={minStockAlert}
+                    onChange={(event) => setMinStockAlert(event.target.value)}
+                    className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+                  />
+                </div>
+              </>
             ) : null}
           </div>
         ) : null}

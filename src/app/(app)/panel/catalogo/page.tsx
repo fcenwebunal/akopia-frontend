@@ -36,6 +36,7 @@ interface ProductRow {
   description: string;
   category_id: string;
   default_unit_id: string;
+  weight_kg?: number;
   min_stock_alert?: number;
   requires_batch?: boolean;
   requires_expiry?: boolean;
@@ -447,6 +448,11 @@ export default function CatalogoPage() {
                 { name: "category_id", label: "Categoría", type: "select", options: categoryOptions },
                 { name: "default_unit_id", label: "Unidad", type: "select", options: unitOptions },
                 { name: "description", label: "Descripción", type: "textarea" },
+                {
+                  name: "weight_kg",
+                  label: "Peso estimado (kg por unidad de medida)",
+                  type: "number",
+                },
                 { name: "min_stock_alert", label: "Alerta de stock mínimo", type: "number" },
                 { name: "requires_batch", label: "Requiere lote", type: "checkbox" },
                 { name: "requires_expiry", label: "Requiere vencimiento", type: "checkbox" },
@@ -478,6 +484,7 @@ export default function CatalogoPage() {
                             category_id: product.category_id,
                             default_unit_id: product.default_unit_id,
                             description: product.description,
+                            weight_kg: product.weight_kg ?? 0,
                             min_stock_alert: product.min_stock_alert ?? 0,
                             requires_batch: Boolean(product.requires_batch),
                             requires_expiry: Boolean(product.requires_expiry),

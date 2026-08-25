@@ -20,6 +20,9 @@ export interface Product {
   active: boolean;
   photo_url?: string;
   min_stock_alert?: number;
+  // Estimado, kg por unidad de `default_unit_id` -- ver migración 059.
+  // Puede faltar en productos que se agreguen sin llenarlo.
+  weight_kg?: number;
 }
 
 export interface Category {

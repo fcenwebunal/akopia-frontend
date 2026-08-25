@@ -72,6 +72,7 @@ interface Dashboard {
   distribution: { available: number; reserved: number; quarantine: number };
   byGroup: { label: string; value: number }[];
   byCategory: { label: string; value: number }[];
+  productsMissingWeight: number;
   inventoryByLocation: LocationStock[];
   donorTypeBreakdown: { label: string; value: number; color: string }[];
   activityDays: { key: string; label: string; isToday: boolean }[];
@@ -91,14 +92,19 @@ const HISTORY_DAYS = 14;
 /*
  * Todo lo que se ve aquí sale de una lectura directa de PocketBase, sin
  * recalcular saldos: si un número está mal, está mal en `inventory` y se
- * corrige con un ajuste, no en esta pantalla. Las cantidades sumadas
- * entre productos (distribución, por grupo, por categoría, por
- * ubicación) mezclan unidades distintas (kg, litros, unidades…) a
- * propósito, como referencia agregada — igual que ya hace
- * `/api/inventory/summary` en el backend — no como una cifra con
- * precisión dimensional. Donde sí importa contar sin mezclar unidades
- * (por grupo, por categoría), se cuentan referencias de producto
- * distintas, no la cantidad.
+ * corrige con un ajuste, no en esta pantalla. La distribución (tres
+ * cubetas) y el saldo por ubicación siguen sumando cantidad cruda,
+ * mezclando kg/litros/unidades a propósito, como referencia agregada —
+ * igual que ya hace `/api/inventory/summary` en el backend.
+ *
+ * Por grupo y por categoría, en cambio, sí conviene un total que
+ * signifique algo real: se convierte cada renglón a kilogramos usando
+ * `product.weight_kg` (cuántos kg pesa una unidad de la medida por
+ * defecto del producto — ver migración 059 del backend), y se suma eso.
+ * Es una estimación, no una báscula: el peso es un dato de catálogo
+ * cargado a mano (tamaños típicos de empaque), no medido remesa por
+ * remesa. Un producto sin peso asignado queda fuera de la suma — se
+ * cuenta cuántos son para no fingir que el total incluye todo.
  */
 export default function PanelPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -158,11 +164,11 @@ export default function PanelPage() {
     // Distribución de las tres cubetas, tal como las define el backend.
     const distribution = { available: 0, reserved: 0, quarantine: 0 };
 
-    // Cuántos productos con saldo disponible tiene cada grupo/categoría
-    // — no la cantidad sumada, que mezclaría kilos con litros con
-    // unidades.
-    const productsByGroup = new Map<string, Set<string>>();
-    const productsByCategory = new Map<string, Set<string>>();
+    // Kilos en inventario por grupo/categoría — `available_qty` del
+    // producto convertida con su `weight_kg` (ver comentario de arriba).
+    const kgByGroup = new Map<string, number>();
+    const kgByCategory = new Map<string, number>();
+    const productsWithoutWeight = new Set<string>();
 
     // Saldo por ubicación, sumado en las mismas tres cubetas — la
     // ubicación vacía ("Por Ubicar") es su propio renglón, como en
@@ -190,23 +196,23 @@ export default function PanelPage() {
         const product = productById.get(row.product_id);
         const category = product ? categoryById.get(product.category_id) : undefined;
         const group = category ? groupById.get(category.group_id) : undefined;
-        if (group) {
-          if (!productsByGroup.has(group.name)) productsByGroup.set(group.name, new Set());
-          productsByGroup.get(group.name)!.add(row.product_id);
-        }
-        if (category) {
-          if (!productsByCategory.has(category.name)) productsByCategory.set(category.name, new Set());
-          productsByCategory.get(category.name)!.add(row.product_id);
+
+        if (!product || product.weight_kg == null) {
+          if (product) productsWithoutWeight.add(product.id);
+        } else {
+          const kg = row.available_qty * product.weight_kg;
+          if (group) kgByGroup.set(group.name, (kgByGroup.get(group.name) ?? 0) + kg);
+          if (category) kgByCategory.set(category.name, (kgByCategory.get(category.name) ?? 0) + kg);
         }
       }
     }
 
-    const byGroup = Array.from(productsByGroup.entries())
-      .map(([label, products]) => ({ label, value: products.size }))
+    const byGroup = Array.from(kgByGroup.entries())
+      .map(([label, value]) => ({ label, value: Math.round(value * 10) / 10 }))
       .sort((a, b) => b.value - a.value);
 
-    const byCategory = Array.from(productsByCategory.entries())
-      .map(([label, products]) => ({ label, value: products.size }))
+    const byCategory = Array.from(kgByCategory.entries())
+      .map(([label, value]) => ({ label, value: Math.round(value * 10) / 10 }))
       .sort((a, b) => b.value - a.value);
 
     const inventoryByLocation = Array.from(stockByLocationId.values())
@@ -259,6 +265,7 @@ export default function PanelPage() {
       distribution,
       byGroup,
       byCategory,
+      productsMissingWeight: productsWithoutWeight.size,
       inventoryByLocation,
       donorTypeBreakdown,
       activityDays,
@@ -449,32 +456,39 @@ export default function PanelPage() {
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4">
         <section className="rounded border border-(--rule) bg-(--surface) p-3 sm:p-4">
-          <h3 className="text-sm font-bold">Productos con existencia por grupo</h3>
+          <h3 className="text-sm font-bold">Kilos en inventario por grupo</h3>
           <p className="mt-0.5 text-xs text-(--muted)">
-            Referencias distintas con saldo disponible hoy.
+            Disponible hoy, convertido a kg (estimado — ver peso por producto en Catálogo).
           </p>
           <div className="mt-4">
             {dashboard.byGroup.length > 0 ? (
-              <HorizontalBarChart rows={dashboard.byGroup} unitLabel="prod." maxVisibleRows={5} />
+              <HorizontalBarChart rows={dashboard.byGroup} unitLabel="kg" maxVisibleRows={5} />
             ) : (
-              <p className="text-sm text-(--muted)">Sin existencias todavía.</p>
+              <p className="text-sm text-(--muted)">Sin existencias con peso registrado todavía.</p>
             )}
           </div>
         </section>
 
         <section className="rounded border border-(--rule) bg-(--surface) p-3 sm:p-4">
-          <h3 className="text-sm font-bold">Stock por categoría</h3>
+          <h3 className="text-sm font-bold">Kilos en inventario por categoría</h3>
           <p className="mt-0.5 text-xs text-(--muted)">
-            Referencias distintas con saldo disponible hoy.
+            Disponible hoy, convertido a kg (estimado — ver peso por producto en Catálogo).
           </p>
           <div className="mt-4">
             {dashboard.byCategory.length > 0 ? (
-              <HorizontalBarChart rows={dashboard.byCategory} unitLabel="prod." maxVisibleRows={5} />
+              <HorizontalBarChart rows={dashboard.byCategory} unitLabel="kg" maxVisibleRows={5} />
             ) : (
-              <p className="text-sm text-(--muted)">Sin existencias todavía.</p>
+              <p className="text-sm text-(--muted)">Sin existencias con peso registrado todavía.</p>
             )}
           </div>
         </section>
+
+        {dashboard.productsMissingWeight > 0 ? (
+          <p className="col-span-2 text-xs text-(--muted)">
+            {dashboard.productsMissingWeight} producto(s) con saldo disponible no tienen peso
+            registrado en el catálogo y no se incluyen en estos dos gráficos.
+          </p>
+        ) : null}
       </div>
 
       <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-3 sm:p-4">
