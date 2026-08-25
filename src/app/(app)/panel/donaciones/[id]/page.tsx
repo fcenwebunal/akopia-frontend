@@ -758,6 +758,7 @@ function CloseDialog({
 }) {
   const [weight, setWeight] = useState(declaredWeight || 0);
   const [confirmedEmpty, setConfirmedEmpty] = useState(false);
+  const [confirmedComplete, setConfirmedComplete] = useState(false);
 
   return (
     <div className="fixed inset-0 z-20 flex items-end bg-black/40 sm:items-center sm:justify-center">
@@ -791,6 +792,21 @@ function CloseDialog({
                 de verdad se volvió a pesar.
               </p>
             </div>
+
+            <p className="mt-4 rounded border-l-4 border-unal-yellow bg-(--surface-2) px-3 py-2 text-sm">
+              Una vez cerrada, esta remesa deja de aparecer como pendiente. Si
+              después hace falta agregar otro producto, la clasificación se
+              reabre sola al hacerlo.
+            </p>
+            <label className="mt-3 flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={confirmedComplete}
+                onChange={(event) => setConfirmedComplete(event.target.checked)}
+                className="mt-0.5"
+              />
+              Confirmo que ya se registraron todos los productos de esta donación.
+            </label>
           </>
         )}
 
@@ -800,7 +816,9 @@ function CloseDialog({
           </button>
           <button
             type="button"
-            disabled={saving || (hasZeroItems && !confirmedEmpty)}
+            disabled={
+              saving || (hasZeroItems ? !confirmedEmpty : !confirmedComplete)
+            }
             onClick={() => onConfirm(weight)}
             className="flex flex-1 items-center justify-center gap-2 rounded bg-unal-green-dark px-4 py-3 font-bold text-white disabled:opacity-50"
           >
