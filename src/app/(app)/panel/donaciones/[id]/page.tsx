@@ -269,65 +269,75 @@ export default function DonacionDetallePage({
         ← Donaciones
       </Link>
 
-      <div className="mt-2 flex flex-wrap items-baseline gap-3">
-        <h1 className="font-mono text-2xl font-black tracking-tight text-unal-green-dark">
-          {donation.code}
-        </h1>
-        <span
-          className={
-            donation.status === "clasificada"
-              ? "rounded bg-unal-green-soft px-2 py-0.5 text-xs font-bold text-unal-green-dark"
-              : "rounded bg-(--surface-2) px-2 py-0.5 text-xs font-bold text-unal-orange"
-          }
-        >
-          {donation.status === "clasificada" ? "Clasificada" : "En recepción"}
-        </span>
-      </div>
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex flex-wrap items-baseline gap-3">
+            <h1 className="font-mono text-2xl font-black tracking-tight text-unal-green-dark">
+              {donation.code}
+            </h1>
+            <span
+              className={
+                donation.status === "clasificada"
+                  ? "rounded bg-unal-green-soft px-2 py-0.5 text-xs font-bold text-unal-green-dark"
+                  : "rounded bg-(--surface-2) px-2 py-0.5 text-xs font-bold text-unal-orange"
+              }
+            >
+              {donation.status === "clasificada" ? "Clasificada" : "En recepción"}
+            </span>
+          </div>
 
-      <p className="mt-1 text-(--muted)">
-        {donation.donor_name} ·{" "}
-        {new Date(donation.receipt_date).toLocaleDateString("es-CO", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })}
-        {donation.carrier_name ? ` · ${donation.carrier_name}` : ""}
-      </p>
+          <p className="mt-1 text-(--muted)">
+            {donation.donor_name} ·{" "}
+            {new Date(donation.receipt_date).toLocaleDateString("es-CO", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+            {donation.carrier_name ? ` · ${donation.carrier_name}` : ""}
+          </p>
 
-      {donation.donor_email || donation.donor_id_number ? (
-        <p className="mt-0.5 text-sm text-(--muted)">
-          {[
-            donation.donor_email,
-            donation.donor_id_number
-              ? `${DONOR_ID_TYPE_LABELS[donation.donor_id_type] ?? "Documento"} ${donation.donor_id_number}`
-              : "",
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
-      ) : null}
-
-      {donation.total_weight_kg ? (
-        <p className="mt-1 text-sm text-(--ink-2)">
-          Peso declarado: <strong>{formatQuantity(donation.total_weight_kg)} kg</strong>
-          {donation.status === "clasificada" && donation.classified_weight_kg ? (
-            <>
-              {" · "}
-              Peso clasificado: <strong>{formatQuantity(donation.classified_weight_kg)} kg</strong>
-              {donation.classified_weight_kg < donation.total_weight_kg ? (
-                <span className="text-(--muted)">
-                  {" "}
-                  (merma {formatQuantity(donation.total_weight_kg - donation.classified_weight_kg)} kg)
-                </span>
-              ) : null}
-            </>
+          {donation.donor_email || donation.donor_id_number ? (
+            <p className="mt-0.5 text-sm text-(--muted)">
+              {[
+                donation.donor_email,
+                donation.donor_id_number
+                  ? `${DONOR_ID_TYPE_LABELS[donation.donor_id_type] ?? "Documento"} ${donation.donor_id_number}`
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
           ) : null}
-        </p>
-      ) : null}
 
-      {donation.notes ? (
-        <p className="mt-2 text-sm text-(--ink-2)">{donation.notes}</p>
-      ) : null}
+          {donation.total_weight_kg ? (
+            <p className="mt-1 text-sm text-(--ink-2)">
+              Peso declarado: <strong>{formatQuantity(donation.total_weight_kg)} kg</strong>
+              {donation.status === "clasificada" && donation.classified_weight_kg ? (
+                <>
+                  {" · "}
+                  Peso clasificado: <strong>{formatQuantity(donation.classified_weight_kg)} kg</strong>
+                  {donation.classified_weight_kg < donation.total_weight_kg ? (
+                    <span className="text-(--muted)">
+                      {" "}
+                      (merma {formatQuantity(donation.total_weight_kg - donation.classified_weight_kg)} kg)
+                    </span>
+                  ) : null}
+                </>
+              ) : null}
+            </p>
+          ) : null}
+
+          {donation.notes ? (
+            <p className="mt-2 text-sm text-(--ink-2)">{donation.notes}</p>
+          ) : null}
+        </div>
+
+        {canAddItems ? (
+          <Button icon={Plus} onClick={() => setAdding((v) => !v)}>
+            {adding ? "Ocultar" : "Agregar artículo"}
+          </Button>
+        ) : null}
+      </div>
 
       {canManageRecords ? (
         <div className="mt-3 flex flex-wrap gap-2">
@@ -366,6 +376,17 @@ export default function DonacionDetallePage({
             onDeleted={() => router.push("/panel/donaciones")}
           />
         </div>
+      ) : null}
+
+      {adding ? (
+        <section className="mt-4 rounded border border-(--rule) bg-(--surface) p-4">
+          <h2 className="mb-3 text-sm font-bold">Agregar artículo</h2>
+          <ProductPicker
+            catalog={catalog}
+            recent={recent}
+            onSelect={(product) => setPendingProduct(product)}
+          />
+        </section>
       ) : null}
 
       {pending > 0 ? (
@@ -499,28 +520,6 @@ export default function DonacionDetallePage({
           })}
         </ul>
       )}
-
-      {canAddItems ? (
-        <section className="mt-5 rounded border border-(--rule) bg-(--surface) p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-bold">Agregar artículo</h2>
-            <button
-              type="button"
-              onClick={() => setAdding((v) => !v)}
-              className="text-sm font-bold text-unal-green-dark"
-            >
-              {adding ? "Ocultar" : "Abrir"}
-            </button>
-          </div>
-          {adding ? (
-            <ProductPicker
-              catalog={catalog}
-              recent={recent}
-              onSelect={(product) => setPendingProduct(product)}
-            />
-          ) : null}
-        </section>
-      ) : null}
 
       {donation.status === "recepcion" && canManageHeader ? (
         <div className="mt-4">
