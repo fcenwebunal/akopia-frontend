@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { AlertTriangle, ArrowRight, Ban, Camera, CheckCircle, LayoutGrid, List, Loader2, MapPin, Warehouse } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, Camera, CheckCircle, LayoutGrid, List, Loader2, MapPin, Warehouse, X } from "lucide-react";
 import { callRoute, currentUser, errorMessage, pb } from "@/lib/pb";
 import { hasAnyRole } from "@/lib/roles";
 import { loadCatalog, normalize } from "@/lib/catalog";
@@ -396,9 +396,8 @@ export default function InventarioPage() {
                     <ProductRow
                       key={row.id}
                       row={row}
-                      canRelocate={canManageInventory}
                       onOpen={() => setDetail({ row, location: undefined })}
-                      onRelocate={() => setRelocating(row)}
+                      onRelocate={canManageInventory ? () => setRelocating(row) : undefined}
                     />
                   ))}
                 </ul>
@@ -512,9 +511,7 @@ export default function InventarioPage() {
                       <ProductRow
                         key={row.id}
                         row={row}
-                        canRelocate={canManageInventory}
                         onOpen={() => setDetail({ row, location })}
-                        onRelocate={() => setRelocating(row)}
                       />
                     ))}
                   </ul>
@@ -612,6 +609,11 @@ export default function InventarioPage() {
           location={detail.location}
           canToggle={canReleaseQuarantine}
           canAdjust={canManageInventory}
+          onRelocate={
+            canManageInventory && detail.row.available_qty > 0
+              ? () => { setRelocating(detail.row); setDetail(null); }
+              : undefined
+          }
           onClose={() => setDetail(null)}
           onChanged={reload}
         />
@@ -622,14 +624,15 @@ export default function InventarioPage() {
 
 function ProductRow({
   row,
-  canRelocate,
   onOpen,
   onRelocate,
 }: {
   row: InventoryRow;
-  canRelocate: boolean;
   onOpen: () => void;
-  onRelocate: () => void;
+  // Solo se ofrece el botón en línea en "Por Ubicar" -- dentro de una
+  // ubicación ya asignada, reubicar vive en el panel de detalle
+  // (`ProductLocationDetail`), no repetido en cada renglón.
+  onRelocate?: () => void;
 }) {
   const unit = row.expand?.unit_id?.code ?? row.expand?.unit_id?.name ?? "";
   const productName = row.expand?.product_id?.name ?? "—";
@@ -656,7 +659,7 @@ function ProductRow({
         <span className="text-sm tabular-nums text-unal-red">{formatQuantity(row.quarantine_qty)} cuarent.</span>
       ) : null}
 
-      {row.available_qty > 0 && canRelocate ? (
+      {row.available_qty > 0 && onRelocate ? (
         <Button variant="outline" size="sm" onClick={onRelocate} icon={MapPin}>
           Reubicar
         </Button>
@@ -1134,6 +1137,7 @@ function ProductLocationDetail({
   location,
   canToggle,
   canAdjust,
+  onRelocate,
   onClose,
   onChanged,
 }: {
@@ -1141,6 +1145,7 @@ function ProductLocationDetail({
   location?: Location;
   canToggle: boolean;
   canAdjust: boolean;
+  onRelocate?: () => void;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -1149,6 +1154,7 @@ function ProductLocationDetail({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [adjusting, setAdjusting] = useState(false);
+  const [imageExpanded, setImageExpanded] = useState(false);
   const [newQuantity, setNewQuantity] = useState(row.available_qty);
   const [adjustReason, setAdjustReason] = useState("");
   const [savingAdjust, setSavingAdjust] = useState(false);
@@ -1221,11 +1227,26 @@ function ProductLocationDetail({
       <div className="max-h-[85vh] w-full overflow-y-auto rounded-t-lg bg-(--surface) p-5 sm:max-w-lg sm:rounded-lg">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <ProductThumb
-              name={row.expand?.product_id?.name ?? "—"}
-              photoUrl={row.expand?.product_id?.photo_url}
-              size={48}
-            />
+            {row.expand?.product_id?.photo_url ? (
+              <button
+                type="button"
+                onClick={() => setImageExpanded(true)}
+                aria-label={`Ver foto de ${row.expand?.product_id?.name ?? "producto"} en grande`}
+                className="shrink-0 rounded-lg"
+              >
+                <ProductThumb
+                  name={row.expand?.product_id?.name ?? "—"}
+                  photoUrl={row.expand?.product_id?.photo_url}
+                  size={48}
+                />
+              </button>
+            ) : (
+              <ProductThumb
+                name={row.expand?.product_id?.name ?? "—"}
+                photoUrl={row.expand?.product_id?.photo_url}
+                size={48}
+              />
+            )}
             <div className="min-w-0">
               <h2 className="text-lg font-bold">{row.expand?.product_id?.name}</h2>
               <p className="text-sm text-(--muted)">{locationLabel(location)}</p>
@@ -1236,60 +1257,65 @@ function ProductLocationDetail({
           </button>
         </div>
 
-        {canAdjust ? (
-          <div className="mt-3">
-            {!adjusting ? (
-              <Button variant="outline" size="sm" onClick={() => setAdjusting(true)}>
-                Ajustar cantidad disponible
+        <div className="mt-3 flex flex-wrap gap-2">
+          {onRelocate ? (
+            <Button variant="outline" size="sm" onClick={onRelocate} icon={MapPin}>
+              Reubicar
+            </Button>
+          ) : null}
+          {canAdjust && !adjusting ? (
+            <Button variant="outline" size="sm" onClick={() => setAdjusting(true)}>
+              Ajustar cantidad disponible
+            </Button>
+          ) : null}
+        </div>
+
+        {canAdjust && adjusting ? (
+          <div className="mt-3 rounded border border-(--rule) p-3">
+            <p className="text-sm">
+              Disponible ahora: <strong>{formatQuantity(row.available_qty)}</strong>
+            </p>
+            <label htmlFor="ajuste-cant" className="mb-1 mt-2 block text-sm font-bold">
+              Cantidad correcta
+            </label>
+            <DecimalInput
+              id="ajuste-cant"
+              value={newQuantity}
+              onChange={setNewQuantity}
+              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+            />
+            <label htmlFor="ajuste-motivo" className="mb-1 mt-2 block text-sm font-bold">
+              Motivo <span className="text-unal-red">*</span>
+            </label>
+            <textarea
+              id="ajuste-motivo"
+              value={adjustReason}
+              onChange={(event) => setAdjustReason(event.target.value)}
+              rows={2}
+              placeholder="Ej.: conteo físico no coincidía"
+              className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+            />
+            {adjustError ? (
+              <p className="mt-2 text-sm text-unal-red">{adjustError}</p>
+            ) : null}
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAdjusting(false)}
+                className="rounded border border-(--rule) px-3 py-2 text-sm font-bold"
+              >
+                Cancelar
+              </button>
+              <Button
+                size="sm"
+                disabled={savingAdjust}
+                loading={savingAdjust}
+                onClick={saveAdjustment}
+                className="flex-1 justify-center"
+              >
+                Guardar ajuste
               </Button>
-            ) : (
-              <div className="rounded border border-(--rule) p-3">
-                <p className="text-sm">
-                  Disponible ahora: <strong>{formatQuantity(row.available_qty)}</strong>
-                </p>
-                <label htmlFor="ajuste-cant" className="mb-1 mt-2 block text-sm font-bold">
-                  Cantidad correcta
-                </label>
-                <DecimalInput
-                  id="ajuste-cant"
-                  value={newQuantity}
-                  onChange={setNewQuantity}
-                  className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
-                />
-                <label htmlFor="ajuste-motivo" className="mb-1 mt-2 block text-sm font-bold">
-                  Motivo <span className="text-unal-red">*</span>
-                </label>
-                <textarea
-                  id="ajuste-motivo"
-                  value={adjustReason}
-                  onChange={(event) => setAdjustReason(event.target.value)}
-                  rows={2}
-                  placeholder="Ej.: conteo físico no coincidía"
-                  className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
-                />
-                {adjustError ? (
-                  <p className="mt-2 text-sm text-unal-red">{adjustError}</p>
-                ) : null}
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setAdjusting(false)}
-                    className="rounded border border-(--rule) px-3 py-2 text-sm font-bold"
-                  >
-                    Cancelar
-                  </button>
-                  <Button
-                    size="sm"
-                    disabled={savingAdjust}
-                    loading={savingAdjust}
-                    onClick={saveAdjustment}
-                    className="flex-1 justify-center"
-                  >
-                    Guardar ajuste
-                  </Button>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         ) : null}
 
@@ -1361,6 +1387,37 @@ function ProductLocationDetail({
           </ul>
         )}
       </div>
+
+      {imageExpanded && row.expand?.product_id?.photo_url ? (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setImageExpanded(false)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
+              event.preventDefault();
+              setImageExpanded(false);
+            }
+          }}
+          className="fixed inset-0 z-40 flex cursor-zoom-out items-center justify-center bg-black/85 p-6"
+        >
+          <Image
+            src={row.expand.product_id.photo_url}
+            alt={row.expand?.product_id?.name ?? ""}
+            width={800}
+            height={800}
+            className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain"
+          />
+          <button
+            type="button"
+            onClick={(event) => { event.stopPropagation(); setImageExpanded(false); }}
+            aria-label="Cerrar"
+            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
