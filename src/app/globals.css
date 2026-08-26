@@ -386,9 +386,22 @@ body {
   }
 }
 
+@keyframes akopia-marquee {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+.akopia-marquee {
+  animation: akopia-marquee 6s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .akopia-cloud-blob,
-  .akopia-cloud-bubble {
+  .akopia-cloud-bubble,
+  .akopia-marquee {
     animation: none !important;
   }
 }

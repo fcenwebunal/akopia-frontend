@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { AlertTriangle, ArrowRight, Ban, CheckCircle, MapPin, Warehouse } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, CheckCircle, LayoutGrid, List, MapPin, Warehouse } from "lucide-react";
 import { callRoute, currentUser, errorMessage, pb } from "@/lib/pb";
 import { hasAnyRole } from "@/lib/roles";
 import { loadCatalog, normalize } from "@/lib/catalog";
@@ -60,6 +60,8 @@ function thumbColorFor(text: string): string {
   return THUMB_PALETTE[hash % THUMB_PALETTE.length];
 }
 
+const TILE_GRID_CLASS = "mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8";
+
 function ProductThumb({ name, photoUrl, size = 40 }: { name: string; photoUrl?: string; size?: number }) {
   return (
     <div
@@ -109,6 +111,7 @@ export default function InventarioPage() {
   const [query, setQuery] = useState("");
   const [groupId, setGroupId] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [relocating, setRelocating] = useState<InventoryRow | null>(null);
   const [rejecting, setRejecting] = useState<InventoryRow | null>(null);
   const [detail, setDetail] = useState<{ row: InventoryRow; location?: Location } | null>(null);
@@ -278,38 +281,67 @@ export default function InventarioPage() {
         </Link>
       </div>
 
-      <div className="mt-6 grid gap-2 sm:grid-cols-3">
-        <label className="sr-only" htmlFor="buscar-inv">Buscar producto</label>
-        <input
-          id="buscar-inv"
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar producto…"
-          autoComplete="off"
-          className="rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
-        />
-        <label className="sr-only" htmlFor="filtro-grupo">Grupo</label>
-        <select
-          id="filtro-grupo"
-          value={groupId}
-          onChange={(e) => { setGroupId(e.target.value); setCategoryId(""); }}
-          className="rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
-        >
-          <option value="">Todos los grupos</option>
-          {data.catalog.groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-        </select>
-        <label className="sr-only" htmlFor="filtro-categoria">Categoría</label>
-        <select
-          id="filtro-categoria"
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          disabled={!groupId}
-          className="rounded border border-(--rule) bg-(--surface) px-3 py-2.5 disabled:opacity-50"
-        >
-          <option value="">Todas las categorías</option>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-3">
+          <label className="sr-only" htmlFor="buscar-inv">Buscar producto</label>
+          <input
+            id="buscar-inv"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar producto…"
+            autoComplete="off"
+            className="rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+          />
+          <label className="sr-only" htmlFor="filtro-grupo">Grupo</label>
+          <select
+            id="filtro-grupo"
+            value={groupId}
+            onChange={(e) => { setGroupId(e.target.value); setCategoryId(""); }}
+            className="rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
+          >
+            <option value="">Todos los grupos</option>
+            {data.catalog.groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+          </select>
+          <label className="sr-only" htmlFor="filtro-categoria">Categoría</label>
+          <select
+            id="filtro-categoria"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            disabled={!groupId}
+            className="rounded border border-(--rule) bg-(--surface) px-3 py-2.5 disabled:opacity-50"
+          >
+            <option value="">Todas las categorías</option>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+
+        <div className="flex shrink-0 gap-1 rounded border border-(--rule) bg-(--surface) p-1">
+          <button
+            type="button"
+            onClick={() => setViewMode("list")}
+            aria-pressed={viewMode === "list"}
+            aria-label="Ver como lista"
+            title="Ver como lista"
+            className={`flex h-9 w-9 items-center justify-center rounded transition-colors ${
+              viewMode === "list" ? "bg-unal-green-dark text-white" : "text-(--muted) hover:bg-(--surface-2)"
+            }`}
+          >
+            <List size={18} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("grid")}
+            aria-pressed={viewMode === "grid"}
+            aria-label="Ver como mosaico"
+            title="Ver como mosaico"
+            className={`flex h-9 w-9 items-center justify-center rounded transition-colors ${
+              viewMode === "grid" ? "bg-unal-green-dark text-white" : "text-(--muted) hover:bg-(--surface-2)"
+            }`}
+          >
+            <LayoutGrid size={18} aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
       {hasFilters ? (
@@ -341,17 +373,25 @@ export default function InventarioPage() {
               <p className="mt-0.5 text-xs text-(--muted)">
                 Ya son aptos para entregar, solo falta decidir dónde se guardan.
               </p>
-              <ul className="mt-3 divide-y divide-(--rule)">
-                {staging.map((row) => (
-                  <ProductRow
-                    key={row.id}
-                    row={row}
-                    canRelocate={canManageInventory}
-                    onOpen={() => setDetail({ row, location: undefined })}
-                    onRelocate={() => setRelocating(row)}
-                  />
-                ))}
-              </ul>
+              {viewMode === "list" ? (
+                <ul className="mt-3 divide-y divide-(--rule)">
+                  {staging.map((row) => (
+                    <ProductRow
+                      key={row.id}
+                      row={row}
+                      canRelocate={canManageInventory}
+                      onOpen={() => setDetail({ row, location: undefined })}
+                      onRelocate={() => setRelocating(row)}
+                    />
+                  ))}
+                </ul>
+              ) : (
+                <div className={TILE_GRID_CLASS}>
+                  {staging.map((row) => (
+                    <ProductTile key={row.id} row={row} onOpen={() => setDetail({ row, location: undefined })} />
+                  ))}
+                </div>
+              )}
             </section>
           ) : null}
 
@@ -442,17 +482,25 @@ export default function InventarioPage() {
                   </div>
                   <span className="ml-auto text-xs text-(--muted)">{rows.length} productos</span>
                 </div>
-                <ul className="mt-3 divide-y divide-(--rule)">
-                  {rows.map((row) => (
-                    <ProductRow
-                      key={row.id}
-                      row={row}
-                      canRelocate={canManageInventory}
-                      onOpen={() => setDetail({ row, location })}
-                      onRelocate={() => setRelocating(row)}
-                    />
-                  ))}
-                </ul>
+                {viewMode === "list" ? (
+                  <ul className="mt-3 divide-y divide-(--rule)">
+                    {rows.map((row) => (
+                      <ProductRow
+                        key={row.id}
+                        row={row}
+                        canRelocate={canManageInventory}
+                        onOpen={() => setDetail({ row, location })}
+                        onRelocate={() => setRelocating(row)}
+                      />
+                    ))}
+                  </ul>
+                ) : (
+                  <div className={TILE_GRID_CLASS}>
+                    {rows.map((row) => (
+                      <ProductTile key={row.id} row={row} onOpen={() => setDetail({ row, location })} />
+                    ))}
+                  </div>
+                )}
               </section>
             ))}
           </div>
@@ -583,6 +631,76 @@ function ProductRow({
         </Button>
       ) : null}
     </li>
+  );
+}
+
+// Recorre el nombre de izquierda a derecha solo cuando de verdad no cabe
+// en el ancho de la casilla — se mide contra el DOM real (`scrollWidth`
+// vs `clientWidth`), no contra un conteo de caracteres, porque el ancho
+// disponible cambia con cada punto de quiebre de la cuadrícula.
+function TileName({ name }: { name: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [overflowing, setOverflowing] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const text = textRef.current;
+    if (!container || !text) return;
+
+    const check = () => setOverflowing(text.scrollWidth > container.clientWidth);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [name]);
+
+  return (
+    <div ref={containerRef} className="overflow-hidden">
+      <span
+        ref={textRef}
+        className={`inline-block whitespace-nowrap text-xs font-bold text-white ${overflowing ? "akopia-marquee" : ""}`}
+      >
+        {name}
+      </span>
+    </div>
+  );
+}
+
+function ProductTile({ row, onOpen }: { row: InventoryRow; onOpen: () => void }) {
+  const unit = row.expand?.unit_id?.code ?? row.expand?.unit_id?.name ?? "";
+  const productName = row.expand?.product_id?.name ?? "—";
+  const photoUrl = row.expand?.product_id?.photo_url;
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group relative aspect-square overflow-hidden rounded-lg border border-(--rule) bg-(--surface) text-left"
+    >
+      {photoUrl ? (
+        <Image
+          src={photoUrl}
+          alt=""
+          fill
+          sizes="(min-width: 1280px) 12vw, (min-width: 1024px) 16vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
+          className="object-cover transition-transform group-hover:scale-105"
+        />
+      ) : (
+        <div
+          className={`flex h-full w-full items-center justify-center text-3xl font-black ${thumbColorFor(productName)}`}
+          aria-hidden="true"
+        >
+          {productName.charAt(0).toUpperCase()}
+        </div>
+      )}
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/55 to-transparent px-1.5 pb-1.5 pt-6">
+        <TileName name={productName} />
+        <span className="mt-0.5 block text-xs font-bold tabular-nums text-white/90">
+          {formatQuantity(row.available_qty)} {unit}
+        </span>
+      </div>
+    </button>
   );
 }
 
