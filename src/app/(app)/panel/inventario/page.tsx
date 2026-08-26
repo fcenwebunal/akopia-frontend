@@ -112,7 +112,7 @@ export default function InventarioPage() {
   const [query, setQuery] = useState("");
   const [groupId, setGroupId] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   // Sobreescribe photo_url localmente al subir una foto desde el mosaico,
   // para que todas las casillas de ese producto (puede repetirse en más
   // de una ubicación) cambien al instante sin recargar el inventario
