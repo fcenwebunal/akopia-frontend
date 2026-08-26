@@ -684,14 +684,10 @@ function RelocateDialog({
 
         <div className="mt-4">
           <label htmlFor="reloc-cant" className="mb-1 block text-sm font-bold">Cantidad</label>
-          <input
+          <DecimalInput
             id="reloc-cant"
-            type="number"
-            min={0.01}
-            max={row.available_qty}
-            step="any"
             value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
+            onChange={setQuantity}
             className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
           />
         </div>
@@ -835,14 +831,10 @@ function RejectDialog({
 
         <div className="mt-4">
           <label htmlFor="reject-cant" className="mb-1 block text-sm font-bold">Cantidad</label>
-          <input
+          <DecimalInput
             id="reject-cant"
-            type="number"
-            min={0.01}
-            max={row.quarantine_qty}
-            step="any"
             value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
+            onChange={setQuantity}
             className="w-full rounded border border-(--rule) bg-(--surface) px-3 py-2.5"
           />
         </div>
