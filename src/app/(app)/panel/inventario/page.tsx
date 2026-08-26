@@ -1222,40 +1222,63 @@ function ProductLocationDetail({
     }
   }
 
+  const productName = row.expand?.product_id?.name ?? "—";
+  const photoUrl = row.expand?.product_id?.photo_url;
+
   return (
     <div className="fixed inset-0 z-30 flex items-end bg-black/40 sm:items-center sm:justify-center">
-      <div className="max-h-[85vh] w-full overflow-y-auto rounded-t-lg bg-(--surface) p-5 sm:max-w-lg sm:rounded-lg">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            {row.expand?.product_id?.photo_url ? (
-              <button
-                type="button"
-                onClick={() => setImageExpanded(true)}
-                aria-label={`Ver foto de ${row.expand?.product_id?.name ?? "producto"} en grande`}
-                className="shrink-0 rounded-lg"
-              >
-                <ProductThumb
-                  name={row.expand?.product_id?.name ?? "—"}
-                  photoUrl={row.expand?.product_id?.photo_url}
-                  size={48}
-                />
-              </button>
-            ) : (
-              <ProductThumb
-                name={row.expand?.product_id?.name ?? "—"}
-                photoUrl={row.expand?.product_id?.photo_url}
-                size={48}
+      <div className="max-h-[85vh] w-full overflow-y-auto rounded-t-lg bg-(--surface) sm:max-w-lg sm:rounded-lg">
+        {/* Foto grande, a todo el ancho -- mismo diseño se llegue por lista o
+            por mosaico, ya que ambas abren este mismo panel. Clicable para
+            verla aún más grande en el lightbox, cuando sí hay foto real. */}
+        <div className="relative">
+          <div
+            role={photoUrl ? "button" : undefined}
+            tabIndex={photoUrl ? 0 : undefined}
+            onClick={photoUrl ? () => setImageExpanded(true) : undefined}
+            onKeyDown={
+              photoUrl
+                ? (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setImageExpanded(true);
+                    }
+                  }
+                : undefined
+            }
+            aria-label={photoUrl ? `Ver foto de ${productName} en grande` : undefined}
+            className={`aspect-square w-full overflow-hidden rounded-t-lg bg-(--surface-2) ${photoUrl ? "cursor-zoom-in" : ""}`}
+          >
+            {photoUrl ? (
+              <Image
+                src={photoUrl}
+                alt=""
+                width={512}
+                height={512}
+                className="h-full w-full object-cover"
               />
+            ) : (
+              <div
+                className={`flex h-full w-full items-center justify-center text-6xl font-black ${thumbColorFor(productName)}`}
+                aria-hidden="true"
+              >
+                {productName.charAt(0).toUpperCase()}
+              </div>
             )}
-            <div className="min-w-0">
-              <h2 className="text-lg font-bold">{row.expand?.product_id?.name}</h2>
-              <p className="text-sm text-(--muted)">{locationLabel(location)}</p>
-            </div>
           </div>
-          <button type="button" onClick={onClose} className="shrink-0 text-sm font-bold text-(--muted) hover:text-(--ink)">
-            Cerrar
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+          >
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
+
+        <div className="p-5">
+        <h2 className="text-lg font-bold">{productName}</h2>
+        <p className="text-sm text-(--muted)">{locationLabel(location)}</p>
 
         <div className="mt-3 flex flex-wrap gap-2">
           {onRelocate ? (
@@ -1386,9 +1409,10 @@ function ProductLocationDetail({
             ))}
           </ul>
         )}
+        </div>
       </div>
 
-      {imageExpanded && row.expand?.product_id?.photo_url ? (
+      {imageExpanded && photoUrl ? (
         <div
           role="button"
           tabIndex={0}
@@ -1402,8 +1426,8 @@ function ProductLocationDetail({
           className="fixed inset-0 z-40 flex cursor-zoom-out items-center justify-center bg-black/85 p-6"
         >
           <Image
-            src={row.expand.product_id.photo_url}
-            alt={row.expand?.product_id?.name ?? ""}
+            src={photoUrl}
+            alt={productName}
             width={800}
             height={800}
             className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain"
