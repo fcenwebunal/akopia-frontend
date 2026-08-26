@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { AlertTriangle, ArrowRight, Ban, CheckCircle, LayoutGrid, List, MapPin, Warehouse } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, Camera, CheckCircle, LayoutGrid, List, Loader2, MapPin, Warehouse } from "lucide-react";
 import { callRoute, currentUser, errorMessage, pb } from "@/lib/pb";
 import { hasAnyRole } from "@/lib/roles";
 import { loadCatalog, normalize } from "@/lib/catalog";
 import { loadLocations, locationLabel, type Location } from "@/lib/locations";
 import { useAsyncData } from "@/lib/use-async-data";
 import { formatQuantity } from "@/lib/format";
+import { uploadPhoto, UploadError } from "@/lib/cloudinary";
 import { LoadingLine } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { DecimalInput } from "@/components/ui/decimal-input";
@@ -112,6 +113,22 @@ export default function InventarioPage() {
   const [groupId, setGroupId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  // Sobreescribe photo_url localmente al subir una foto desde el mosaico,
+  // para que todas las casillas de ese producto (puede repetirse en más
+  // de una ubicación) cambien al instante sin recargar el inventario
+  // completo — mismo patrón que ya usa /panel/catalogo.
+  const [photoOverrides, setPhotoOverrides] = useState<Record<string, string>>({});
+
+  async function updateProductPhoto(productId: string, url: string) {
+    setPhotoOverrides((current) => ({ ...current, [productId]: url }));
+    try {
+      await pb.collection("products").update(productId, { photo_url: url });
+    } catch {
+      // La casilla ya muestra la foto nueva; si el guardado falló, la
+      // próxima recarga la revierte sola — es una foto, no un movimiento
+      // de inventario, no vale la pena bloquear la pantalla por esto.
+    }
+  }
   const [relocating, setRelocating] = useState<InventoryRow | null>(null);
   const [rejecting, setRejecting] = useState<InventoryRow | null>(null);
   const [detail, setDetail] = useState<{ row: InventoryRow; location?: Location } | null>(null);
@@ -388,7 +405,14 @@ export default function InventarioPage() {
               ) : (
                 <div className={TILE_GRID_CLASS}>
                   {staging.map((row) => (
-                    <ProductTile key={row.id} row={row} onOpen={() => setDetail({ row, location: undefined })} />
+                    <ProductTile
+                      key={row.id}
+                      row={row}
+                      photoUrl={photoOverrides[row.product_id] ?? row.expand?.product_id?.photo_url}
+                      canEditPhoto={canManageInventory}
+                      onPhotoUploaded={(url) => updateProductPhoto(row.product_id, url)}
+                      onOpen={() => setDetail({ row, location: undefined })}
+                    />
                   ))}
                 </div>
               )}
@@ -497,7 +521,14 @@ export default function InventarioPage() {
                 ) : (
                   <div className={TILE_GRID_CLASS}>
                     {rows.map((row) => (
-                      <ProductTile key={row.id} row={row} onOpen={() => setDetail({ row, location })} />
+                      <ProductTile
+                        key={row.id}
+                        row={row}
+                        photoUrl={photoOverrides[row.product_id] ?? row.expand?.product_id?.photo_url}
+                        canEditPhoto={canManageInventory}
+                        onPhotoUploaded={(url) => updateProductPhoto(row.product_id, url)}
+                        onOpen={() => setDetail({ row, location })}
+                      />
                     ))}
                   </div>
                 )}
@@ -667,16 +698,59 @@ function TileName({ name }: { name: string }) {
   );
 }
 
-function ProductTile({ row, onOpen }: { row: InventoryRow; onOpen: () => void }) {
+function ProductTile({
+  row,
+  photoUrl,
+  canEditPhoto,
+  onPhotoUploaded,
+  onOpen,
+}: {
+  row: InventoryRow;
+  photoUrl?: string;
+  canEditPhoto: boolean;
+  onPhotoUploaded: (url: string) => void;
+  onOpen: () => void;
+}) {
   const unit = row.expand?.unit_id?.code ?? row.expand?.unit_id?.name ?? "";
   const productName = row.expand?.product_id?.name ?? "—";
-  const photoUrl = row.expand?.product_id?.photo_url;
+  const [uploading, setUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setUploading(true);
+    setPhotoError(null);
+    try {
+      const url = await uploadPhoto(file, "products");
+      onPhotoUploaded(url);
+    } catch (err) {
+      setPhotoError(err instanceof UploadError ? err.message : "No se pudo subir la foto.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  // No es un <button> anidado en otro <button> porque también aloja el
+  // botón de cámara — mismo motivo y mismo patrón ya usado en
+  // <PhotoTile> (components/app/photo-tile.tsx): un botón dentro de otro
+  // botón no es HTML válido, el navegador saca el interior fuera del
+  // exterior al parsear y el clic deja de funcionar donde se espera.
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onOpen}
-      className="group relative aspect-square overflow-hidden rounded-lg border border-(--rule) bg-(--surface) text-left"
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border border-(--rule) bg-(--surface) text-left"
     >
       {photoUrl ? (
         <Image
@@ -694,13 +768,45 @@ function ProductTile({ row, onOpen }: { row: InventoryRow; onOpen: () => void })
           {productName.charAt(0).toUpperCase()}
         </div>
       )}
+
+      {canEditPhoto ? (
+        <>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              inputRef.current?.click();
+            }}
+            disabled={uploading}
+            aria-label={`Cambiar foto de ${productName}`}
+            className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 disabled:opacity-60"
+          >
+            {uploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+          </button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            onClick={(event) => event.stopPropagation()}
+            onChange={handleFile}
+            className="hidden"
+          />
+        </>
+      ) : null}
+
+      {photoError ? (
+        <p role="alert" className="absolute inset-x-0 top-8 bg-unal-red/90 px-1 py-0.5 text-[10px] font-bold text-white">
+          {photoError}
+        </p>
+      ) : null}
+
       <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/55 to-transparent px-1.5 pb-1.5 pt-6">
         <TileName name={productName} />
         <span className="mt-0.5 block text-xs font-bold tabular-nums text-white/90">
           {formatQuantity(row.available_qty)} {unit}
         </span>
       </div>
-    </button>
+    </div>
   );
 }
 
