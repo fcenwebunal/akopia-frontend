@@ -440,6 +440,7 @@ export default function InventarioPage() {
                       <ProductThumb
                         name={row.expand?.product_id?.name ?? "—"}
                         photoUrl={row.expand?.product_id?.photo_url}
+                        size={64}
                       />
                       <span className="min-w-0">
                         <span className="font-bold">{row.expand?.product_id?.name ?? "—"}</span>
@@ -644,7 +645,7 @@ function ProductRow({
         onClick={onOpen}
         className="flex min-w-0 flex-1 items-center gap-3 text-left hover:text-unal-green-dark"
       >
-        <ProductThumb name={productName} photoUrl={row.expand?.product_id?.photo_url} />
+        <ProductThumb name={productName} photoUrl={row.expand?.product_id?.photo_url} size={64} />
         <span className="min-w-0 truncate font-medium">{productName}</span>
         <ArrowRight size={14} className="shrink-0 opacity-50" aria-hidden="true" />
       </button>
