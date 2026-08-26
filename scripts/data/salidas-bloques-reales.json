@@ -1,0 +1,1255 @@
+{
+  "fuente": "INVENTARIO INTERNO, pestaña SALIDAS -- fileId 1yz_ndyrO_tlF6WBVsEc_fdrtaP8zAruD_hnLsvZDjUE",
+  "releido": "2026-08-26",
+  "nota": "Cada bloque es la bolsa real de una familia, en el orden en que aparece en la hoja. La hoja no tiene columna de nombre por fila -- la asignación a un beneficiario específico (por orden de parada) es una convención documentada en redo-segunda-entrega-con-salidas-reales.mjs, no un dato verificado de la hoja.",
+  "bloques": [
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2.5
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 0.5
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.5
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.4
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.25
+      },
+      {
+        "product": "HARINA",
+        "qty": 0.5
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.2
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.12
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 1
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.091
+      },
+      {
+        "product": "PANELA",
+        "qty": 0.45
+      }
+    ],
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2.5
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 0.5
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 0.5
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.38
+      },
+      {
+        "product": "HARINA",
+        "qty": 0.8
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.5
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.25
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.425
+      },
+      {
+        "product": "PANELA",
+        "qty": 0.4
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.2
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.091
+      }
+    ],
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2.5
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 0.5
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 0.454
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "HARINA",
+        "qty": 0.8
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.4
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.25
+      },
+      {
+        "product": "PANELA",
+        "qty": 0.5
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.525
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.091
+      },
+      {
+        "product": "ACEITE",
+        "qty": 2.2
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.12
+      }
+    ],
+    [
+      {
+        "product": "SARDINA",
+        "qty": 0.4
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 0.5
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.12
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.091
+      },
+      {
+        "product": "PANELA",
+        "qty": 0.5
+      },
+      {
+        "product": "ARROZ",
+        "qty": 2.5
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.5
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.5
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.24
+      }
+    ],
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2.5
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 0.5
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 0.5
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.4
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.24
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.525
+      },
+      {
+        "product": "PANELA",
+        "qty": 0.835
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.2
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.42
+      },
+      {
+        "product": "HARINA",
+        "qty": 0.8
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.091
+      }
+    ],
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2.5
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 0.5
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 1
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "HARINA",
+        "qty": 0.8
+      },
+      {
+        "product": "PANELA",
+        "qty": 1
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.25
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.425
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.5
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.23
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.42
+      },
+      {
+        "product": "PANADERIA",
+        "qty": 0.44
+      }
+    ],
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2.5
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 0.5
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 0.5
+      },
+      {
+        "product": "HARINA",
+        "qty": 0.8
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.225
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.24
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.5
+      },
+      {
+        "product": "PANELA",
+        "qty": 1
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.5
+      },
+      {
+        "product": "PANADERIA",
+        "qty": 0.44
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.42
+      }
+    ],
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2.5
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.8
+      },
+      {
+        "product": "SAL",
+        "qty": 1
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 0.5
+      },
+      {
+        "product": "HARINA",
+        "qty": 1
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "PANELA",
+        "qty": 1
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.25
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.225
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.5
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.5
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.42
+      }
+    ],
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2
+      },
+      {
+        "product": "MAIZ PIRA",
+        "qty": 0.5
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.46
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 0.8
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 0.5
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.6
+      },
+      {
+        "product": "HARINA",
+        "qty": 1
+      },
+      {
+        "product": "PANELA",
+        "qty": 1
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.225
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.25
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.5
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.5
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.42
+      }
+    ],
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2
+      },
+      {
+        "product": "MAIZ PIRA",
+        "qty": 0.5
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.46
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 1
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 1
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "HARINA",
+        "qty": 1
+      },
+      {
+        "product": "PANELA",
+        "qty": 1
+      },
+      {
+        "product": "SALCHICHA",
+        "qty": 0.15
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.17
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.55
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.5
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.225
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.5
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      }
+    ],
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2
+      },
+      {
+        "product": "SAL",
+        "qty": 0.5
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 0.5
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.5
+      },
+      {
+        "product": "HARINA",
+        "qty": 1
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.4
+      },
+      {
+        "product": "PANELA",
+        "qty": 1
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.5
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.17
+      },
+      {
+        "product": "SALCHICHA",
+        "qty": 0.15
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.5
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.5
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      }
+    ],
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2
+      },
+      {
+        "product": "ARVEJA",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 1
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 0.5
+      },
+      {
+        "product": "HARINA",
+        "qty": 1
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "PANELA",
+        "qty": 1
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.5
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.4
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.17
+      },
+      {
+        "product": "VERDURAS EN LATA",
+        "qty": 0.3
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.55
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.5
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      }
+    ],
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2
+      },
+      {
+        "product": "MAIZ PIRA",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 0.8
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 1
+      },
+      {
+        "product": "HARINA",
+        "qty": 1
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 1
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.12
+      },
+      {
+        "product": "PANELA",
+        "qty": 1
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.4
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.17
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.5
+      },
+      {
+        "product": "SALCHICHA",
+        "qty": 0.15
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.9
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.55
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      }
+    ],
+    [
+      {
+        "product": "ARROZ",
+        "qty": 2
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 1
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 0.8
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 1
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "HARINA",
+        "qty": 0.8
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.5
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.16
+      },
+      {
+        "product": "SALCHICHA",
+        "qty": 0.15
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.55
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.9
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.225
+      },
+      {
+        "product": "PANELA",
+        "qty": 1
+      }
+    ],
+    [
+      {
+        "product": "ACEITE",
+        "qty": 0.9
+      },
+      {
+        "product": "PASTA",
+        "qty": 0.55
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      },
+      {
+        "product": "ARROZ",
+        "qty": 2
+      },
+      {
+        "product": "MAIZ PIRA",
+        "qty": 0.5
+      },
+      {
+        "product": "ARVEJA",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 1
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 0.5
+      },
+      {
+        "product": "HARINA",
+        "qty": 1
+      },
+      {
+        "product": "AVENA",
+        "qty": 0.22
+      },
+      {
+        "product": "PANELA",
+        "qty": 1
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.4
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.25
+      },
+      {
+        "product": "CHOCOLATE",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOLES EN LATA",
+        "qty": 0.3
+      }
+    ],
+    [
+      {
+        "product": "PASTA",
+        "qty": 0.55
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.9
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      },
+      {
+        "product": "ARROZ",
+        "qty": 2
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 1
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 0.5
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "HARINA",
+        "qty": 0.8
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.225
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.16
+      },
+      {
+        "product": "SALCHICHA",
+        "qty": 0.15
+      }
+    ],
+    [
+      {
+        "product": "PASTA",
+        "qty": 0.55
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.9
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      },
+      {
+        "product": "ARROZ",
+        "qty": 2.5
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.454
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "HARINA",
+        "qty": 1
+      },
+      {
+        "product": "SAL",
+        "qty": 1
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 1
+      },
+      {
+        "product": "PANELA",
+        "qty": 1
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.225
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.27
+      },
+      {
+        "product": "SALCHICHA",
+        "qty": 0.15
+      }
+    ],
+    [
+      {
+        "product": "PASTA",
+        "qty": 0.55
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.9
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      },
+      {
+        "product": "ARROZ",
+        "qty": 2
+      },
+      {
+        "product": "VERDURAS EN LATA",
+        "qty": 0.57
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.46
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 0.454
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 0.35
+      },
+      {
+        "product": "HARINA",
+        "qty": 1
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 1
+      },
+      {
+        "product": "SAL",
+        "qty": 0.8
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.225
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.16
+      }
+    ],
+    [
+      {
+        "product": "PASTA",
+        "qty": 0.525
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.9
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      },
+      {
+        "product": "ARROZ",
+        "qty": 1.862
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 1
+      },
+      {
+        "product": "HARINA",
+        "qty": 1
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 1
+      },
+      {
+        "product": "SAL",
+        "qty": 0.8
+      },
+      {
+        "product": "LECHE EN POLVO",
+        "qty": 1
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.225
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.15
+      },
+      {
+        "product": "SALCHICHA",
+        "qty": 0.15
+      }
+    ],
+    [
+      {
+        "product": "PASTA",
+        "qty": 0.525
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.9
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      },
+      {
+        "product": "ARROZ",
+        "qty": 1.9
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.454
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 1
+      },
+      {
+        "product": "AVENA",
+        "qty": 0.22
+      },
+      {
+        "product": "HARINA",
+        "qty": 1
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 1
+      },
+      {
+        "product": "SAL",
+        "qty": 1
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.225
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.14
+      },
+      {
+        "product": "SALCHICHA",
+        "qty": 0.15
+      }
+    ],
+    [
+      {
+        "product": "PASTA",
+        "qty": 0.55
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.9
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.12
+      },
+      {
+        "product": "ARROZ",
+        "qty": 2
+      },
+      {
+        "product": "LENTEJAS",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 1
+      },
+      {
+        "product": "HARINA",
+        "qty": 1
+      },
+      {
+        "product": "SAL",
+        "qty": 1
+      },
+      {
+        "product": "AVENA",
+        "qty": 0.22
+      },
+      {
+        "product": "AZUCAR",
+        "qty": 1
+      },
+      {
+        "product": "ATUN",
+        "qty": 0.14
+      },
+      {
+        "product": "SARDINA",
+        "qty": 0.225
+      }
+    ],
+    [
+      {
+        "product": "PASTA",
+        "qty": 0.525
+      },
+      {
+        "product": "ACEITE",
+        "qty": 0.9
+      },
+      {
+        "product": "SALCHICHA",
+        "qty": 0.15
+      },
+      {
+        "product": "GALLETAS",
+        "qty": 0.072
+      },
+      {
+        "product": "ARROZ",
+        "qty": 2
+      },
+      {
+        "product": "ARVEJA",
+        "qty": 0.5
+      },
+      {
+        "product": "FRIJOL",
+        "qty": 1
+      },
+      {
+        "product": "PANELA",
+        "qty": 0.5
+      },
+      {
+        "product": "SAL",
+        "qty": 1
+      },
+      {
+        "product": "AVENA",
+        "qty": 0.22
+      }
+    ]
+  ]
+}
