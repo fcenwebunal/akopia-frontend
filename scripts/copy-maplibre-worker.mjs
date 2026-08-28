@@ -6,23 +6,37 @@
 // estático propio (`public/maplibre-gl-worker.mjs`) y se le dice a MapLibre
 // dónde está con `setWorkerUrl()` (ver `maplibre-basemap.tsx`).
 //
-// Se copia aquí, en `postinstall`, en vez de commitear el archivo: así queda
-// siempre sincronizado con la versión de `maplibre-gl` que de verdad está
-// instalada, sin depender de que alguien recuerde actualizarlo a mano.
+// El worker, a su vez, importa `./maplibre-gl-shared.mjs` por ruta relativa
+// — el código que comparte con el hilo principal (parsers, utilidades). Si
+// solo se copia el worker, esa segunda importación resuelve contra
+// `/maplibre-gl-shared.mjs`, que sin este segundo archivo tampoco existe: el
+// worker "carga" (el navegador no avisa con un error obvio) pero nunca
+// termina de evaluar su propio módulo, así que nunca procesa una sola
+// tesela — encontrado en producción real, sin ningún error de consola que
+// lo delatara, solo silencio total en los eventos del mapa.
+//
+// Se copian aquí, en `postinstall`, en vez de commitear los archivos: así
+// quedan siempre sincronizados con la versión de `maplibre-gl` que de
+// verdad está instalada, sin depender de que alguien recuerde actualizarlos
+// a mano.
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const source = join(root, "node_modules", "maplibre-gl", "dist", "maplibre-gl-worker.mjs");
+const distDir = join(root, "node_modules", "maplibre-gl", "dist");
 const destDir = join(root, "public");
-const dest = join(destDir, "maplibre-gl-worker.mjs");
 
-if (!existsSync(source)) {
-  console.warn(`[copy-maplibre-worker] No se encontró ${source} — ¿falló la instalación de maplibre-gl?`);
-  process.exit(0);
-}
+const files = ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"];
 
 mkdirSync(destDir, { recursive: true });
-copyFileSync(source, dest);
-console.log(`[copy-maplibre-worker] Copiado a ${dest}`);
+
+for (const file of files) {
+  const source = join(distDir, file);
+  if (!existsSync(source)) {
+    console.warn(`[copy-maplibre-worker] No se encontró ${source} — ¿falló la instalación de maplibre-gl?`);
+    continue;
+  }
+  copyFileSync(source, join(destDir, file));
+  console.log(`[copy-maplibre-worker] Copiado ${file}`);
+}

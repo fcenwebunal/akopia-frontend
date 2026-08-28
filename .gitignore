@@ -47,3 +47,4 @@ next-env.d.ts
 # Copiado en postinstall desde node_modules/maplibre-gl — ver
 # scripts/copy-maplibre-worker.mjs. Se regenera solo, no se versiona.
 /public/maplibre-gl-worker.mjs
+/public/maplibre-gl-shared.mjs
