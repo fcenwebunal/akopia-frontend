@@ -1,5 +1,13 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
+/*
+ * Sin esta hoja, `.maplibregl-canvas` (donde MapLibre dibuja de verdad, ver
+ * maplibre-basemap.tsx) pierde `position:absolute` y queda fuera del área
+ * visible del mapa — el layer se agrega bien, la atribución aparece, pero
+ * no se ve una sola tesela. Encontrado en producción real, con la consola
+ * ya sin errores: nada de lo demás lo hubiera delatado.
+ */
+@import "maplibre-gl/dist/maplibre-gl.css";
 
 /*
  * Identidad visual UNAL — Unimedios
