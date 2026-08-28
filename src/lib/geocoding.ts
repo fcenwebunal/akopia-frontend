@@ -3,8 +3,9 @@
 // tarjeta para crear la cuenta pese a que su nivel gratuito no debería
 // exigirla, el mismo tropiezo que ya había obligado a abandonar Fly.io
 // el 18 de agosto. Mismo criterio que ya usan los mapas de la app
-// (Leaflet + teselas CARTO, ver map-picker.tsx): nada que dependa de una
-// tarjeta de nadie.
+// (Leaflet + teselas vectoriales de OpenFreeMap, ver map-picker.tsx y
+// src/lib/openfreemap.ts): nada que dependa de una cuenta o tarjeta de
+// nadie.
 //
 // La política de uso de Nominatim (operations.osmfoundation.org/policies/nominatim)
 // exige identificar la aplicación con un User-Agent o un Referer válido

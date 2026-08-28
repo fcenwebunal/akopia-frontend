@@ -46,8 +46,20 @@ export function proxy(request: NextRequest) {
     `default-src 'self'`,
     `script-src 'self' 'nonce-${nonce}' https://apis.google.com https://www.gstatic.com`,
     `style-src 'self' 'unsafe-inline'`,
-    `img-src 'self' data: https://res.cloudinary.com https://*.basemaps.cartocdn.com https://*.openstreetmap.org`,
-    `connect-src 'self' https://nominatim.openstreetmap.org https://api.cloudinary.com https://*.googleapis.com https://securetoken.googleapis.com https://apis.google.com`,
+    `img-src 'self' data: https://res.cloudinary.com`,
+    // `tiles.openfreemap.org` (estilo + teselas vectoriales + sprites/glifos
+    // del mapa, ver src/lib/openfreemap.ts): MapLibre GL los pide todos por
+    // fetch/XHR, no con <img>, así que van en connect-src, no en img-src —
+    // reemplaza a `*.basemaps.cartocdn.com`, retirado el 28 de agosto de
+    // 2026 (CARTO empezó a exigir API key y anunció el retiro de ese
+    // servicio raster incluso con llave).
+    `connect-src 'self' https://nominatim.openstreetmap.org https://tiles.openfreemap.org https://api.cloudinary.com https://*.googleapis.com https://securetoken.googleapis.com https://apis.google.com`,
+    // El worker interno de MapLibre GL se instancia con `new Worker(url,
+    // {type:"module"})`, `url` derivada de `import.meta.url` — Next.js la
+    // resuelve a un chunk propio bajo `_next/static/`, mismo origen. `blob:`
+    // se agrega solo como red de seguridad si algún bundler futuro cambia
+    // esa resolución.
+    `worker-src 'self' blob:`,
     `frame-src https://accounts.google.com https://akopia.firebaseapp.com`,
     `font-src 'self' data:`,
     `object-src 'none'`,

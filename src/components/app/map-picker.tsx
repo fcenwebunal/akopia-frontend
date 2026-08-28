@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, useMap, useMapEvents } from "react-leaflet";
 import L, { type LeafletMouseEvent } from "leaflet";
 import { MANIZALES_CENTER } from "@/lib/coordinates";
+import { OPENFREEMAP_POSITRON_STYLE } from "@/lib/openfreemap";
+import { MaplibreBasemap } from "./maplibre-basemap";
 
 /*
  * Este archivo importa Leaflet, que toca `window` al cargarse — nunca
@@ -96,13 +98,13 @@ export function MapPicker({
         scrollWheelZoom
         style={{ height: "100%", width: "100%" }}
       >
-        <TileLayer
-          // CARTO Positron: calles, manzanas y verde, sin nombres de
-          // lugar — justo el nivel de detalle que hace falta para
-          // ubicar un punto, sin ruido de etiquetas.
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        />
+        {/*
+          OpenFreeMap Positron: calles, manzanas y verde, CON nombres de
+          calle — aquí sí hacen falta, para que quien registra pueda
+          confirmar que está marcando el sitio correcto (a diferencia de
+          `help-map.tsx`, que los quita a propósito).
+        */}
+        <MaplibreBasemap style={OPENFREEMAP_POSITRON_STYLE} />
         <ClickToMove onMove={onChange} />
         <RecenterOnFocus lat={lat} lng={lng} focusToken={focusToken} />
         <Marker
