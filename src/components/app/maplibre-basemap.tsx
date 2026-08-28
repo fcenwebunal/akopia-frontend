@@ -38,9 +38,31 @@ export function MaplibreBasemap({ style }: { style: string | StyleSpecification 
     const layer = maplibreGL({
       style,
       attributionControl: { customAttribution: OPENFREEMAP_ATTRIBUTION },
+      // Necesario para poder leer el canvas con `toDataURL()`/`readPixels()`
+      // en diagnóstico — sin esto el búfer se limpia apenas termina de
+      // componer el cuadro y una lectura posterior siempre da vacío, aunque
+      // sí se haya dibujado algo.
+      canvasContextAttributes: { preserveDrawingBuffer: true },
     }).addTo(map);
 
+    const glMap = layer.getMaplibreMap();
+
+    // Los errores de estilo/fuente/tesela de MapLibre no siempre truenan —
+    // muchos solo se enteran por este evento. Sin este listener, un fallo
+    // real (un layer del estilo mal formado, una tesela que nunca llega)
+    // se queda completamente silencioso, como ya pasó una vez.
+    const logError = (event: { error?: unknown }) => {
+      console.error("[MaplibreBasemap] error:", event.error ?? event);
+    };
+    glMap.on("error", logError);
+
+    // Gancho temporal de diagnóstico — se retira una vez confirmado por qué
+    // el mapa quedaba en blanco pese a que estilo/sprite/manifiesto cargaban
+    // bien (ver bitácora, 2026-08-28).
+    (window as typeof window & { __akopiaMaplibreDebug?: unknown }).__akopiaMaplibreDebug = glMap;
+
     return () => {
+      glMap.off("error", logError);
       map.removeLayer(layer);
     };
   }, [map, style]);
