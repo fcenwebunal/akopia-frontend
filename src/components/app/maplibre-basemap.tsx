@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import { maplibreGL } from "@maplibre/maplibre-gl-leaflet";
-import type { StyleSpecification } from "maplibre-gl";
+import { setWorkerUrl, type StyleSpecification } from "maplibre-gl";
 import { OPENFREEMAP_ATTRIBUTION } from "@/lib/openfreemap";
 
 /*
@@ -16,7 +16,21 @@ import { OPENFREEMAP_ATTRIBUTION } from "@/lib/openfreemap";
  * Toca `window` al importar `maplibre-gl` — mismo cuidado que ya exige
  * Leaflet: quien use un mapa con esta capa debe cargarse con
  * `next/dynamic(..., { ssr: false })`.
+ *
+ * MapLibre adivina la URL de su worker interno a partir de `import.meta.url`
+ * del chunk donde quedó empaquetado — funciona si el paquete se sirve tal
+ * cual (un CDN), pero Turbopack lo mete en un chunk con nombre hasheado, así
+ * que esa URL nunca existe: el navegador pide un archivo que no está ahí,
+ * Next.js responde con la página HTML normal (nunca un 404 real) y el
+ * navegador rechaza ejecutarla como worker por el tipo MIME — el mapa se
+ * queda en blanco sin ningún error de red obvio (encontrado así en
+ * producción real, no en desarrollo). Se sirve el worker real como archivo
+ * estático propio (`public/maplibre-gl-worker.mjs`, copiado en cada
+ * instalación por `scripts/copy-maplibre-worker.mjs`) y se le dice a
+ * MapLibre dónde está, antes de crear cualquier mapa.
  */
+setWorkerUrl("/maplibre-gl-worker.mjs");
+
 export function MaplibreBasemap({ style }: { style: string | StyleSpecification }) {
   const map = useMap();
 

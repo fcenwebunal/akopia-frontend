@@ -43,3 +43,7 @@ next-env.d.ts
 
 # Logs locales
 *.log
+
+# Copiado en postinstall desde node_modules/maplibre-gl — ver
+# scripts/copy-maplibre-worker.mjs. Se regenera solo, no se versiona.
+/public/maplibre-gl-worker.mjs
