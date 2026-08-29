@@ -426,10 +426,35 @@ body {
   animation: akopia-marquee 6s linear infinite;
 }
 
+/*
+ * Los tres paquetes en paracaídas de "Horario de recepción / Punto de
+ * recepción" (ver (landing)/page.tsx) oscilan como si colgaran de la
+ * punta de su propio paracaídas — el punto fijo del giro no es el
+ * centro de la imagen. Cada `packet_N.svg` centra su paracaídas en un
+ * X distinto (medido contra la geometría real de cada archivo: el
+ * pico de la copa toca el borde superior del lienzo en cada uno, pero
+ * en una posición horizontal distinta), así que el `transform-origin`
+ * va por `style` en cada `<img>`, no en esta clase — esta clase solo
+ * pone la animación en sí, compartida por los tres.
+ */
+.akopia-packet-swing {
+  animation: akopia-packet-swing 5s ease-in-out infinite;
+}
+@keyframes akopia-packet-swing {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .akopia-cloud-blob,
   .akopia-cloud-bubble,
-  .akopia-marquee {
+  .akopia-marquee,
+  .akopia-packet-swing {
     animation: none !important;
   }
 }

@@ -388,13 +388,38 @@ export default async function HomePage() {
           </ScrollReveal>
         </div>
 
+        {/*
+          Cada paquete cuelga y oscila desde la punta de su propio
+          paracaídas, no desde su centro — el `transformOrigin` de
+          cada uno viene de medir la geometría real del archivo (el
+          pico de la copa toca y=0 en un X distinto en cada SVG; ver
+          el comentario de `.akopia-packet-swing` en globals.css).
+          Retraso y duración también varían un poco por paquete para
+          que los tres no se muevan sincronizados, mismo criterio que
+          ya usan las burbujas de las nubes.
+        */}
         <div className="relative z-[2] mx-auto mt-11 flex max-w-[820px] items-end justify-center gap-5 px-6 sm:gap-9">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/landing/packet_1.svg" alt="" className="h-[100px] w-auto sm:h-[150px]" />
+          <img
+            src="/landing/packet_1.svg"
+            alt=""
+            className="akopia-packet-swing h-[100px] w-auto sm:h-[150px]"
+            style={{ transformOrigin: "46% 0%", animationDelay: "-1.1s", animationDuration: "4.6s" }}
+          />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/landing/packet_2.svg" alt="" className="h-[120px] w-auto sm:h-[180px]" />
+          <img
+            src="/landing/packet_2.svg"
+            alt=""
+            className="akopia-packet-swing h-[120px] w-auto sm:h-[180px]"
+            style={{ transformOrigin: "53% 0%", animationDelay: "-3.4s", animationDuration: "5.3s" }}
+          />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/landing/packet_3.svg" alt="" className="h-[100px] w-auto sm:h-[150px]" />
+          <img
+            src="/landing/packet_3.svg"
+            alt=""
+            className="akopia-packet-swing h-[100px] w-auto sm:h-[150px]"
+            style={{ transformOrigin: "60% 0%", animationDelay: "-0.4s", animationDuration: "4.9s" }}
+          />
         </div>
       </section>
 
