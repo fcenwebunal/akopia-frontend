@@ -16,13 +16,28 @@
  * línea), un redondeo de un solo píxel entre ambas ya se nota como un
  * borde cortado justo donde el arte toca la esquina — forzarlas a la
  * MISMA caja explícita lo hace imposible.
+ *
+ * El viewBox de las dos NO es el original del arte (`0 0 1183 690` /
+ * `0 0 1067 768`) — se le agregaron 50 unidades de lienzo transparente
+ * arriba (`0 -50 1183 740` / `0 -50 1067 818`), verificado con la
+ * geometría real de las hojas: el pétalo más alto de la hoja izquierda
+ * subía hasta y=-29.2, por FUERA del viewBox original, así que el
+ * propio recorte implícito del SVG (todo lo que cae fuera del viewBox
+ * se descarta al pintar) le cortaba la punta en línea recta — el
+ * "corte" reportado. Ampliar el lienzo hacia arriba no mueve ni una
+ * coordenada del dibujo: solo le da más aire transparente por encima,
+ * lo que de paso separa el arte del botón/texto de la sección. Nunca
+ * se toca el lado x=0 (donde el blob ya llega exacto a la esquina) ni
+ * el y=690/768 original (el borde inferior, que debe seguir pegado):
+ * el aire nuevo va SIEMPRE del lado contrario a la esquina que ancla
+ * cada capa, nunca del lado que la toca.
  */
 
 const CLOUD_FILL = "#84cab7";
 
 export function VolunteerCloudLeft() {
   return (
-    <svg viewBox="0 0 1183 690" aria-hidden="true" className="block h-full w-full">
+    <svg viewBox="0 -50 1183 740" aria-hidden="true" className="block h-full w-full">
       <path
         className="akopia-cloud-blob"
         fill={CLOUD_FILL}
@@ -74,7 +89,7 @@ export function VolunteerCloudLeft() {
 
 export function VolunteerCloudRight() {
   return (
-    <svg viewBox="0 0 1067 768" aria-hidden="true" className="block h-full w-full">
+    <svg viewBox="0 -50 1067 818" aria-hidden="true" className="block h-full w-full">
       <path
         className="akopia-cloud-blob"
         fill={CLOUD_FILL}
