@@ -350,22 +350,42 @@ body {
  * obligatorio aquí: un `<path>`/`<circle>` de SVG por defecto
  * transforma relativo al origen del viewport (0,0), no a su propia
  * caja — sin esto, "respirar" se vería como saltar hacia una esquina.
+ *
+ * El blob toca dos lados de su propio lienzo a propósito (el borde
+ * inferior y el borde exterior — izquierdo en la nube de la izquierda,
+ * derecho en la de la derecha), pegados a la esquina real de la
+ * página. `transform-origin` NO se fija aquí: cada instancia lo pasa
+ * por `style` (ver animated-cloud.tsx) apuntando exactamente a esa
+ * esquina de SU PROPIA caja (`0% 100%` / `100% 100%` con
+ * `fill-box` — no a "center", que era el bug real detrás del reporte
+ * "el movimiento lo saca del contenedor y se ve el fondo": escalar
+ * desde el centro aleja TAMBIÉN los dos bordes que debían quedar
+ * pegados, abriendo un hueco que deja ver el verde de la página detrás
+ * durante parte del ciclo de "respiración". Con el origen puesto en la
+ * esquina, un `scale()` puro dobla matemáticamente sin mover ni un
+ * punto de esos dos bordes (todo punto sobre el borde inferior tiene
+ * distancia vertical cero al origen; todo punto sobre el borde
+ * exterior tiene distancia horizontal cero) — por eso el `skew()` que
+ * traía este keyframe se quitó: mueve puntos en función de su
+ * distancia al origen sobre el eje PERPENDICULAR, así que sí despegaba
+ * el borde exterior (aunque el borde inferior seguía intacto). Sin
+ * `skew`, los dos bordes quedan invariantes en cualquier fase del
+ * ciclo, no solo "casi" pegados.
  */
 .akopia-cloud-blob {
   transform-box: fill-box;
-  transform-origin: center;
   animation: akopia-cloud-breathe 16s ease-in-out infinite;
 }
 @keyframes akopia-cloud-breathe {
   0%,
   100% {
-    transform: scale(1, 1) skew(0deg, 0deg);
+    transform: scale(1, 1);
   }
   33% {
-    transform: scale(1.025, 0.98) skew(0.6deg, 0deg);
+    transform: scale(1.025, 0.98);
   }
   66% {
-    transform: scale(0.982, 1.022) skew(-0.5deg, 0deg);
+    transform: scale(0.982, 1.022);
   }
 }
 

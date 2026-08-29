@@ -425,7 +425,7 @@ export default async function HomePage() {
         </div>
         {/*
           Las dos capas (nube animada + hojas) van forzadas a la MISMA
-          caja explícita — `aspect-[1183/740]` fija el alto exacto que
+          caja explícita — `aspect-[1183/790]` fija el alto exacto que
           le corresponde al ancho según el propio viewBox del arte, y
           cada hijo se estira a 100%×100% de esa caja (ver el
           comentario en animated-cloud.tsx). Antes cada capa calculaba
@@ -435,16 +435,20 @@ export default async function HomePage() {
           toca la esquina.
 
           El viewBox ya no es el original del arte (1183×690 /
-          1067×768): las dos ganaron 50 unidades de lienzo transparente
-          arriba (ver el comentario de `animated-cloud.tsx` con la
-          medición exacta) para que el pétalo más alto de las hojas
-          deje de recortarse contra el borde del `viewBox`, y de paso
-          para separar el arte del botón/texto de arriba. Solo cambia
-          el ancho vs. alto de esta caja (`aspect-[…]`); el anclaje
-          real sigue siendo `bottom-0 left-0`/`right-0` — la esquina
-          que debe quedar pegada nunca se tocó.
+          1067×768): las dos ganaron 100 unidades de lienzo
+          transparente arriba (ver el comentario de
+          `animated-cloud.tsx` con la medición exacta — la manda la
+          burbuja que sube y crece por su propia animación, no el
+          dibujo quieto) para que nada se recorte contra el borde del
+          `viewBox` en ningún momento del ciclo, y de paso para
+          separar el arte del botón/texto de arriba. Solo cambia el
+          ancho vs. alto de esta caja (`aspect-[…]`); el anclaje real
+          sigue siendo `bottom-0 left-0`/`right-0` — la esquina que
+          debe quedar pegada nunca se tocó, y el propio blob tampoco se
+          despega de ella al animarse (ver `.akopia-cloud-blob` en
+          globals.css).
         */}
-        <div className="pointer-events-none absolute bottom-0 left-0 aspect-[1183/740] w-[min(440px,40vw)]">
+        <div className="pointer-events-none absolute bottom-0 left-0 aspect-[1183/790] w-[min(440px,40vw)]">
           <VolunteerCloudLeft />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -454,7 +458,7 @@ export default async function HomePage() {
             className="absolute inset-0 h-full w-full"
           />
         </div>
-        <div className="pointer-events-none absolute bottom-0 right-0 aspect-[1067/818] w-[min(400px,36vw)]">
+        <div className="pointer-events-none absolute bottom-0 right-0 aspect-[1067/868] w-[min(400px,36vw)]">
           <VolunteerCloudRight />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
