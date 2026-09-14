@@ -44,7 +44,10 @@ export function proxy(request: NextRequest) {
 
   const csp = [
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' https://apis.google.com https://www.gstatic.com`,
+    // 'wasm-unsafe-eval' lets the PDF engine of /panel/reportes compile
+    // its WebAssembly layout module (yoga-layout). It allows WASM only,
+    // not JavaScript eval().
+    `script-src 'self' 'nonce-${nonce}' 'wasm-unsafe-eval' https://apis.google.com https://www.gstatic.com`,
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: https://res.cloudinary.com`,
     // `tiles.openfreemap.org` (estilo + teselas vectoriales + sprites/glifos

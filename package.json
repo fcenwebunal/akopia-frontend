@@ -12,6 +12,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
     "@maplibre/maplibre-gl-leaflet": "^0.1.4",
+    "@react-pdf/renderer": "^4.9.0",
     "cloudinary": "^2.10.0",
     "firebase": "^12.17.1",
     "jose": "^6.2.9",

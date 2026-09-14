@@ -62,6 +62,11 @@ export const APP_MENU: AppMenuItem[] = [
         href: "/panel/historial",
         roles: ["admin", "coordinacion", "comunicaciones"],
       },
+      {
+        label: "Reportes",
+        href: "/panel/reportes",
+        roles: ["admin", "coordinacion", "comunicaciones"],
+      },
       { label: "Respaldos", href: "/panel/respaldos", roles: ["admin"] },
     ],
   },
